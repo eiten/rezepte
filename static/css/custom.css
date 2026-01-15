@@ -1,23 +1,72 @@
+/* Navbar Fix: Schwebend, aber durchlässig für Dropdowns */
 nav.container-fluid {
-    /* Fixiert die Leiste oben */
-    position: sticky;
+    position: fixed;
     top: 0;
+    left: 0;
+    right: 0;
     z-index: 1000;
-    
-    /* Hintergrund & Schatten */
-    background-color: var(--card-background-color); /* Nutzt Pico-Farbe für Konsistenz */
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);    /* Sanfter Schatten nach unten */
-    
-    /* Etwas Abstand zum Rand */
-    padding-left: 1rem;
-    padding-right: 1rem;
-    
-    /* Verhindert, dass die Nav-Leiste zu dünn wirkt */
+    height: 3.5rem;
+    background-color: var(--card-background-color);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     border-bottom: 1px solid var(--muted-border-color);
+    padding: 0 1rem;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    /* WICHTIG: Erlaubt dem Dropdown, über den unteren Rand zu ragen */
+    overflow: visible; 
 }
 
+/* Platzhalter für den Content */
 main.container {
-    padding-top: 0;
+    margin-top: 5rem !important; /* Etwas mehr Puffer */
+    padding-top: 0 !important;
+}
+
+/* Dropdown-Korrektur für PicoCSS */
+nav ul li details.dropdown {
+    margin-bottom: 0;
+    position: relative;
+}
+
+/* Positioniert das aufgeklappte Menü absolut, damit es über dem Content schwebt */
+nav ul li details.dropdown ul {
+    position: absolute;
+    right: 0;
+    top: 100%; /* Direkt unter der Navbar */
+    background-color: var(--card-background-color);
+    box-shadow: var(--card-box-shadow);
+    min-width: 400px;
+    z-index: 1001;
+    border: 1px solid var(--muted-border-color);
+}
+
+nav ul li details.dropdown ul li a {
+    display: flex;
+    align-items: center;
+    white-space: nowrap; /* Verhindert den Zeilenumbruch zwischen Icon und Text */
+    width: auto;
+    min-width: 100%;     /* Sorgt dafür, dass der Button die ganze Breite nutzt */
+    padding: 0.5rem 1rem;
+}
+
+nav ul:last-child {
+    padding-right: 0.5rem;
+}
+
+/* Stil für Icons innerhalb von Dropdown-Listen */
+.ph-dropdown-icon {
+    font-family: 'Phosphor';
+    font-size: 1.1em;
+    vertical-align: middle;
+    margin-right: 0.5rem;
+    flex-shrink: 0;
+}
+
+/* Dropdown-Liste schöner positionieren */
+nav ul li details.dropdown ul {
+    right: 0.5rem; /* Kleiner Abstand vom Rand */
+    min-width: 160px;
 }
 
 article {

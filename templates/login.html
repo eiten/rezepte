@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}Login{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: center; align-items: center; min-height: 70vh;">
+    <article style="width: 100%; max-width: 400px;">
+        <hgroup>
+            <h1>Anmelden</h1>
+            <small>Bitte gib deine Zugangsdaten ein</small>
+        </hgroup>
+        
+        <form action="/auth/login" method="post">
+            <label for="username">Benutzername</label>
+            <input type="text" id="username" name="username" placeholder="Dein Name" required>
+            
+            <label for="password">Passwort</label>
+            <input type="password" id="password" name="password" placeholder="••••••••" required>
+            
+            {% if error %}
+                <p style="color: var(--pico-color-red-500); font-size: 0.9rem;">{{ error }}</p>
+            {% endif %}
+
+            <button type="submit" class="contrast">Einloggen</button>
+        </form>
+    </article>
+</div>
+{% endblock %}
