@@ -31,7 +31,15 @@ async def read_recipe(request: Request, recipe_id: int, db: aiosqlite.Connection
         raise HTTPException(status_code=404, detail="Recipe not found")
 
     # 2. Get Steps
-    async with db.execute("SELECT * FROM steps WHERE recipe_id = ? ORDER BY position", (recipe_id,)) as cursor:
+    # Wir holen s.* (alle Step-Infos) und c.html_color
+    query_steps = """
+        SELECT s.*, c.html_color, c.label_de, c.codepoint
+        FROM steps s
+        LEFT JOIN step_categories c ON s.category_id = c.id
+        WHERE s.recipe_id = ? 
+        ORDER BY s.position
+    """
+    async with db.execute(query_steps, (recipe_id,)) as cursor:
         steps = await cursor.fetchall()
         
     # 3. Aggregate Ingredients

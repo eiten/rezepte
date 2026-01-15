@@ -1,0 +1,33 @@
+@font-face {
+    font-family: 'Phosphor';
+    src: url('/static/fonts/Phosphor.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+.ph-icon {
+    font-family: 'Phosphor';
+    font-style: normal;
+    font-weight: normal;
+    line-height: 1;
+    display: inline-block;
+    
+    /* Größe etwas dezenter als 2rem */
+    font-size: 1.8rem;
+    
+    /* Optische Anpassung für Pastellfarben */
+    filter: brightness(0.9) saturate(150%);
+    
+    /* Rendering */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.ingredient-list {
+    padding-left: 1rem;
+    margin-bottom: 0;
+}
+
+.ingredient-item {
+    font-size: 0.9rem;
+}

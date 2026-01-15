@@ -70,6 +70,7 @@ def init_db():
         name TEXT NOT NULL UNIQUE, 
         label_de TEXT NOT NULL,
         codepoint TEXT,
+        html_color TEXT, 
         is_ingredients INTEGER DEFAULT 0
     );
     """)
@@ -143,22 +144,17 @@ def init_db():
 
     # --- Seeding Data ---
     # 1. Step Categories (Mit deinen neuen Codes!)
-    # Warning: E4E0
-    # Info: E2CE
-    # Variante (Shuffle): E422
-    # Tipp (Lightbulb): E2DC
-    
     categories_data = [
-        (1, 'default', 'Zubereitung', '', 1),
-        (2, 'warning', 'Achtung', 'E4E0', 0), 
-        (3, 'info', 'Info', 'E2CE', 0),            
-        (4, 'variation', 'Variante', 'E422', 0),       
-        (5, 'tip', 'Tipp', 'E2DC', 0)               
+        (1, 'default', 'Zubereitung', '', None, 1),              # Kein Hintergrund
+        (2, 'warning', 'Achtung', 'E4E0', '#FEE2E2', 0), 
+        (3, 'info', 'Info', 'E2CE', '#DBEAFE', 0),            
+        (4, 'variation', 'Variante', 'E422', '#F3E8FF', 0),       
+        (5, 'tip', 'Tipp', 'E2DC', '#FEF3C7', 0)               
     ]
     cursor.execute("SELECT count(*) FROM step_categories")
     if cursor.fetchone()[0] == 0:
         print("--> Seeding step categories...")
-        cursor.executemany("INSERT INTO step_categories (id, name, label_de, codepoint, is_ingredients) VALUES (?, ?, ?, ?, ?)", categories_data)
+        cursor.executemany("INSERT INTO step_categories (id, name, label_de, codepoint, html_color, is_ingredients) VALUES (?, ?, ?, ?, ?, ?)", categories_data)
 
     # 2. Units
     units_data = [

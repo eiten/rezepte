@@ -29,23 +29,24 @@
                 <tr>
                     <td valign="top">
                         {% if step.ingredients %}
-                        <ul style="padding-left: 1rem; margin-bottom: 0;">
-                            {% for ing in step.ingredients %}
-                            <li style="font-size: 0.9rem;">
-                                {{ "%g" % ing.amount_min }} 
-                                
-                                {% if ing.amount_max %}
-                                    - {{ "%g" % ing.amount_max }}
-                                {% endif %}
-                                
-                                {{ ing.unit_symbol }} 
-                                <strong>{{ ing.item }}</strong>
-                                
-                                {% if ing.note %}<em>({{ ing.note }})</em>{% endif %}
-                            </li>
-                            {% endfor %}
-                        </ul>
-                        {% else %}
+                            <ul class="ingredient-list">
+                                {% for ing in step.ingredients %}
+                                <li class="ingredient-item">
+                                    {{ "%g" % ing.amount_min }} 
+                                    {% if ing.amount_max %}- {{ "%g" % ing.amount_max }}{% endif %}
+                                    {{ ing.unit_symbol }} 
+                                    <strong>{{ ing.item }}</strong>
+                                    {% if ing.note %}<em>({{ ing.note }})</em>{% endif %}
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        
+                        {% elif step.codepoint %}
+                            <div style="text-align: right; padding-right: 0.5rem;">
+                                <div class="ph-icon" style="color: {{ step.html_color }};">
+                                    &#x{{ step.codepoint }};
+                                </div>
+                            </div>
                         {% endif %}
                     </td>
 
@@ -54,8 +55,7 @@
                     </td>
                 </tr>
                 {% endfor %}
-            </tbody>
-        </table>
+            </tbody>        </table>
     </figure>
 
 </article>

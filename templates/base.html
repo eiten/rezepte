@@ -1,28 +1,16 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{% block title %}Rezept Manager{% endblock %}</title>
-    <link rel="stylesheet" href="/static/css/pico.min.css">
-    <style>
-        /* Custom tweaks */
-        :root { --primary: #c62828; } /* A nice "kitchen red" */
-        nav { border-bottom: 1px solid var(--muted-border-color); padding-bottom: 1rem; margin-bottom: 2rem; }
-    </style>
+    <title>{% block title %}Rezepte App{% endblock %}</title>
+    
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/pico.min.css') }}">
+    
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/custom.css') }}">
 </head>
 <body>
     <main class="container">
-        <nav>
-            <ul>
-                <li><strong>Rezept Manager</strong></li>
-            </ul>
-            <ul>
-                <li><a href="/">Alle Rezepte</a></li>
-                <li><a href="/login" role="button">Login</a></li>
-            </ul>
-        </nav>
-
         {% block content %}{% endblock %}
     </main>
 </body>
