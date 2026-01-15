@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.env
+
+# VS Code
+.vscode/
+
+# Unsere App Daten
+data/*.db
+data/*.sqlite
+cache/
+*.log
+
+# OS
+.DS_Store
