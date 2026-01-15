@@ -6,7 +6,7 @@
     <title>{% block title %}Rezepte App{% endblock %}</title>
     
     <link rel="stylesheet" href="{{ url_for('static', path='/css/pico.min.css') }}">
-    
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/pico.colors.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', path='/css/custom.css') }}">
 </head>
 <body>
@@ -22,14 +22,17 @@
                         <summary class="secondary outline nav-link-button">
                             <span class="ph-btn-icon">&#xE4C2;</span> {{ request.cookies.get("session_user") }}
                         </summary>
-                        <ul>
-                            <li>
-                                <a href="/auth/logout" class="secondary">
-                                    <span class="ph-dropdown-icon">&#xE42A;</span> Abmelden
-                                </a>
-                            </li>
-                        </ul>
-                    </details>
+                        <ul dir="rtl">
+                            {% if is_admin %}
+                                <li style="padding: 0.5rem; font-size: 0.7rem; font-weight: bold; color: var(--pico-muted-color); text-align: right;">VERWALTUNG</li>
+                                <li><a href="/admin/users">Benutzer</a></li>
+                                <li><a href="/admin/categories">Kategorien</a></li>
+                                <li><a href="/admin/paths">Pfade</a></li>
+                                <li><hr></li>
+                            {% endif %}
+                            <li><a href="/profile">Profil</a></li>
+                            <li><a href="/auth/logout"><span class="ph-dropdown-icon">&#xE42A;</span> Abmelden</a></li>
+                        </ul>                    </details>
                 </li>
             {% else %}
                 <li>
@@ -38,7 +41,7 @@
                     </a>
                 </li>
             {% endif %}
-        </ul>
+        </ul>  
     </nav>
     <main class="container">
         {% block content %}{% endblock %}

@@ -3,7 +3,7 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from database import get_config
-from routers import recipes, pdf, auth
+from routers import recipes, pdf, auth, admin
 
 # Load config
 config = get_config()
@@ -16,6 +16,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Include routers
 app.include_router(recipes.router)
+app.include_router(admin.router)
 app.include_router(pdf.router)
 app.include_router(auth.router)
 

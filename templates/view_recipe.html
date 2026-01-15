@@ -13,13 +13,24 @@
             </hgroup>
         </div>
         
-        <div style="display: flex; justify-content: flex-end;">
+        <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+            {% if can_edit %}
+            <a href="/recipe/{{ recipe.id }}/edit" role="button" class="outline secondary nav-link-button">
+                <span class="ph-btn-icon">&#xE3B4;</span> Bearbeiten
+            </a>
+            {% endif %}
+
+            {% if can_delete %}
+            <a href="/recipe/{{ recipe.id }}/delete" role="button" class="outline pico-background-red-500 pico-color-red-500 pico-border-red-500 secondary nav-link-button">
+                <span class="ph-btn-icon">&#xE4A6;</span> Löschen
+            </a>
+            {% endif %}
+
             <a href="/recipe/{{ recipe.id }}/pdf" target="_blank" role="button" class="outline contrast nav-link-button">
-                <span class="ph-btn-icon">&#xE702;</span> Herunterladen
+                <span class="ph-btn-icon">&#xE702;</span> PDF
             </a>
         </div>
     </div>
-
     <figure>
         <table role="grid" class="striped">
             <thead>
@@ -61,6 +72,5 @@
             </tbody>
         </table>
     </figure>
-
 </article>
 {% endblock %}

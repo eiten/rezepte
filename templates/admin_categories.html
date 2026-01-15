@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Admin - Kategorien{% endblock %}
+
+{% block content %}
+<article>
+    <hgroup>
+        <h1>Kategorien verwalten</h1>
+        <small>Icons und Farben für Rezeptschritte anpassen</small>
+    </hgroup>
+
+    <table role="grid">
+        <thead>
+            <tr>
+                <th>Icon</th>
+                <th>Name</th>
+                <th>Farbe</th>
+                <th>Phosphor-Hex</th>
+                <th>Aktion</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cat in categories %}
+            <tr>
+                <td>
+                    <span class="ph-icon" style="color: {{ cat.html_color }}; opacity: 1; font-size: 1.5rem;">
+                        &#x{{ cat.codepoint }};
+                    </span>
+                </td>
+                <form action="/admin/categories/update" method="post">
+                    <input type="hidden" name="id" value="{{ cat.id }}">
+                    <td><input type="text" name="label_de" value="{{ cat.label_de }}" required></td>
+                    <td><input type="color" name="html_color" value="{{ cat.html_color }}"></td>
+                    <td><input type="text" name="codepoint" value="{{ cat.codepoint }}" required></td>
+                    <td><button type="submit" class="outline contrast">Speichern</button></td>
+                </form>
+            </tr>
+            {% endfor %}
+            
+            <tr style="background-color: var(--pico-card-sectioning-background-color);">
+                <td>Neu:</td>
+                <form action="/admin/categories/add" method="post">
+                    <td><input type="text" name="label_de" placeholder="z.B. Backen" required></td>
+                    <td><input type="color" name="html_color" value="#000000"></td>
+                    <td><input type="text" name="codepoint" placeholder="e.g. E2AA" required></td>
+                    <td><button type="submit">Hinzufügen</button></td>
+                </form>
+            </tr>
+        </tbody>
+    </table>
+</article>
+{% endblock %}

@@ -22,7 +22,7 @@ async def read_root(request: Request, db: aiosqlite.Connection = Depends(get_db_
 
 @router.get("/recipe/{recipe_id}", response_class=HTMLResponse)
 async def read_recipe(request: Request, recipe_id: int, db: aiosqlite.Connection = Depends(get_db_connection)):
-    """ Detail view """
+    """ Detail view with permissions check """
     # 1. Get Recipe
     async with db.execute("SELECT * FROM recipes WHERE id = ?", (recipe_id,)) as cursor:
         recipe = await cursor.fetchone()
@@ -30,8 +30,25 @@ async def read_recipe(request: Request, recipe_id: int, db: aiosqlite.Connection
     if not recipe:
         raise HTTPException(status_code=404, detail="Recipe not found")
 
+    # --- NEU: Rechteprüfung ---
+    current_username = request.cookies.get("session_user")
+    can_edit = False
+    can_delete = False
+
+    if current_username:
+        async with db.execute("SELECT id, role FROM users WHERE username = ?", (current_username,)) as cursor:
+            user = await cursor.fetchone()
+            if user:
+                # Admin darf alles
+                if user["role"] == "admin":
+                    can_edit = True
+                    can_delete = True
+                # User darf nur eigene bearbeiten (owner_id Vergleich)
+                elif user["id"] == recipe["owner_id"]:
+                    can_edit = True
+    # ---------------------------
+
     # 2. Get Steps
-    # Wir holen s.* (alle Step-Infos) und c.html_color
     query_steps = """
         SELECT s.*, c.html_color, c.label_de, c.codepoint
         FROM steps s
@@ -39,6 +56,7 @@ async def read_recipe(request: Request, recipe_id: int, db: aiosqlite.Connection
         WHERE s.recipe_id = ? 
         ORDER BY s.position
     """
+    # Hier war der IndentationError - achte darauf, dass async bündig mit den Kommentaren oben ist
     async with db.execute(query_steps, (recipe_id,)) as cursor:
         steps = await cursor.fetchall()
         
@@ -60,5 +78,8 @@ async def read_recipe(request: Request, recipe_id: int, db: aiosqlite.Connection
     return templates.TemplateResponse("view_recipe.html", {
         "request": request, 
         "recipe": recipe, 
-        "steps": steps_data
+        "steps": steps_data,
+        "can_edit": can_edit,
+        "can_delete": can_delete,
+        "is_admin": is_admin
     })
