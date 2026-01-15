@@ -1,34 +1,22 @@
-import os
-import yaml
+# main.py
 import uvicorn
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+from database import get_config
+from routers import recipes # Unser neuer Router
 
-# 1. Load config
-ENV = os.getenv("APP_ENV", "development")
+# Config laden
+config = get_config()
 
-with open("config.yaml", "r") as f:
-    full_config = yaml.safe_load(f)
-
-config = {**full_config['common'], **full_config[ENV]}
-
-# 2. start app
+# App Setup
 app = FastAPI(title=config['app_name'], debug=config['debug'])
 
-@app.get("/")
-def read_root():
-    return {
-        "message": "Hallo Welt!", 
-        "mode": ENV, 
-        "port": config['port']
-    }
+# Static Files
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# 3. Start server (only when invoked directly)
+# Router einbinden
+app.include_router(recipes.router)
+
 if __name__ == "__main__":
-    print(f"🚀 Starte im {ENV}-Modus auf Port {config['port']}...")
-    
-    uvicorn.run(
-        "main:app", 
-        host=config['host'], 
-        port=config['port'], 
-        reload=config['reload']
-    )
+    print(f"🚀 Starte auf Port {config['port']}...")
+    uvicorn.run("main:app", host=config['host'], port=config['port'], reload=config['reload'])

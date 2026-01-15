@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}Meine Rezeptsammlung{% endblock %}
+
+{% block content %}
+<section>
+    <h2>Alle Rezepte</h2>
+    {% if recipes %}
+        <div class="grid">
+        {% for recipe in recipes %}
+            <article>
+                <header><strong>{{ recipe.name }}</strong></header>
+                <p>Autor: {{ recipe.author }}</p>
+                <footer>
+                    <a href="/recipe/{{ recipe.id }}" role="button" class="secondary">Ansehen</a>
+                </footer>
+            </article>
+        {% endfor %}
+        </div>
+    {% else %}
+        <p>Noch keine Rezepte vorhanden.</p>
+    {% endif %}
+</section>
+{% endblock %}

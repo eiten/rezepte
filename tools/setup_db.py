@@ -11,13 +11,18 @@ def get_db_path():
     Reads the config.yaml to determine the database path based on the environment.
     """
     env = os.getenv("APP_ENV", "development")
-    
-    with open("config.yaml", "r") as f:
+
+    env = os.getenv("APP_ENV", "development")
+
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    config_path = os.path.join(base_dir, "config.yaml")
+
+    with open(config_path, "r") as f:
         full_config = yaml.safe_load(f)
-    
+
     # Merge config
     config = {**full_config['common'], **full_config[env]}
-    
+
     # Extract path from connection string (e.g., "sqlite+aiosqlite:///./data/recipes.db")
     db_url = config['database_url']
     if "sqlite+aiosqlite:///" in db_url:

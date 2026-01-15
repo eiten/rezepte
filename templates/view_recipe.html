@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}{{ recipe.name }}{% endblock %}
+
+{% block content %}
+<article>
+    <header>
+        <h1>{{ recipe.name }}</h1>
+        <small>Von {{ recipe.author }}</small>
+        <a href="#" role="button" class="outline contrast" style="float: right;">PDF Export</a>
+    </header>
+
+    {% for step in steps %}
+    <div class="grid">
+        
+        <div style="border-right: 1px solid #ccc; padding-right: 1rem;">
+            {% if step.ingredients %}
+            <ul>
+                {% for ing in step.ingredients %}
+                <li>
+                    <strong>{{ ing.amount_min }}</strong> 
+                    {% if ing.amount_max %}- {{ ing.amount_max }}{% endif %}
+                    {{ ing.unit_symbol }} 
+                    {{ ing.item }}
+                    {% if ing.note %}<em>({{ ing.note }})</em>{% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <small>Keine Zutaten für diesen Schritt</small>
+            {% endif %}
+        </div>
+
+        <div>
+            {{ step.markdown_text }}
+        </div>
+    </div>
+    <hr>
+    {% endfor %}
+
+</article>
+{% endblock %}
