@@ -1,86 +1,65 @@
 \documentclass[a4paper,12pt]{scrartcl}
 
-% Basic encoding and languages
+% -- LuaLaTeX Setup --
 \usepackage{fontspec}
 \usepackage[ngerman]{babel}
-\usepackage[style=swiss]{csquotes} % Swiss quotes
+\usepackage[style=swiss]{csquotes} 
 
-% Layout
+% -- Layout --
 \usepackage[left=2.5cm, right=2.5cm, top=3cm, bottom=3cm]{geometry}
 \usepackage{tabularx}
 \usepackage{booktabs}
-\usepackage{parskip} % No indentation for paragraphs
+\usepackage{parskip} 
+\usepackage{array} 
 
-% Science & Units
+% -- Science & Units --
 \usepackage[version=4]{mhchem}
 \usepackage{siunitx}
 \sisetup{
-  locale = DE,
+  locale = CH, 
   detect-all,
   range-phrase = --,
   range-units = single
 }
 
-% Define custom units if needed (Example mappings from DB)
+% -- Custom Units --
 \DeclareSIUnit\EL{EL}
 \DeclareSIUnit\TL{TL}
 \DeclareSIUnit\Prise{Prise}
 \DeclareSIUnit\Stk{Stk.}
 
-% Metadata
+% -- Metadata --
 \title{ << recipe.name >> }
 \author{ << recipe.author >> }
 \date{}
 
 \begin{document}
-\noindent
-{\huge \textbf{<< recipe.name >>}} \\[0.3cm]
-\noindent
-{\large Von << recipe.author >>}
 
-\vspace{1cm}
+% -- Header --
+\section*{<< recipe.name >>}
+<< recipe.author >>, << current_date >>
 
+\vspace{0.5cm}
+
+% -- Content Table --
 \noindent
-\begin{tabularx}{\textwidth}{@{} p{5cm} X @{}}
+\begin{tabularx}{\textwidth}{@{} >{\raggedright\arraybackslash}p{5cm} X @{}}
     \toprule
     \textbf{Zutaten} & \textbf{Zubereitung} \\
     \midrule
-
-    <% for step in steps %>
-        % --- Ingredients Column ---
-        \vspace{0pt} % Hack to align top
-        <% if step.ingredients %>
-            <% for ing in step.ingredients %>
-                % Logic: If it is a real unit, use \qty, else simple text formatting
-                <% if ing.unit_type == 'si' %>
-                    <% if ing.amount_max %>
-                        \qtyrange{<< ing.amount_min >>}{<< ing.amount_max >>}{<< ing.unit_latex >>}
-                    <% else %>
-                        \qty{<< ing.amount_min >>}{<< ing.unit_latex >>}
-                    <% endif %>
-                <% else %>
-                    % Text units (EL, TL, Stk)
-                    \num{<< ing.amount_min >>}
-                    <% if ing.amount_max %>--\num{<< ing.amount_max >>}<% endif %>
-                    << ing.unit_symbol >>
-                <% endif %>
-                
-                << ing.item >>
-                <% if ing.note %> \textit{(<< ing.note >>)} <% endif %>
-                \newline
-            <% endfor %>
-        <% endif %>
+    <% for step in steps -%>
+        <% if step.ingredients -%>
+            <% for ing in step.ingredients -%>
+                <% if ing.unit_type == 'si' -%>
+                    <% if ing.amount_max -%>\qtyrange{<< ing.amount_min >>}{<< ing.amount_max >>}{<< ing.unit_latex >>}<% else -%>\qty{<< ing.amount_min >>}{<< ing.unit_latex >>}<% endif -%><% else -%>\num{<< ing.amount_min >>}<% if ing.amount_max -%>--\num{<< ing.amount_max >>}<% endif -%><< ing.unit_symbol >><% endif -%>~<< ing.item >> <% if ing.note -%>\textit{(<< ing.note >>)}<% endif -%><% if not loop.last -%>\newline<% endif -%>
+            <% endfor -%>
+        <% endif -%>
         &
-        % --- Instructions Column ---
-        \vspace{0pt} % Hack to align top
         << step.latex_text >> \\
-        \addlinespace[1em]
-    <% endfor %>
+        <% if not loop.last -%>\addlinespace[1em]<% endif -%>
 
+    <% endfor -%>
     \bottomrule
 \end{tabularx}
-
-\vfill
-\footnotesize{Generiert am << current_date >> mit Rezept Manager}
 
 \end{document}
