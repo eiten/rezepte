@@ -5,4 +5,5 @@ python-multipart
 aiosqlite
 pyyaml
 markdown
-passlib[bcrypt]
+passlib
+bcrypt==3.2.2
