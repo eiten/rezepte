@@ -1,51 +1,41 @@
 {% extends "base.html" %}
 
-{% block title %}My Recipes{% endblock %}
+{% block title %}Alle Rezepte{% endblock %}
 
 {% block content %}
-<section>
-    <div class="grid">
-        <div>
-            <h2>Alle Rezepte</h2>
-        </div>
-        <div style="text-align: right;">
-            <a href="#" role="button" class="outline">+ Neues Rezept</a>
-        </div>
-    </div>
+    <hgroup>
+        <h1>Alle Rezepte</h1>
+        <small>Deine Sammlung</small>
+    </hgroup>
 
-    {% if recipes %}
-        <figure>
-            <table role="grid">
-                <thead>
-                    <tr>
-                        <th scope="col">Name</th>
-                        <th scope="col">Autor</th>
-                        <th scope="col" style="text-align: right;">Aktion</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for recipe in recipes %}
-                    <tr>
-                        <th scope="row">
-                            <a href="/recipe/{{ recipe.id }}" style="text-decoration: none; color: inherit;">
-                                <strong>{{ recipe.name }}</strong>
-                            </a>
-                        </th>
-                        <td>{{ recipe.author }}</td>
-                        <td style="text-align: right;">
-                            <a href="/recipe/{{ recipe.id }}" role="button" class="outline secondary" style="padding: 0.2rem 0.5rem; font-size: 0.8rem;">
-                                Öffnen
-                            </a>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </figure>
-    {% else %}
-        <article>
-            <p>No recipes found yet.</p>
-        </article>
-    {% endif %}
-</section>
+    <figure>
+        <table role="grid">
+            <thead>
+                <tr>
+                    <th scope="col"><strong>Name</strong></th>
+                    <th scope="col"><strong>Autor</strong></th>
+                    <th scope="col" style="text-align: right;"><strong>Aktion</strong></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for recipe in recipes %}
+                <tr>
+                    <td>
+                        <a href="/recipe/{{ recipe.id }}" class="contrast">
+                            <strong>{{ recipe.name }}</strong>
+                        </a>
+                    </td>
+                    
+                    <td>{{ recipe.author }}</td>
+                    
+                    <td style="text-align: right;">
+                        <a href="/recipe/{{ recipe.id }}/pdf" target="_blank" role="button" class="outline secondary" style="padding: 0.2rem 0.8rem; font-size: 0.9rem;">
+                            <span class="ph-btn-icon" style="font-size: 1.1rem;">&#xE702;</span> Herunterladen
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </figure>
 {% endblock %}

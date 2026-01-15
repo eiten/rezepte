@@ -12,7 +12,9 @@
             </hgroup>
         </div>
         <div style="text-align: right;">
-            <a href="/recipe/{{ recipe.id }}/pdf" target="_blank" role="button" class="outline contrast">PDF Export</a>
+            <a href="/recipe/{{ recipe.id }}/pdf" target="_blank" role="button" class="outline contrast">
+                <span class="ph-btn-icon">&#xE702;</span> Herunterladen
+            </a>
         </div>
     </div>
 
@@ -20,8 +22,12 @@
         <table role="grid" class="striped">
             <thead>
                 <tr>
-                    <th scope="col" style="width: 30%;">Zutaten</th>
-                    <th scope="col">Zubereitung</th>
+                    <th scope="col" style="width: 30%;">
+                        <strong style="font-size: 1.1em;">Zutaten</strong>
+                    </th>
+                    <th scope="col">
+                        <strong style="font-size: 1.1em;">Zubereitung</strong>
+                    </th>
                 </tr>
             </thead>
             <tbody>
@@ -40,7 +46,6 @@
                                 </li>
                                 {% endfor %}
                             </ul>
-                        
                         {% elif step.codepoint %}
                             <div style="text-align: right; padding-right: 0.5rem;">
                                 <div class="ph-icon" style="color: {{ step.html_color }};">
@@ -55,7 +60,8 @@
                     </td>
                 </tr>
                 {% endfor %}
-            </tbody>        </table>
+            </tbody>
+        </table>
     </figure>
 
 </article>

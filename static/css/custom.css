@@ -23,6 +23,27 @@
     -moz-osx-font-smoothing: grayscale;
 }
 
+.ph-btn-icon {
+    font-family: 'Phosphor';
+    font-style: normal;
+    font-weight: normal;
+    line-height: 1;
+    display: inline-block;
+    
+    /* Passt sich der Textgröße an, aber einen Tick größer */
+    font-size: 1.3em; 
+    
+    /* Vertikale Ausrichtung mittig zum Text */
+    vertical-align: text-bottom;
+    
+    /* Kleiner Abstand zum Text daneben */
+    margin-right: 0.4rem;
+    
+    /* Rendering */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
 .ingredient-list {
     padding-left: 1rem;
     margin-bottom: 0;
