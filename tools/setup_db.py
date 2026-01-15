@@ -20,7 +20,7 @@ def get_db_path():
     with open(config_path, "r") as f:
         full_config = yaml.safe_load(f)
 
-    # Merge config
+    # Merge configuration
     config = {**full_config['common'], **full_config[env]}
 
     # Extract path from connection string (e.g., "sqlite+aiosqlite:///./data/recipes.db")
@@ -42,12 +42,12 @@ def init_db():
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     
-    # 1. Enable Foreign Keys
+    # 1. Enable foreign keys
     cursor.execute("PRAGMA foreign_keys = ON;")
     
-    # 2. Create Tables
+    # 2. Create tables
     
-    # Users
+    # Users table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -58,7 +58,7 @@ def init_db():
     );
     """)
     
-    # Units
+    # Units table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS units (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -69,7 +69,7 @@ def init_db():
     );
     """)
     
-    # Folders
+    # Folders table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS folders (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -79,7 +79,7 @@ def init_db():
     );
     """)
     
-    # Recipes
+    # Recipes table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS recipes (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -94,7 +94,7 @@ def init_db():
     );
     """)
     
-    # Steps
+    # Steps table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS steps (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -105,7 +105,7 @@ def init_db():
     );
     """)
     
-    # Ingredients
+    # Ingredients table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS ingredients (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -121,7 +121,7 @@ def init_db():
     );
     """)
     
-    # 3. Create Trigger for Timestamp Update
+    # 3. Create trigger for timestamp update
     cursor.execute("""
     CREATE TRIGGER IF NOT EXISTS update_recipe_timestamp_after_ingredient_update
     AFTER UPDATE ON ingredients
@@ -132,9 +132,9 @@ def init_db():
     END;
     """)
 
-    # 4. Seed Data (Initial Data)
+    # 4. Seed data (initial data)
     
-    # Units
+    # Units table
     units_data = [
         ('Gramm', 'g', r'\gram', 'si'),
         ('Kilogramm', 'kg', r'\kilogram', 'si'),
@@ -152,7 +152,7 @@ def init_db():
         print("--> Seeding units...")
         cursor.executemany("INSERT INTO units (name, symbol, latex_code, type) VALUES (?, ?, ?, ?)", units_data)
 
-    # Initial Admin User
+    # Initial admin user
     cursor.execute("SELECT count(*) FROM users")
     if cursor.fetchone()[0] == 0:
         print("--> Creating default admin user...")

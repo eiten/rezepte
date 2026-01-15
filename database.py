@@ -17,17 +17,17 @@ def get_config():
 def get_db_path():
     config = get_config()
     db_url = config['database_url']
-    # Pfad bereinigen
+    # Clean up path
     path = db_url.replace("sqlite+aiosqlite:///", "").replace("sqlite:///", "")
     
-    # Wenn relativer Pfad (./data...), dann absolut machen relativ zum App-Root
+    # If relative path (./data...), make it absolute relative to app root
     if path.startswith("."):
         base_dir = os.path.dirname(os.path.abspath(__file__))
         path = os.path.join(base_dir, path)
         
     return os.path.normpath(path)
 
-# Dependency für FastAPI Routen
+# Dependency for FastAPI routes
 async def get_db_connection():
     db_path = get_db_path()
     async with aiosqlite.connect(db_path) as db:

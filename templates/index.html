@@ -1,24 +1,51 @@
 {% extends "base.html" %}
 
-{% block title %}Meine Rezeptsammlung{% endblock %}
+{% block title %}My Recipes{% endblock %}
 
 {% block content %}
 <section>
-    <h2>Alle Rezepte</h2>
-    {% if recipes %}
-        <div class="grid">
-        {% for recipe in recipes %}
-            <article>
-                <header><strong>{{ recipe.name }}</strong></header>
-                <p>Autor: {{ recipe.author }}</p>
-                <footer>
-                    <a href="/recipe/{{ recipe.id }}" role="button" class="secondary">Ansehen</a>
-                </footer>
-            </article>
-        {% endfor %}
+    <div class="grid">
+        <div>
+            <h2>Alle Rezepte</h2>
         </div>
+        <div style="text-align: right;">
+            <a href="#" role="button" class="outline">+ Neues Rezept</a>
+        </div>
+    </div>
+
+    {% if recipes %}
+        <figure>
+            <table role="grid">
+                <thead>
+                    <tr>
+                        <th scope="col">Name</th>
+                        <th scope="col">Autor</th>
+                        <th scope="col" style="text-align: right;">Aktion</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for recipe in recipes %}
+                    <tr>
+                        <th scope="row">
+                            <a href="/recipe/{{ recipe.id }}" style="text-decoration: none; color: inherit;">
+                                <strong>{{ recipe.name }}</strong>
+                            </a>
+                        </th>
+                        <td>{{ recipe.author }}</td>
+                        <td style="text-align: right;">
+                            <a href="/recipe/{{ recipe.id }}" role="button" class="outline secondary" style="padding: 0.2rem 0.5rem; font-size: 0.8rem;">
+                                Öffnen
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </figure>
     {% else %}
-        <p>Noch keine Rezepte vorhanden.</p>
+        <article>
+            <p>No recipes found yet.</p>
+        </article>
     {% endif %}
 </section>
 {% endblock %}

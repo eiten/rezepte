@@ -3,18 +3,18 @@ from fastapi import APIRouter, Request, HTTPException, Depends
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 import aiosqlite
-from database import get_db_connection # Import aus unserer neuen Datei
+from database import get_db_connection # Import from our database module
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
 
 @router.get("/", response_class=HTMLResponse)
 async def read_root(request: Request, db: aiosqlite.Connection = Depends(get_db_connection)):
-    """ Startseite: Liste alle Rezepte """
+    """ Home page: List all recipes """
     async with db.execute("SELECT id, name, author FROM recipes") as cursor:
         recipes = await cursor.fetchall()
         
-    # Bugfix: Wir nutzen jetzt das neue index.html!
+    # Bugfix: We now use the new index.html!
     return templates.TemplateResponse("index.html", {
         "request": request,
         "recipes": recipes
@@ -22,19 +22,19 @@ async def read_root(request: Request, db: aiosqlite.Connection = Depends(get_db_
 
 @router.get("/recipe/{recipe_id}", response_class=HTMLResponse)
 async def read_recipe(request: Request, recipe_id: int, db: aiosqlite.Connection = Depends(get_db_connection)):
-    """ Detailansicht """
-    # 1. Rezept holen
+    """ Detail view """
+    # 1. Get recipe
     async with db.execute("SELECT * FROM recipes WHERE id = ?", (recipe_id,)) as cursor:
         recipe = await cursor.fetchone()
         
     if not recipe:
-        raise HTTPException(status_code=404, detail="Rezept nicht gefunden")
+        raise HTTPException(status_code=404, detail="Recipe not found")
 
-    # 2. Schritte holen
+    # 2. Get steps
     async with db.execute("SELECT * FROM steps WHERE recipe_id = ? ORDER BY position", (recipe_id,)) as cursor:
         steps = await cursor.fetchall()
         
-    # 3. Zutaten aggregieren
+    # 3. Aggregate ingredients
     steps_data = []
     for step in steps:
         s_dict = dict(step)
@@ -58,18 +58,18 @@ from fastapi import APIRouter, Request, HTTPException, Depends
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 import aiosqlite
-from database import get_db_connection # Import aus unserer neuen Datei
+from database import get_db_connection # Import from our database module
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
 
 @router.get("/", response_class=HTMLResponse)
 async def read_root(request: Request, db: aiosqlite.Connection = Depends(get_db_connection)):
-    """ Startseite: Liste alle Rezepte """
+    """ Home page: List all recipes """
     async with db.execute("SELECT id, name, author FROM recipes") as cursor:
         recipes = await cursor.fetchall()
         
-    # Bugfix: Wir nutzen jetzt das neue index.html!
+    # Bugfix: We now use the new index.html!
     return templates.TemplateResponse("index.html", {
         "request": request,
         "recipes": recipes
@@ -77,19 +77,19 @@ async def read_root(request: Request, db: aiosqlite.Connection = Depends(get_db_
 
 @router.get("/recipe/{recipe_id}", response_class=HTMLResponse)
 async def read_recipe(request: Request, recipe_id: int, db: aiosqlite.Connection = Depends(get_db_connection)):
-    """ Detailansicht """
-    # 1. Rezept holen
+    """ Detail view """
+    # 1. Get recipe
     async with db.execute("SELECT * FROM recipes WHERE id = ?", (recipe_id,)) as cursor:
         recipe = await cursor.fetchone()
         
     if not recipe:
-        raise HTTPException(status_code=404, detail="Rezept nicht gefunden")
+        raise HTTPException(status_code=404, detail="Recipe not found")
 
-    # 2. Schritte holen
+    # 2. Get steps
     async with db.execute("SELECT * FROM steps WHERE recipe_id = ? ORDER BY position", (recipe_id,)) as cursor:
         steps = await cursor.fetchall()
         
-    # 3. Zutaten aggregieren
+    # 3. Aggregate ingredients
     steps_data = []
     for step in steps:
         s_dict = dict(step)

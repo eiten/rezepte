@@ -4,39 +4,59 @@
 
 {% block content %}
 <article>
-    <header>
-        <h1>{{ recipe.name }}</h1>
-        <small>Von {{ recipe.author }}</small>
-        <a href="#" role="button" class="outline contrast" style="float: right;">PDF Export</a>
-    </header>
-
-    {% for step in steps %}
     <div class="grid">
-        
-        <div style="border-right: 1px solid #ccc; padding-right: 1rem;">
-            {% if step.ingredients %}
-            <ul>
-                {% for ing in step.ingredients %}
-                <li>
-                    <strong>{{ ing.amount_min }}</strong> 
-                    {% if ing.amount_max %}- {{ ing.amount_max }}{% endif %}
-                    {{ ing.unit_symbol }} 
-                    {{ ing.item }}
-                    {% if ing.note %}<em>({{ ing.note }})</em>{% endif %}
-                </li>
-                {% endfor %}
-            </ul>
-            {% else %}
-            <small>Keine Zutaten für diesen Schritt</small>
-            {% endif %}
-        </div>
-
         <div>
-            {{ step.markdown_text }}
+            <hgroup>
+                <h1>{{ recipe.name }}</h1>
+                <small>Von {{ recipe.author }}</small>
+            </hgroup>
+        </div>
+        <div style="text-align: right;">
+            <a href="/recipe/{{ recipe.id }}/pdf" target="_blank" role="button" class="outline contrast">PDF Export</a>
         </div>
     </div>
-    <hr>
-    {% endfor %}
+
+    <figure>
+        <table role="grid" class="striped">
+            <thead>
+                <tr>
+                    <th scope="col" style="width: 30%;">Zutaten</th>
+                    <th scope="col">Zubereitung</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for step in steps %}
+                <tr>
+                    <td valign="top">
+                        {% if step.ingredients %}
+                        <ul style="padding-left: 1rem; margin-bottom: 0;">
+                            {% for ing in step.ingredients %}
+                            <li style="font-size: 0.9rem;">
+                                {{ "%g" % ing.amount_min }} 
+                                
+                                {% if ing.amount_max %}
+                                    - {{ "%g" % ing.amount_max }}
+                                {% endif %}
+                                
+                                {{ ing.unit_symbol }} 
+                                <strong>{{ ing.item }}</strong>
+                                
+                                {% if ing.note %}<em>({{ ing.note }})</em>{% endif %}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                        {% else %}
+                        {% endif %}
+                    </td>
+
+                    <td valign="top">
+                        {{ step.markdown_text }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </figure>
 
 </article>
 {% endblock %}

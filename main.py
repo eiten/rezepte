@@ -3,20 +3,21 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from database import get_config
-from routers import recipes # Unser neuer Router
+from routers import recipes, pdf
 
-# Config laden
+# Load config
 config = get_config()
 
-# App Setup
+# App setup
 app = FastAPI(title=config['app_name'], debug=config['debug'])
 
-# Static Files
+# Static files
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# Router einbinden
+# Include routers
 app.include_router(recipes.router)
+app.include_router(pdf.router)
 
 if __name__ == "__main__":
-    print(f"🚀 Starte auf Port {config['port']}...")
+    print(f"🚀 Starting on port {config['port']}...")
     uvicorn.run("main:app", host=config['host'], port=config['port'], reload=config['reload'])

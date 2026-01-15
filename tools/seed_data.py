@@ -25,7 +25,7 @@ def seed_leckerli():
     # 1. Get Unit IDs (We assume standard order from setup)
     # g=1, kg=2, ml=3, l=4, EL=5, TL=6, Prise=7, Stk=8
     
-    # 2. Create Recipe
+    # 2. Create recipe
     print("--> Inserting recipe 'Basler Leckerli'...")
     cursor.execute("""
         INSERT INTO recipes (name, author, owner_id) 
@@ -33,7 +33,7 @@ def seed_leckerli():
     """)
     recipe_id = cursor.lastrowid
 
-    # 3. Add Steps & Ingredients
+    # 3. Add steps & ingredients
     
     # --- Step 1 ---
     cursor.execute("INSERT INTO steps (recipe_id, position, markdown_text) VALUES (?, ?, ?)", 

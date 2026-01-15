@@ -7,7 +7,7 @@ development:
   port: 8080
   debug: true
   reload: true
-  # Relative path for developement
+  # Relative path for development
   database_url: "sqlite+aiosqlite:///./data/recipes.db"
   pdf_cache_dir: "./cache"
 
