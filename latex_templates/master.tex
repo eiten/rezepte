@@ -1,32 +1,53 @@
-\documentclass[a4paper,12pt]{scrartcl}
+% FIX: 'footsepline' hier oben erzwingt die Linie global und zuverlässig
+\documentclass[a4paper,12pt,footsepline]{scrartcl}
 
 % -- LuaLaTeX Setup --
 \usepackage{fontspec}
 \usepackage[ngerman]{babel}
 \usepackage[style=swiss]{csquotes} 
 
+% -- PHOSPHOR ICONS SETUP (Der elegante Weg) --
+% Wir laden die Schriftart direkt aus dem Ordner.
+% "Ligatures=TeX" sorgt dafür, dass Wörter wie "Warning" zum Icon werden.
+\newfontfamily\iconFont[
+    Path = latex_templates/,   % Hier muss die .ttf liegen
+    Extension = .ttf,
+    Renderer = HarfBuzz,
+    UprightFont = Phosphor
+]{Phosphor}
+
 % -- Layout --
-\usepackage[left=2.5cm, right=2.5cm, top=3cm, bottom=3cm]{geometry}
+\usepackage[left=2.5cm, right=2.5cm, top=2cm, bottom=2cm, includehead, includefoot]{geometry}
 \usepackage{tabularx}
 \usepackage{booktabs}
 \usepackage{parskip} 
 \usepackage{array} 
+\usepackage{xcolor}
+
+% -- Footer Setup --
+\usepackage{scrlayer-scrpage}
+\usepackage{ccicons}
+
+\pagestyle{scrheadings}
+\clearpairofpagestyles 
+
+\ifoot[\footnotesize Generiert: << date_print >>]{\footnotesize Generiert: << date_print >>}
+\cfoot[\ccbyncsa]{\ccbyncsa}
+\ofoot[\footnotesize Stand: << date_version >>]{\footnotesize Letzte Änderung: << date_version >>}
 
 % -- Science & Units --
 \usepackage[version=4]{mhchem}
 \usepackage{siunitx}
 \sisetup{
-  locale = CH, 
+  locale = DE, 
   detect-all,
   range-phrase = --,
-  range-units = single
+  range-units = single,
+  per-mode = symbol
 }
 
-% -- Custom Units --
-\DeclareSIUnit\EL{EL}
-\DeclareSIUnit\TL{TL}
-\DeclareSIUnit\Prise{Prise}
-\DeclareSIUnit\Stk{Stk.}
+% -- Custom Units from Database --
+<< unit_defs >>
 
 % -- Metadata --
 \title{ << recipe.name >> }
@@ -37,29 +58,55 @@
 
 % -- Header --
 \section*{<< recipe.name >>}
-<< recipe.author >>, << current_date >>
 
-\vspace{0.5cm}
+\noindent
+Von << recipe.author >>
+<% if source -%>
+    \hfill {\small \textit{Quelle: << source >>}}
+<% endif -%>
+
+% -- Preamble --
+<% if preamble -%>
+    \vspace{0.5em}
+
+    \noindent
+    << preamble >>
+<% endif -%>
+
+\vspace{1em}
 
 % -- Content Table --
 \noindent
-\begin{tabularx}{\textwidth}{@{} >{\raggedright\arraybackslash}p{5cm} X @{}}
-    \toprule
+\begin{tabularx}{\textwidth}{@{} >{\raggedright\arraybackslash}p{4cm} X @{}}
+    %\toprule
     \textbf{Zutaten} & \textbf{Zubereitung} \\
     \midrule
     <% for step in steps -%>
-        <% if step.ingredients -%>
-            <% for ing in step.ingredients -%>
-                <% if ing.unit_type == 'si' -%>
-                    <% if ing.amount_max -%>\qtyrange{<< ing.amount_min >>}{<< ing.amount_max >>}{<< ing.unit_latex >>}<% else -%>\qty{<< ing.amount_min >>}{<< ing.unit_latex >>}<% endif -%><% else -%>\num{<< ing.amount_min >>}<% if ing.amount_max -%>--\num{<< ing.amount_max >>}<% endif -%><< ing.unit_symbol >><% endif -%>~<< ing.item >> <% if ing.note -%>\textit{(<< ing.note >>)}<% endif -%><% if not loop.last -%>\newline<% endif -%>
-            <% endfor -%>
+        
+        <% if step.is_ingredients == 1 -%>
+            % -- FALL A: Normale Zutatenliste --
+            <% if step.ingredients -%>
+                <% for ing in step.ingredients -%>
+                    <% if ing.amount_max -%>
+                        \qtyrange{<< ing.amount_min >>}{<< ing.amount_max >>}{<< ing.unit_cmd >>}
+                    <% else -%>
+                        \qty{<< ing.amount_min >>}{<< ing.unit_cmd >>}
+                    <% endif -%>
+                     ~<< ing.item >>
+                    <% if ing.note -%> \textit{\small{(<< ing.note >>)}}<% endif -%>
+                    <% if not loop.last -%>\newline<% endif -%> 
+                <% endfor -%>
+            <% endif -%>
+        
+        <% else -%>
+            \hfill \raisebox{-4pt}{\iconFont\large{\symbol{<< step.latex_icon >>}}}
         <% endif -%>
+
         &
         << step.latex_text >> \\
         <% if not loop.last -%>\addlinespace[1em]<% endif -%>
-
     <% endfor -%>
-    \bottomrule
+    %\bottomrule
 \end{tabularx}
 
 \end{document}

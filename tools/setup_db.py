@@ -8,35 +8,27 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def get_db_path():
     """
-    Reads the config.yaml to determine the database path based on the environment.
+    Reads the config.yaml to determine the database path.
     """
     env = os.getenv("APP_ENV", "development")
-
-    env = os.getenv("APP_ENV", "development")
-
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     config_path = os.path.join(base_dir, "config.yaml")
 
     with open(config_path, "r") as f:
         full_config = yaml.safe_load(f)
 
-    # Merge configuration
     config = {**full_config['common'], **full_config[env]}
-
-    # Extract path from connection string (e.g., "sqlite+aiosqlite:///./data/recipes.db")
     db_url = config['database_url']
     if "sqlite+aiosqlite:///" in db_url:
         path = db_url.replace("sqlite+aiosqlite:///", "")
     else:
         path = db_url.replace("sqlite:///", "")
-        
     return path
 
 def init_db():
     db_path = get_db_path()
     print(f"--> Initializing database at: {db_path}")
     
-    # Ensure directory exists
     os.makedirs(os.path.dirname(db_path), exist_ok=True)
     
     conn = sqlite3.connect(db_path)
@@ -45,9 +37,9 @@ def init_db():
     # 1. Enable foreign keys
     cursor.execute("PRAGMA foreign_keys = ON;")
     
-    # 2. Create tables
-    
-    # Users table
+    # --- Tables ---
+
+    # Users
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -58,7 +50,7 @@ def init_db():
     );
     """)
     
-    # Units table
+    # Units
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS units (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -68,8 +60,21 @@ def init_db():
         type TEXT DEFAULT 'si'
     );
     """)
+
+    # Step Categories (NEU)
+    # codepoint: Der Unicode-Codepunkt für das Icon (z.B. "E4E0")
+    # is_ingredients: Boolean Flag (1/0), ob hier Zutaten angezeigt werden sollen oder das Icon
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS step_categories (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL UNIQUE, 
+        label_de TEXT NOT NULL,
+        codepoint TEXT,
+        is_ingredients INTEGER DEFAULT 0
+    );
+    """)
     
-    # Folders table
+    # Folders
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS folders (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -79,7 +84,7 @@ def init_db():
     );
     """)
     
-    # Recipes table
+    # Recipes (Erweitert um 'source' und 'preamble')
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS recipes (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -87,6 +92,8 @@ def init_db():
         owner_id INTEGER,
         name TEXT NOT NULL,
         author TEXT,
+        source TEXT,
+        preamble TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY(folder_id) REFERENCES folders(id),
@@ -94,18 +101,20 @@ def init_db():
     );
     """)
     
-    # Steps table
+    # Steps (Erweitert um 'category_id')
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS steps (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         recipe_id INTEGER NOT NULL,
+        category_id INTEGER NOT NULL DEFAULT 1,
         position INTEGER NOT NULL,
         markdown_text TEXT,
-        FOREIGN KEY(recipe_id) REFERENCES recipes(id) ON DELETE CASCADE
+        FOREIGN KEY(recipe_id) REFERENCES recipes(id) ON DELETE CASCADE,
+        FOREIGN KEY(category_id) REFERENCES step_categories(id)
     );
     """)
     
-    # Ingredients table
+    # Ingredients
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS ingredients (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -121,7 +130,7 @@ def init_db():
     );
     """)
     
-    # 3. Create trigger for timestamp update
+    # Trigger
     cursor.execute("""
     CREATE TRIGGER IF NOT EXISTS update_recipe_timestamp_after_ingredient_update
     AFTER UPDATE ON ingredients
@@ -132,37 +141,53 @@ def init_db():
     END;
     """)
 
-    # 4. Seed data (initial data)
+    # --- Seeding Data ---
+    # 1. Step Categories (Mit deinen neuen Codes!)
+    # Warning: E4E0
+    # Info: E2CE
+    # Variante (Shuffle): E422
+    # Tipp (Lightbulb): E2DC
     
-    # Units table
+    categories_data = [
+        (1, 'default', 'Zubereitung', '', 1),
+        (2, 'warning', 'Achtung', 'E4E0', 0), 
+        (3, 'info', 'Info', 'E2CE', 0),            
+        (4, 'variation', 'Variante', 'E422', 0),       
+        (5, 'tip', 'Tipp', 'E2DC', 0)               
+    ]
+    cursor.execute("SELECT count(*) FROM step_categories")
+    if cursor.fetchone()[0] == 0:
+        print("--> Seeding step categories...")
+        cursor.executemany("INSERT INTO step_categories (id, name, label_de, codepoint, is_ingredients) VALUES (?, ?, ?, ?, ?)", categories_data)
+
+    # 2. Units
     units_data = [
         ('Gramm', 'g', r'\gram', 'si'),
         ('Kilogramm', 'kg', r'\kilogram', 'si'),
         ('Milliliter', 'ml', r'\milli\liter', 'si'),
         ('Liter', 'l', r'\liter', 'si'),
+        ('Grad Celsius', '°C', r'\degreeCelsius', 'si'),
         ('Esslöffel', 'EL', 'EL', 'text'),
         ('Teelöffel', 'TL', 'TL', 'text'),
         ('Prise', 'Prise', 'Prise', 'text'),
-        ('Stück', 'Stk.', '', 'text')
+        ('Messerspitze', 'Msp.', 'Msp.', 'text'),
+        ('Stück', 'Stk.', 'Stk', 'text'),
+        ('Packung', 'Pkg.', 'Pkg.', 'text')
     ]
-    
-    # Check if units exist, if not, insert them
     cursor.execute("SELECT count(*) FROM units")
     if cursor.fetchone()[0] == 0:
         print("--> Seeding units...")
         cursor.executemany("INSERT INTO units (name, symbol, latex_code, type) VALUES (?, ?, ?, ?)", units_data)
 
-    # Initial admin user
+    # 3. Admin User
     cursor.execute("SELECT count(*) FROM users")
     if cursor.fetchone()[0] == 0:
         print("--> Creating default admin user...")
-        # WARNING: Change this password later!
         admin_pass = pwd_context.hash("admin")
         cursor.execute(
             "INSERT INTO users (username, password_hash, display_name, role) VALUES (?, ?, ?, ?)",
             ("admin", admin_pass, "System Admin", "admin")
         )
-        print("    User 'admin' created with password 'admin'")
 
     conn.commit()
     conn.close()

@@ -25,6 +25,7 @@ apt install -y \
     texlive-science \
     texlive-lang-german \
     texlive-luatex \
+    texlive-fonts-extra \
     latexmk
 
 echo "--> Cleaning up..."
