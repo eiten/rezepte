@@ -3,18 +3,19 @@
 {% block title %}Alle Rezepte{% endblock %}
 
 {% block content %}
-    <hgroup>
-        <h1>Alle Rezepte</h1>
-        <small>Deine Sammlung</small>
+<article style="margin-top: 1rem; padding-top: 1rem;">
+    <hgroup style="margin-bottom: 1.5rem;">
+        <h1 style="margin-bottom: 0;">Alle Rezepte</h1>
+        <small>Deine persönliche Sammlung</small>
     </hgroup>
 
     <figure>
         <table role="grid">
             <thead>
                 <tr>
-                    <th scope="col"><strong>Name</strong></th>
-                    <th scope="col"><strong>Autor</strong></th>
-                    <th scope="col" style="text-align: right;"><strong>Aktion</strong></th>
+                    <th scope="col" class="table-header-bold">Name</th>
+                    <th scope="col" class="table-header-bold">Autor</th>
+                    <th scope="col" class="text-right table-header-bold">Aktion</th>
                 </tr>
             </thead>
             <tbody>
@@ -25,12 +26,10 @@
                             <strong>{{ recipe.name }}</strong>
                         </a>
                     </td>
-                    
                     <td>{{ recipe.author }}</td>
-                    
-                    <td style="text-align: right;">
-                        <a href="/recipe/{{ recipe.id }}/pdf" target="_blank" role="button" class="outline secondary" style="padding: 0.2rem 0.8rem; font-size: 0.9rem;">
-                            <span class="ph-btn-icon" style="font-size: 1.1rem;">&#xE702;</span> Herunterladen
+                    <td class="text-right">
+                        <a href="/recipe/{{ recipe.id }}/pdf" target="_blank" role="button" class="outline secondary nav-link-button">
+                            <span class="ph-btn-icon">&#xE702;</span> Herunterladen
                         </a>
                     </td>
                 </tr>
@@ -38,4 +37,5 @@
             </tbody>
         </table>
     </figure>
+</article>
 {% endblock %}

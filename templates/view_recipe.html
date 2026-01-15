@@ -3,16 +3,18 @@
 {% block title %}{{ recipe.name }}{% endblock %}
 
 {% block content %}
-<article>
-    <div class="grid">
+<article style="margin-top: 1rem; padding-top: 1rem;">
+    
+    <div class="grid" style="align-items: start; margin-bottom: 1rem;">
         <div>
-            <hgroup>
-                <h1>{{ recipe.name }}</h1>
+            <hgroup style="margin-bottom: 0;">
+                <h1 style="margin-bottom: 0;">{{ recipe.name }}</h1>
                 <small>Von {{ recipe.author }}</small>
             </hgroup>
         </div>
-        <div style="text-align: right;">
-            <a href="/recipe/{{ recipe.id }}/pdf" target="_blank" role="button" class="outline contrast">
+        
+        <div style="display: flex; justify-content: flex-end;">
+            <a href="/recipe/{{ recipe.id }}/pdf" target="_blank" role="button" class="outline contrast nav-link-button">
                 <span class="ph-btn-icon">&#xE702;</span> Herunterladen
             </a>
         </div>
@@ -22,12 +24,8 @@
         <table role="grid" class="striped">
             <thead>
                 <tr>
-                    <th scope="col" style="width: 30%;">
-                        <strong style="font-size: 1.1em;">Zutaten</strong>
-                    </th>
-                    <th scope="col">
-                        <strong style="font-size: 1.1em;">Zubereitung</strong>
-                    </th>
+                    <th scope="col" class="table-header-bold" style="width: 30%;">Zutaten</th>
+                    <th scope="col" class="table-header-bold">Zubereitung</th>
                 </tr>
             </thead>
             <tbody>
@@ -47,7 +45,7 @@
                                 {% endfor %}
                             </ul>
                         {% elif step.codepoint %}
-                            <div style="text-align: right; padding-right: 0.5rem;">
+                            <div class="icon-align-right">
                                 <div class="ph-icon" style="color: {{ step.html_color }};">
                                     &#x{{ step.codepoint }};
                                 </div>
