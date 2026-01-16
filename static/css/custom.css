@@ -112,6 +112,7 @@ article > .grid:first-child {
     line-height: 1;
     display: inline-block;
     font-size: 1.8rem;
+    opacity: 0.7;
     filter: brightness(0.9) saturate(150%);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
