@@ -47,17 +47,16 @@ nav ul li details.dropdown ul {
     z-index: 1001;
     border: 1px solid var(--muted-border-color);
     border-radius: var(--border-radius);
-    min-width: 200px;
+    min-width: 250px;
     margin-top: 0.5rem;
     display: flex;
     flex-direction: column;
-    padding: 0;
-    margin: 0.5rem 0;
 }
 
 nav ul li details.dropdown ul li {
     margin: 0;
     display: block;
+    width: 100%;
 }
 
 nav ul li details.dropdown ul li a {
@@ -68,6 +67,8 @@ nav ul li details.dropdown ul li a {
     color: var(--color);
     text-decoration: none;
     transition: background-color 0.2s;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 nav ul li details.dropdown ul li a:hover {
