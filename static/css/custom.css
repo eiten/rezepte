@@ -1,4 +1,16 @@
-/* Navbar Fix: Schwebend, aber durchlässig für Dropdowns */
+/* ============================================
+   REZEPTE APP - Custom CSS
+   ============================================ */
+
+/* -------- FONTS -------- */
+@font-face {
+    font-family: 'Phosphor';
+    src: url('/static/fonts/Phosphor.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+/* -------- NAVIGATION (Navbar) -------- */
 nav.container-fluid {
     position: fixed;
     top: 0;
@@ -13,64 +25,77 @@ nav.container-fluid {
     margin: 0;
     display: flex;
     align-items: center;
-    /* WICHTIG: Erlaubt dem Dropdown, über den unteren Rand zu ragen */
     overflow: visible; 
-}
-
-/* Platzhalter für den Content */
-main.container {
-    margin-top: 5rem !important; /* Etwas mehr Puffer */
-    padding-top: 0 !important;
-}
-
-/* Dropdown-Korrektur für PicoCSS */
-nav ul li details.dropdown {
-    margin-bottom: 0;
-    position: relative;
-}
-
-/* Positioniert das aufgeklappte Menü absolut, damit es über dem Content schwebt */
-nav ul li details.dropdown ul {
-    position: absolute;
-    right: 0;
-    top: 100%; /* Direkt unter der Navbar */
-    background-color: var(--card-background-color);
-    box-shadow: var(--card-box-shadow);
-    min-width: 400px;
-    z-index: 1001;
-    border: 1px solid var(--muted-border-color);
-}
-
-nav ul li details.dropdown ul li a {
-    display: flex;
-    align-items: center;
-    white-space: nowrap; /* Verhindert den Zeilenumbruch zwischen Icon und Text */
-    width: auto;
-    min-width: 100%;     /* Sorgt dafür, dass der Button die ganze Breite nutzt */
-    padding: 0.5rem 1rem;
 }
 
 nav ul:last-child {
     padding-right: 0.5rem;
 }
 
-/* Stil für Icons innerhalb von Dropdown-Listen */
-.ph-dropdown-icon {
-    font-family: 'Phosphor';
-    font-size: 1.1em;
-    vertical-align: middle;
-    margin-right: 0.5rem;
-    flex-shrink: 0;
+/* -------- DROPDOWN-MENÜ -------- */
+nav ul li details.dropdown {
+    margin-bottom: 0;
+    position: relative;
 }
 
-/* Dropdown-Liste schöner positionieren */
 nav ul li details.dropdown ul {
-    right: 0.5rem; /* Kleiner Abstand vom Rand */
-    min-width: 160px;
+    position: absolute;
+    right: 0;
+    top: 100%;
+    background-color: var(--card-background-color);
+    box-shadow: var(--card-box-shadow);
+    z-index: 1001;
+    border: 1px solid var(--muted-border-color);
+    border-radius: var(--border-radius);
+    min-width: 200px;
+    margin-top: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    margin: 0.5rem 0;
 }
 
+nav ul li details.dropdown ul li {
+    margin: 0;
+    display: block;
+}
+
+nav ul li details.dropdown ul li a {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1.5rem;
+    white-space: nowrap;
+    color: var(--color);
+    text-decoration: none;
+    transition: background-color 0.2s;
+}
+
+nav ul li details.dropdown ul li a:hover {
+    background-color: var(--dropdown-hover-background-color);
+}
+
+nav ul li details.dropdown ul li.menu-separator {
+    padding: 0.75rem 1.5rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: bold;
+    color: var(--muted-color);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+nav ul li details.dropdown ul li hr {
+    margin: 0;
+}
+
+/* -------- MAIN CONTENT -------- */
+main.container {
+    margin-top: 5rem !important;
+    padding-top: 0 !important;
+}
+
+/* -------- ARTICLES -------- */
 article {
-    margin-top: 1rem; /* Standardmäßig ist dieser bei Pico oft viel größer */
+    margin-top: 1rem;
 }
 
 article > hgroup, 
@@ -78,27 +103,15 @@ article > .grid:first-child {
     margin-top: 0;
 }
 
-@font-face {
-    font-family: 'Phosphor';
-    src: url('/static/fonts/Phosphor.ttf') format('truetype');
-    font-weight: normal;
-    font-style: normal;
-}
-
+/* -------- ICONS -------- */
 .ph-icon {
     font-family: 'Phosphor';
     font-style: normal;
     font-weight: normal;
     line-height: 1;
     display: inline-block;
-    
-    /* Größe etwas dezenter als 2rem */
     font-size: 1.8rem;
-    
-    /* Optische Anpassung für Pastellfarben */
     filter: brightness(0.9) saturate(150%);
-    
-    /* Rendering */
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
@@ -109,21 +122,21 @@ article > .grid:first-child {
     font-weight: normal;
     line-height: 1;
     display: inline-block;
-    
-    /* Passt sich der Textgröße an, aber einen Tick größer */
     font-size: 1.3em; 
-    
-    /* Vertikale Ausrichtung mittig zum Text */
     vertical-align: text-bottom;
-    
-    /* Kleiner Abstand zum Text daneben */
     margin-right: 0.4rem;
-    
-    /* Rendering */
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
 
+/* -------- BUTTONS -------- */
+.nav-link-button {
+    padding: 0.2rem 0.8rem !important;
+    font-size: 0.9rem !important;
+    margin-bottom: 0;
+}
+
+/* -------- INGREDIENTS -------- */
 .ingredient-list {
     padding-left: 1rem;
     margin-bottom: 0;
@@ -132,25 +145,18 @@ article > .grid:first-child {
 .ingredient-item {
     font-size: 0.9rem;
 }
-.nav-link-button {
-    padding: 0.2rem 0.8rem !important; /* !important um Pico's Standard-Padding zu überschreiben */
-    font-size: 0.9rem !important;
-    margin-bottom: 0; /* Verhindert Versatz in der Nav-Leiste */
-}
 
-/* Hilfsklasse für rechtsbündige Icons in der Tabelle (Zutaten-Spalte) */
-.icon-align-right {
-    text-align: right;
-    padding-right: 0.5rem;
-}
-
-/* Hilfsklasse für fette Tabellen-Header */
+/* -------- TABLES & LAYOUT -------- */
 .table-header-bold {
     font-weight: bold;
     font-size: 1.1em;
 }
 
-/* Hilfsklasse für rechtsbündige Zellen (Aktionen) */
+.icon-align-right {
+    text-align: right;
+    padding-right: 0.5rem;
+}
+
 .text-right {
     text-align: right;
 }

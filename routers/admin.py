@@ -1,35 +1,26 @@
 # routers/admin.py
 from fastapi import APIRouter, Request, Depends, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
 import aiosqlite
-from database import get_db_connection
+from database import get_db_connection, get_user_context
+from template_config import templates
 
 router = APIRouter(prefix="/admin", tags=["admin"])
-templates = Jinja2Templates(directory="templates")
-
-# Helper: Check if user is admin based on cookie
-async def is_user_admin(request: Request, db: aiosqlite.Connection):
-    username = request.cookies.get("session_user")
-    if not username:
-        return False
-    async with db.execute("SELECT role FROM users WHERE username = ?", (username,)) as cursor:
-        user = await cursor.fetchone()
-        return user and user["role"] == "admin"
 
 @router.get("/categories", response_class=HTMLResponse)
 async def manage_categories(request: Request, db: aiosqlite.Connection = Depends(get_db_connection)):
-    if not await is_user_admin(request, db):
+    user_ctx = await get_user_context(request, db)
+    
+    if not user_ctx["is_admin"]:
         return RedirectResponse(url="/", status_code=303)
 
     async with db.execute("SELECT * FROM step_categories ORDER BY label_de") as cursor:
         categories = await cursor.fetchall()
     
-    # We pass is_admin=True because we checked it above
     return templates.TemplateResponse("admin_categories.html", {
         "request": request,
         "categories": categories,
-        "is_admin": True 
+        **user_ctx
     })
 
 @router.post("/categories/update")
@@ -41,7 +32,9 @@ async def update_category(
     codepoint: str = Form(...),
     db: aiosqlite.Connection = Depends(get_db_connection)
 ):
-    if not await is_user_admin(request, db):
+    user_ctx = await get_user_context(request, db)
+    
+    if not user_ctx["is_admin"]:
         raise HTTPException(status_code=403)
 
     await db.execute(
@@ -50,3 +43,25 @@ async def update_category(
     )
     await db.commit()
     return RedirectResponse(url="/admin/categories", status_code=303)
+
+@router.get("/users", response_class=HTMLResponse)
+async def manage_users(request: Request, db: aiosqlite.Connection = Depends(get_db_connection)):
+    """ User management page (placeholder) """
+    user_ctx = await get_user_context(request, db)
+    
+    if not user_ctx["is_admin"]:
+        return RedirectResponse(url="/", status_code=303)
+    
+    # TODO: Implement user management
+    return HTMLResponse(content="<h1>User Management</h1><p>Not implemented yet</p>")
+
+@router.get("/paths", response_class=HTMLResponse)
+async def manage_paths(request: Request, db: aiosqlite.Connection = Depends(get_db_connection)):
+    """ Paths/folders management page (placeholder) """
+    user_ctx = await get_user_context(request, db)
+    
+    if not user_ctx["is_admin"]:
+        return RedirectResponse(url="/", status_code=303)
+    
+    # TODO: Implement path/folder management
+    return HTMLResponse(content="<h1>Path Management</h1><p>Not implemented yet</p>")

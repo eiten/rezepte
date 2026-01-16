@@ -33,3 +33,40 @@ async def get_db_connection():
     async with aiosqlite.connect(db_path) as db:
         db.row_factory = aiosqlite.Row
         yield db
+
+# User Context Helper
+async def get_user_context(request, db: aiosqlite.Connection):
+    """
+    Returns user context dict with username, display_name, role, and is_admin.
+    Returns None values if user is not logged in.
+    """
+    username = request.cookies.get("session_user")
+    
+    if not username:
+        return {
+            "username": None,
+            "display_name": None,
+            "user_id": None,
+            "role": None,
+            "is_admin": False
+        }
+    
+    async with db.execute("SELECT id, username, display_name, role FROM users WHERE username = ?", (username,)) as cursor:
+        user = await cursor.fetchone()
+        
+    if not user:
+        return {
+            "username": None,
+            "display_name": None,
+            "user_id": None,
+            "role": None,
+            "is_admin": False
+        }
+    
+    return {
+        "username": user["username"],
+        "display_name": user["display_name"],
+        "user_id": user["id"],
+        "role": user["role"],
+        "is_admin": user["role"] == "admin"
+    }
