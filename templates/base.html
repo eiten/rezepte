@@ -5,21 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}Rezepte App{% endblock %}</title>
     
-    <link rel="stylesheet" href="{{ url_for('static', path='/css/pico.min.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', path='/css/pico.colors.min.css') }}">
+    <!-- <link rel="stylesheet" href="{{ url_for('static', path='/css/pico.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/pico.colors.min.css') }}"> -->
     <link rel="stylesheet" href="{{ url_for('static', path='/css/custom.css') }}">
 </head>
 <body>
     <nav class="container-fluid">
         <ul>
-            <li><strong><a href="/" class="contrast">🍳 Rezepte App</a></strong></li>
+            <li><strong><a href="/">🍳 Rezepte App</a></strong></li>
         </ul>
         <ul>
-            <li><a href="/" class="secondary">Alle Rezepte</a></li>
+            <li><a href="/">Alle Rezepte</a></li>
             {% if request.cookies.get("session_user") %}
                 <li>
-                    <details class="dropdown">
-                        <summary class="secondary outline nav-link-button">
+                    <details>
+                        <summary>
                             <span class="ph-btn-icon">&#xE4C2;</span> {{ display_name or request.cookies.get("session_user") }}
                         </summary>
                         <ul>
@@ -36,7 +36,7 @@
                 </li>
             {% else %}
                 <li>
-                    <a href="/auth/login" role="button" class="outline secondary nav-link-button">
+                    <a href="/auth/login" role="button">
                         <span class="ph-btn-icon">&#xE4C2;</span> Login
                     </a>
                 </li>

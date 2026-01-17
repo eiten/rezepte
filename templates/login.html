@@ -3,7 +3,7 @@
 {% block title %}Login{% endblock %}
 
 {% block content %}
-<div style="display: flex; justify-content: center; align-items: center; min-height: 70vh;">
+<div>
     <article style="width: 100%; max-width: 400px;">
         <hgroup>
             <h1>Anmelden</h1>
@@ -18,10 +18,10 @@
             <input type="password" id="password" name="password" placeholder="••••••••" required>
             
             {% if error %}
-                <p class="pico-color-red-500" style="font-size: 0.9rem;">{{ error }}</p>
+                <p style="font-size: 0.9rem;">{{ error }}</p>
             {% endif %}
 
-            <button type="submit" class="contrast">Einloggen</button>
+            <button type="submit">Einloggen</button>
         </form>
     </article>
 </div>

@@ -10,85 +10,6 @@
     font-style: normal;
 }
 
-/* -------- GLOBAL LAYOUT -------- */
-main.container {
-    margin-top: 5rem !important;
-    padding-top: 0 !important;
-}
-
-article {
-    margin-top: 1rem;
-}
-
-article > hgroup, 
-article > .grid:first-child {
-    margin-top: 0;
-}
-
-/* -------- NAVIGATION (Navbar) -------- */
-nav.container-fluid {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 1000;
-    height: 3.5rem;
-    background-color: var(--card-background-color);
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    border-bottom: 1px solid var(--muted-border-color);
-    margin: 0;
-    display: flex;
-    align-items: center;
-    overflow: visible; 
-}
-
-/* -------- DROPDOWN-MENÜ -------- */
-nav ul li details.dropdown {
-    margin-bottom: 0;
-    position: relative;
-}
-
-nav ul li details.dropdown ul {
-    position: absolute;
-    right: 0;
-    top: 100%;
-    background-color: var(--card-background-color);
-    box-shadow: var(--card-box-shadow);
-    z-index: 1001;
-    border: 1px solid var(--muted-border-color);
-    border-radius: var(--border-radius);
-    margin-top: 0.5rem;
-    display: flex;
-    flex-direction: column;
-    padding: 0 0.5rem;
-}
-
-nav ul li details.dropdown ul li {
-    margin: 0;
-    display: block;
-    width: 100%;
-}
-
-nav ul li details.dropdown ul li a {
-    display: flex;
-    align-items: center;
-    padding: 0.75rem 1.5rem;
-    white-space: nowrap;
-    color: var(--color);
-    text-decoration: none;
-    transition: background-color 0.2s;
-    width: 100%;
-    box-sizing: border-box;
-}
-
-nav ul li details.dropdown ul li a:hover {
-    background-color: var(--dropdown-hover-background-color);
-}
-
-nav ul li details.dropdown ul li hr {
-    margin: 0;
-}
-
 /* -------- ICONS -------- */
 .ph-icon {
     font-family: 'Phosphor';
@@ -111,100 +32,18 @@ nav ul li details.dropdown ul li hr {
     display: inline-block;
     font-size: 1.3em; 
     vertical-align: text-bottom;
-    margin-right: 0.4rem;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
 
-/* -------- BUTTONS & LINKS -------- */
-th {
-    font-weight: bold;
+.hint {
+    color: #d58e00;
 }
 
-.nav-link-button {
-    padding: 0.2rem 0.8rem !important;
-    font-size: 0.9rem !important;
-    margin-bottom: 0;
-}
-
-/* Red delete button */
-
-/* -------- TABLES & CONTENT -------- */
 .table-header-bold {
     font-weight: bold;
-    font-size: 1.1em;
-}
-
-.ingredient-list {
-    padding-left: 1rem;
-    margin-bottom: 0;
-}
-
-.ingredient-item {
-    font-size: 0.9rem;
-}
-
-.icon-align-right {
-    text-align: right;
-    padding-right: 0.5rem;
 }
 
 .text-right {
     text-align: right;
 }
-
-/* -------- RECIPE EDITOR -------- */
-/* Remove spinner arrows from number inputs */
-input[type="number"]::-webkit-inner-spin-button,
-input[type="number"]::-webkit-outer-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-
-input[type="number"] {
-  -moz-appearance: textfield;
-}
-
-/* Step card styling */
-.step-card {
-  margin-bottom: 1.5rem;
-  position: relative;
-}
-
-.step-controls {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
-}
-
-/* Ingredients table styling */
-/* .ingredients-table td,
-.ingredients-table th {
-  padding: 0.3rem 0.5rem;
-  font-size: 0.9rem;
-}
-
-.ingredients-table input,
-.ingredients-table select {
-  font-size: 0.9rem;
-  padding: 0.25rem 0.5rem;
-  margin: 0;
-  height: 2.4rem;
-  line-height: 1;
-  box-sizing: border-box;
-}
-
-.ingredients-table input {
-  text-align: left;
-}
-
-.ingredients-table button {
-  padding: 0.25rem 0.5rem;
-  font-size: 0.85rem;
-  height: 2.4rem;
-  line-height: 1;
-  min-width: 2.4rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-} */

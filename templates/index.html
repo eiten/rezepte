@@ -22,13 +22,13 @@
                 {% for recipe in recipes %}
                 <tr>
                     <td>
-                        <a href="/recipe/{{ recipe.id }}" class="contrast">
+                        <a href="/recipe/{{ recipe.id }}">
                             <strong>{{ recipe.name }}</strong>
                         </a>
                     </td>
                     <td>{{ recipe.author }}</td>
                     <td class="text-right">
-                        <a href="/recipe/{{ recipe.id }}/pdf" target="_blank" role="button" class="outline secondary nav-link-button">
+                        <a href="/recipe/{{ recipe.id }}/pdf" target="_blank" role="button">
                             <span class="ph-btn-icon">&#xE702;</span> Herunterladen
                         </a>
                     </td>

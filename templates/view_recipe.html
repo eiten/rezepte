@@ -15,18 +15,18 @@
         
         <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
             {% if can_edit %}
-            <a href="/recipe/{{ recipe.id }}/edit" role="button" class="outline secondary nav-link-button">
+            <a href="/recipe/{{ recipe.id }}/edit" role="button">
                 <span class="ph-btn-icon">&#xE3B4;</span> Bearbeiten
             </a>
             {% endif %}
 
             {% if can_delete %}
-            <a href="/recipe/{{ recipe.id }}/delete" role="button" class="outline nav-link-button btn-delete pico-background-red-500">
+            <a href="/recipe/{{ recipe.id }}/delete" role="button">
                 <span class="ph-btn-icon">&#xE4A6;</span> Löschen
             </a>
             {% endif %}
 
-            <a href="/recipe/{{ recipe.id }}/pdf" target="_blank" role="button" class="outline contrast nav-link-button">
+            <a href="/recipe/{{ recipe.id }}/pdf" target="_blank" role="button">
                 <span class="ph-btn-icon">&#xE702;</span> PDF
             </a>
         </div>
@@ -56,7 +56,7 @@
                                 {% endfor %}
                             </ul>
                         {% elif step.codepoint %}
-                            <div class="icon-align-right">
+                            <div>
                                 <div class="ph-icon" style="color: {{ step.html_color }};">
                                     &#x{{ step.codepoint }};
                                 </div>

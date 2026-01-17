@@ -33,15 +33,15 @@
 
     {% for step in steps %}
     {% set step_idx = loop.index0 %}
-    <section class="card step-card" data-step-id="{{ step.id }}" data-step-index="{{ step_idx }}">
-      <header class="grid" style="align-items:center;">
+    <section class="step-card" data-step-id="{{ step.id }}">
+      <header style="align-items:center;">
         <div>
           <strong>Schritt {{ step.position }}</strong>
         </div>
         <div class="step-controls">
-          <button type="button" class="outline secondary" onclick="moveStepUp(this)" title="Nach oben">↑</button>
-          <button type="button" class="outline secondary" onclick="moveStepDown(this)" title="Nach unten">↓</button>
-          <button type="button" class="outline pico-background-red-500" onclick="removeStep(this)" title="Schritt löschen">✕</button>
+          <button type="button" onclick="moveStepUp(this)" title="Nach oben"><span class="ph-btn-icon">&#xE08E;</span></button>
+          <button type="button" onclick="moveStepDown(this)" title="Nach unten"><span class="ph-btn-icon">&#xE03E;</span></button>
+          <button type="button" onclick="removeStep(this)" title="Schritt löschen"><span class="ph-btn-icon">&#xE4A6;</span></button>
         </div>
       </header>
 
@@ -70,16 +70,16 @@
           </select>
         </label>
         {% if step.ingredients|length > 0 %}
-        <p class="pico-color-amber-700" style="margin-top:0.25rem;">
-          Hinweis: Dieser Schritt hat noch Zutaten. Sie werden nicht angezeigt, bleiben aber erhalten.
+        <p class="hint">
+          <b>Hinweis:</b> Dieser Schritt hat noch Zutaten. Sie werden nicht angezeigt, bleiben aber erhalten.
         </p>
         {% endif %}
       </div>
 
       <div class="ingredients-block" {% if not step.is_ingredients %}style="display:none;"{% endif %}>
         <input type="hidden" name="steps[{{ step_idx }}][category_id]" value="1">
-        <div class="overflow-auto">
-          <table role="grid" class="striped ingredients-table">
+        <div>
+          <table role="grid">
             <thead>
               <tr>
                 <th style="width:7%;">Min</th>
@@ -106,13 +106,13 @@
                 </td>
                 <td><input type="text" name="steps[{{ step_idx }}][ingredients][{{ loop.index0 }}][item]" value="{{ ing.item }}" required></td>
                 <td><input type="text" name="steps[{{ step_idx }}][ingredients][{{ loop.index0 }}][note]" value="{{ ing.note }}"></td>
-                <td><button type="button" class="outline nav-link-button btn-delete pico-background-red-500" onclick="removeIngredient(this)" title="Entfernen"><span class="ph-btn-icon">&#xE4A6;</span></button></td>
+                <td><button type="button" onclick="removeIngredient(this)" title="Entfernen"><span class="ph-btn-icon">&#xE4A6;</span></button></td>
               </tr>
               {% endfor %}
             </tbody>
           </table>
         </div>
-        <button type="button" class="outline" onclick="addIngredient(this)">+ Zutat hinzufügen</button>
+        <button type="button" onclick="addIngredient(this)">+ Zutat hinzufügen</button>
       </div>
 
       <label>Text (Markdown erlaubt)
@@ -121,11 +121,11 @@
     </section>
     {% endfor %}
 
-    <button type="button" class="contrast" onclick="addStep()">+ Neuer Schritt</button>
+    <button type="button" onclick="addStep()">+ Neuer Schritt</button>
 
     <footer style="display:flex; gap:0.5rem; margin-top:1.5rem;">
-      <button type="submit" class="contrast">Speichern</button>
-      <a href="/recipe/{{ recipe.id }}" role="button" class="secondary outline">Abbrechen</a>
+      <button type="submit">Speichern</button>
+      <a href="/recipe/{{ recipe.id }}" role="button">Abbrechen</a>
     </footer>
   </form>
 </article>
@@ -174,7 +174,7 @@ function addIngredient(btn) {
     <td><select name="steps[${stepIdx}][ingredients][${ingIdx}][unit_id]">${unitOptionsHTML}</select></td>
     <td><input type="text" name="steps[${stepIdx}][ingredients][${ingIdx}][item]" required></td>
     <td><input type="text" name="steps[${stepIdx}][ingredients][${ingIdx}][note]"></td>
-    <td><button type="button" class="outline btn-delete pico-background-red-500" onclick="removeIngredient(this)" title="Entfernen"><span class="ph-btn-icon">&#xE4A6;</span></button></td>
+    <td><button type="button" onclick="removeIngredient(this)" title="Entfernen"><span class="ph-btn-icon">&#xE4A6;</span></button></td>
   `;
   table.appendChild(row);
 }
@@ -223,16 +223,16 @@ function addStep() {
   const newPos = newIdx + 1;
   
   const newStep = document.createElement('section');
-  newStep.className = 'card step-card';
+  newStep.className = 'step-card';
   newStep.dataset.stepId = '';
   newStep.dataset.stepIndex = newIdx;
   newStep.innerHTML = `
-    <header class="grid" style="align-items:center;">
+    <header style="align-items:center;">
       <div><strong>Schritt ${newPos}</strong></div>
       <div class="step-controls">
-        <button type="button" class="outline secondary" onclick="moveStepUp(this)" title="Nach oben">↑</button>
-        <button type="button" class="outline secondary" onclick="moveStepDown(this)" title="Nach unten">↓</button>
-        <button type="button" class="outline pico-background-red-500" onclick="removeStep(this)" title="Schritt löschen">✕</button>
+        <button type="button" onclick="moveStepUp(this)" title="Nach oben">↑</button>
+        <button type="button" onclick="moveStepDown(this)" title="Nach unten">↓</button>
+        <button type="button" onclick="removeStep(this)" title="Schritt löschen"><span class="ph-btn-icon">&#xE4A6;</span></button>
       </div>
     </header>
     <input type="hidden" name="steps[${newIdx}][id]" value="">
@@ -258,8 +258,8 @@ function addStep() {
     </div>
     <div class="ingredients-block">
       <input type="hidden" name="steps[${newIdx}][category_id]" value="1">
-      <div class="overflow-auto">
-        <table role="grid" class="striped ingredients-table">
+      <div>
+        <table role="grid">
           <thead>
             <tr>
               <th style="width:7%;">Min</th>
@@ -273,7 +273,7 @@ function addStep() {
           <tbody></tbody>
         </table>
       </div>
-      <button type="button" class="outline" onclick="addIngredient(this)">+ Zutat hinzufügen</button>
+      <button type="button" onclick="addIngredient(this)">+ Zutat hinzufügen</button>
     </div>
     <label>Text (Markdown erlaubt)
       <textarea name="steps[${newIdx}][markdown_text]" rows="3"></textarea>
