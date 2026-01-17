@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Request, HTTPException, Depends
 from fastapi.responses import HTMLResponse
 import aiosqlite
+import markdown
 from database import get_db_connection, get_user_context
 from template_config import templates
 
@@ -53,10 +54,12 @@ async def read_recipe(request: Request, recipe_id: int, db: aiosqlite.Connection
     async with db.execute(query_steps, (recipe_id,)) as cursor:
         steps = await cursor.fetchall()
         
-    # 4. Aggregate Ingredients
+    # 4. Aggregate Ingredients + render markdown to HTML
     steps_data = []
     for step in steps:
         s_dict = dict(step)
+        # Render markdown to HTML for display
+        s_dict["html_text"] = markdown.markdown(s_dict.get("markdown_text") or "", extensions=["extra"]) 
         query = """
             SELECT i.*, u.symbol as unit_symbol 
             FROM ingredients i 

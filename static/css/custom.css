@@ -10,6 +10,21 @@
     font-style: normal;
 }
 
+/* -------- GLOBAL LAYOUT -------- */
+main.container {
+    margin-top: 5rem !important;
+    padding-top: 0 !important;
+}
+
+article {
+    margin-top: 1rem;
+}
+
+article > hgroup, 
+article > .grid:first-child {
+    margin-top: 0;
+}
+
 /* -------- NAVIGATION (Navbar) -------- */
 nav.container-fluid {
     position: fixed;
@@ -72,22 +87,6 @@ nav ul li details.dropdown ul li a:hover {
 
 nav ul li details.dropdown ul li hr {
     margin: 0;
-} */
-
-/* -------- MAIN CONTENT -------- */
-main.container {
-    margin-top: 5rem !important;
-    padding-top: 0 !important;
-}
-
-/* -------- ARTICLES -------- */
-article {
-    margin-top: 1rem;
-}
-
-article > hgroup, 
-article > .grid:first-child {
-    margin-top: 0;
 }
 
 /* -------- ICONS -------- */
@@ -117,14 +116,25 @@ article > .grid:first-child {
     -moz-osx-font-smoothing: grayscale;
 }
 
-/* -------- BUTTONS -------- */
+/* -------- BUTTONS & LINKS -------- */
+th {
+    font-weight: bold;
+}
+
 .nav-link-button {
     padding: 0.2rem 0.8rem !important;
     font-size: 0.9rem !important;
     margin-bottom: 0;
 }
 
-/* -------- INGREDIENTS -------- */
+/* Red delete button */
+
+/* -------- TABLES & CONTENT -------- */
+.table-header-bold {
+    font-weight: bold;
+    font-size: 1.1em;
+}
+
 .ingredient-list {
     padding-left: 1rem;
     margin-bottom: 0;
@@ -132,12 +142,6 @@ article > .grid:first-child {
 
 .ingredient-item {
     font-size: 0.9rem;
-}
-
-/* -------- TABLES & LAYOUT -------- */
-.table-header-bold {
-    font-weight: bold;
-    font-size: 1.1em;
 }
 
 .icon-align-right {
@@ -148,3 +152,59 @@ article > .grid:first-child {
 .text-right {
     text-align: right;
 }
+
+/* -------- RECIPE EDITOR -------- */
+/* Remove spinner arrows from number inputs */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* Step card styling */
+.step-card {
+  margin-bottom: 1.5rem;
+  position: relative;
+}
+
+.step-controls {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Ingredients table styling */
+/* .ingredients-table td,
+.ingredients-table th {
+  padding: 0.3rem 0.5rem;
+  font-size: 0.9rem;
+}
+
+.ingredients-table input,
+.ingredients-table select {
+  font-size: 0.9rem;
+  padding: 0.25rem 0.5rem;
+  margin: 0;
+  height: 2.4rem;
+  line-height: 1;
+  box-sizing: border-box;
+}
+
+.ingredients-table input {
+  text-align: left;
+}
+
+.ingredients-table button {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.85rem;
+  height: 2.4rem;
+  line-height: 1;
+  min-width: 2.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+} */

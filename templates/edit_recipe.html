@@ -2,27 +2,6 @@
 {% block title %}Rezept bearbeiten{% endblock %}
 
 {% block content %}
-<style>
-/* Remove arrows from number inputs */
-input[type="number"]::-webkit-inner-spin-button,
-input[type="number"]::-webkit-outer-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-input[type="number"] {
-  -moz-appearance: textfield;
-}
-.step-card {
-  margin-bottom: 1.5rem;
-  position: relative;
-}
-.step-controls {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
-}
-</style>
-
 <article>
   <hgroup>
     <h1>Rezept bearbeiten</h1>
@@ -103,20 +82,20 @@ input[type="number"] {
           <table role="grid" class="striped ingredients-table">
             <thead>
               <tr>
-                <th style="width:10%;">Min</th>
-                <th style="width:10%;">Max</th>
-                <th style="width:20%;">Einheit</th>
-                <th style="width:30%;">Zutat</th>
-                <th style="width:20%;">Notiz</th>
-                <th style="width:10%;"></th>
+                <th style="width:7%;">Min</th>
+                <th style="width:7%;">Max</th>
+                <th style="width:12%;">Einheit</th>
+                <th style="width:45%;">Zutat</th>
+                <th style="width:23%;">Notiz</th>
+                <th style="width:6%;"></th>
               </tr>
             </thead>
             <tbody>
               {% for ing in step.ingredients %}
               <tr>
                 <input type="hidden" name="steps[{{ step_idx }}][ingredients][{{ loop.index0 }}][id]" value="{{ ing.id }}">
-                <td><input type="number" step="0.01" name="steps[{{ step_idx }}][ingredients][{{ loop.index0 }}][amount_min]" value="{{ ing.amount_min }}"></td>
-                <td><input type="number" step="0.01" name="steps[{{ step_idx }}][ingredients][{{ loop.index0 }}][amount_max]" value="{{ ing.amount_max }}"></td>
+                <td><input type="number" step="0.01" name="steps[{{ step_idx }}][ingredients][{{ loop.index0 }}][amount_min]" value="{{ '%g'|format(ing.amount_min) if ing.amount_min else '' }}"></td>
+                <td><input type="number" step="0.01" name="steps[{{ step_idx }}][ingredients][{{ loop.index0 }}][amount_max]" value="{{ '%g'|format(ing.amount_max) if ing.amount_max else '' }}"></td>
                 <td>
                   <select name="steps[{{ step_idx }}][ingredients][{{ loop.index0 }}][unit_id]">
                     <option value="">-</option>
@@ -127,7 +106,7 @@ input[type="number"] {
                 </td>
                 <td><input type="text" name="steps[{{ step_idx }}][ingredients][{{ loop.index0 }}][item]" value="{{ ing.item }}" required></td>
                 <td><input type="text" name="steps[{{ step_idx }}][ingredients][{{ loop.index0 }}][note]" value="{{ ing.note }}"></td>
-                <td><button type="button" class="outline secondary" onclick="removeIngredient(this)" title="Entfernen">✕</button></td>
+                <td><button type="button" class="outline nav-link-button btn-delete pico-background-red-500" onclick="removeIngredient(this)" title="Entfernen"><span class="ph-btn-icon">&#xE4A6;</span></button></td>
               </tr>
               {% endfor %}
             </tbody>
@@ -195,7 +174,7 @@ function addIngredient(btn) {
     <td><select name="steps[${stepIdx}][ingredients][${ingIdx}][unit_id]">${unitOptionsHTML}</select></td>
     <td><input type="text" name="steps[${stepIdx}][ingredients][${ingIdx}][item]" required></td>
     <td><input type="text" name="steps[${stepIdx}][ingredients][${ingIdx}][note]"></td>
-    <td><button type="button" class="outline secondary" onclick="removeIngredient(this)" title="Entfernen">✕</button></td>
+    <td><button type="button" class="outline btn-delete pico-background-red-500" onclick="removeIngredient(this)" title="Entfernen"><span class="ph-btn-icon">&#xE4A6;</span></button></td>
   `;
   table.appendChild(row);
 }
@@ -215,6 +194,10 @@ function moveStepUp(btn) {
   if (prev && prev.classList.contains('step-card')) {
     card.parentNode.insertBefore(card, prev);
     updateStepPositions();
+    // Scroll to the moved step and focus first editable field
+    card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const focusEl = card.querySelector('textarea, input[type="text"], input[type="number"], select');
+    if (focusEl) focusEl.focus();
   }
 }
 
@@ -225,6 +208,10 @@ function moveStepDown(btn) {
   if (next && next.classList.contains('step-card')) {
     card.parentNode.insertBefore(next, card);
     updateStepPositions();
+    // Scroll to the moved step and focus first editable field
+    card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const focusEl = card.querySelector('textarea, input[type="text"], input[type="number"], select');
+    if (focusEl) focusEl.focus();
   }
 }
 
@@ -275,12 +262,12 @@ function addStep() {
         <table role="grid" class="striped ingredients-table">
           <thead>
             <tr>
-              <th style="width:10%;">Min</th>
-              <th style="width:10%;">Max</th>
-              <th style="width:20%;">Einheit</th>
-              <th style="width:30%;">Zutat</th>
-              <th style="width:20%;">Notiz</th>
-              <th style="width:10%;"></th>
+              <th style="width:7%;">Min</th>
+              <th style="width:7%;">Max</th>
+              <th style="width:12%;">Einheit</th>
+              <th style="width:45%;">Zutat</th>
+              <th style="width:23%;">Notiz</th>
+              <th style="width:6%;"></th>
             </tr>
           </thead>
           <tbody></tbody>
