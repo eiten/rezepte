@@ -1,0 +1,322 @@
+{% extends "base.html" %}
+{% block title %}Rezept bearbeiten{% endblock %}
+
+{% block content %}
+<style>
+/* Remove arrows from number inputs */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+.step-card {
+  margin-bottom: 1.5rem;
+  position: relative;
+}
+.step-controls {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+</style>
+
+<article>
+  <hgroup>
+    <h1>Rezept bearbeiten</h1>
+    <small>{{ recipe.name }}</small>
+  </hgroup>
+
+  <form action="/recipe/{{ recipe.id }}/edit" method="post" id="recipe-edit-form">
+    <section class="grid">
+      <label>
+        Name
+        <input type="text" name="name" value="{{ recipe.name }}" required>
+      </label>
+      <label>
+        Autor
+        <input type="text" name="author" value="{{ recipe.author }}">
+      </label>
+      <label>
+        Quelle
+        <input type="text" name="source" value="{{ recipe.source }}">
+      </label>
+    </section>
+
+    <label>
+      Einführung / Preamble
+      <textarea name="preamble" rows="3">{{ recipe.preamble or '' }}</textarea>
+    </label>
+
+    <hr>
+
+    {% for step in steps %}
+    {% set step_idx = loop.index0 %}
+    <section class="card step-card" data-step-id="{{ step.id }}" data-step-index="{{ step_idx }}">
+      <header class="grid" style="align-items:center;">
+        <div>
+          <strong>Schritt {{ step.position }}</strong>
+        </div>
+        <div class="step-controls">
+          <button type="button" class="outline secondary" onclick="moveStepUp(this)" title="Nach oben">↑</button>
+          <button type="button" class="outline secondary" onclick="moveStepDown(this)" title="Nach unten">↓</button>
+          <button type="button" class="outline pico-background-red-500" onclick="removeStep(this)" title="Schritt löschen">✕</button>
+        </div>
+      </header>
+
+      <input type="hidden" name="steps[{{ step_idx }}][id]" value="{{ step.id }}">
+      <input type="hidden" name="steps[{{ step_idx }}][position]" value="{{ step.position }}">
+
+      <fieldset>
+        <legend>Typ</legend>
+        <label>
+          <input type="radio" name="steps[{{ step_idx }}][type]" value="ingredients" {% if step.is_ingredients %}checked{% endif %} data-toggle-type>
+          Zubereitung (mit Zutaten)
+        </label>
+        <label>
+          <input type="radio" name="steps[{{ step_idx }}][type]" value="category" {% if not step.is_ingredients %}checked{% endif %} data-toggle-type>
+          Kategorie (Icon/Info)
+        </label>
+      </fieldset>
+
+      <div class="category-block" {% if step.is_ingredients %}style="display:none;"{% endif %}>
+        <label>Kategorie
+          <select name="steps[{{ step_idx }}][category_id]">
+            <option value="">-- Bitte wählen --</option>
+            {% for cat in categories %}
+              <option value="{{ cat.id }}" {% if step.category_id == cat.id %}selected{% endif %}>{{ cat.label_de }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        {% if step.ingredients|length > 0 %}
+        <p class="pico-color-amber-700" style="margin-top:0.25rem;">
+          Hinweis: Dieser Schritt hat noch Zutaten. Sie werden nicht angezeigt, bleiben aber erhalten.
+        </p>
+        {% endif %}
+      </div>
+
+      <div class="ingredients-block" {% if not step.is_ingredients %}style="display:none;"{% endif %}>
+        <input type="hidden" name="steps[{{ step_idx }}][category_id]" value="1">
+        <div class="overflow-auto">
+          <table role="grid" class="striped ingredients-table">
+            <thead>
+              <tr>
+                <th style="width:10%;">Min</th>
+                <th style="width:10%;">Max</th>
+                <th style="width:20%;">Einheit</th>
+                <th style="width:30%;">Zutat</th>
+                <th style="width:20%;">Notiz</th>
+                <th style="width:10%;"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for ing in step.ingredients %}
+              <tr>
+                <input type="hidden" name="steps[{{ step_idx }}][ingredients][{{ loop.index0 }}][id]" value="{{ ing.id }}">
+                <td><input type="number" step="0.01" name="steps[{{ step_idx }}][ingredients][{{ loop.index0 }}][amount_min]" value="{{ ing.amount_min }}"></td>
+                <td><input type="number" step="0.01" name="steps[{{ step_idx }}][ingredients][{{ loop.index0 }}][amount_max]" value="{{ ing.amount_max }}"></td>
+                <td>
+                  <select name="steps[{{ step_idx }}][ingredients][{{ loop.index0 }}][unit_id]">
+                    <option value="">-</option>
+                    {% for u in units %}
+                      <option value="{{ u.id }}" {% if ing.unit_id == u.id %}selected{% endif %}>{{ u.symbol }}</option>
+                    {% endfor %}
+                  </select>
+                </td>
+                <td><input type="text" name="steps[{{ step_idx }}][ingredients][{{ loop.index0 }}][item]" value="{{ ing.item }}" required></td>
+                <td><input type="text" name="steps[{{ step_idx }}][ingredients][{{ loop.index0 }}][note]" value="{{ ing.note }}"></td>
+                <td><button type="button" class="outline secondary" onclick="removeIngredient(this)" title="Entfernen">✕</button></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <button type="button" class="outline" onclick="addIngredient(this)">+ Zutat hinzufügen</button>
+      </div>
+
+      <label>Text (Markdown erlaubt)
+        <textarea name="steps[{{ step_idx }}][markdown_text]" rows="3">{{ step.markdown_text or '' }}</textarea>
+      </label>
+    </section>
+    {% endfor %}
+
+    <button type="button" class="contrast" onclick="addStep()">+ Neuer Schritt</button>
+
+    <footer style="display:flex; gap:0.5rem; margin-top:1.5rem;">
+      <button type="submit" class="contrast">Speichern</button>
+      <a href="/recipe/{{ recipe.id }}" role="button" class="secondary outline">Abbrechen</a>
+    </footer>
+  </form>
+</article>
+
+<script>
+// Unit options HTML for dynamic ingredient rows
+const unitOptionsHTML = `<option value="">-</option>{% for u in units %}<option value="{{ u.id }}">{{ u.symbol }}</option>{% endfor %}`;
+
+// Toggle type visibility
+(function() {
+  function toggle(block, show) {
+    block.style.display = show ? '' : 'none';
+  }
+  document.querySelectorAll('[data-toggle-type]').forEach(function(radio) {
+    radio.addEventListener('change', function() {
+      var card = radio.closest('.step-card');
+      if (!card) return;
+      var isIngredients = radio.value === 'ingredients';
+      var ingredientsBlock = card.querySelector('.ingredients-block');
+      var categoryBlock = card.querySelector('.category-block');
+      if (ingredientsBlock) toggle(ingredientsBlock, isIngredients);
+      if (categoryBlock) toggle(categoryBlock, !isIngredients);
+    });
+  });
+})();
+
+// Remove ingredient row
+function removeIngredient(btn) {
+  if (confirm('Zutat wirklich entfernen?')) {
+    btn.closest('tr').remove();
+  }
+}
+
+// Add ingredient row
+function addIngredient(btn) {
+  const table = btn.previousElementSibling.querySelector('tbody');
+  const stepCard = btn.closest('.step-card');
+  const stepIdx = stepCard.dataset.stepIndex;
+  const ingIdx = table.querySelectorAll('tr').length;
+  
+  const row = document.createElement('tr');
+  row.innerHTML = `
+    <input type="hidden" name="steps[${stepIdx}][ingredients][${ingIdx}][id]" value="">
+    <td><input type="number" step="0.01" name="steps[${stepIdx}][ingredients][${ingIdx}][amount_min]"></td>
+    <td><input type="number" step="0.01" name="steps[${stepIdx}][ingredients][${ingIdx}][amount_max]"></td>
+    <td><select name="steps[${stepIdx}][ingredients][${ingIdx}][unit_id]">${unitOptionsHTML}</select></td>
+    <td><input type="text" name="steps[${stepIdx}][ingredients][${ingIdx}][item]" required></td>
+    <td><input type="text" name="steps[${stepIdx}][ingredients][${ingIdx}][note]"></td>
+    <td><button type="button" class="outline secondary" onclick="removeIngredient(this)" title="Entfernen">✕</button></td>
+  `;
+  table.appendChild(row);
+}
+
+// Remove step
+function removeStep(btn) {
+  if (confirm('Schritt wirklich löschen?')) {
+    btn.closest('.step-card').remove();
+    updateStepPositions();
+  }
+}
+
+// Move step up
+function moveStepUp(btn) {
+  const card = btn.closest('.step-card');
+  const prev = card.previousElementSibling;
+  if (prev && prev.classList.contains('step-card')) {
+    card.parentNode.insertBefore(card, prev);
+    updateStepPositions();
+  }
+}
+
+// Move step down
+function moveStepDown(btn) {
+  const card = btn.closest('.step-card');
+  const next = card.nextElementSibling;
+  if (next && next.classList.contains('step-card')) {
+    card.parentNode.insertBefore(next, card);
+    updateStepPositions();
+  }
+}
+
+// Add new step
+function addStep() {
+  const form = document.getElementById('recipe-edit-form');
+  const steps = form.querySelectorAll('.step-card');
+  const newIdx = steps.length;
+  const newPos = newIdx + 1;
+  
+  const newStep = document.createElement('section');
+  newStep.className = 'card step-card';
+  newStep.dataset.stepId = '';
+  newStep.dataset.stepIndex = newIdx;
+  newStep.innerHTML = `
+    <header class="grid" style="align-items:center;">
+      <div><strong>Schritt ${newPos}</strong></div>
+      <div class="step-controls">
+        <button type="button" class="outline secondary" onclick="moveStepUp(this)" title="Nach oben">↑</button>
+        <button type="button" class="outline secondary" onclick="moveStepDown(this)" title="Nach unten">↓</button>
+        <button type="button" class="outline pico-background-red-500" onclick="removeStep(this)" title="Schritt löschen">✕</button>
+      </div>
+    </header>
+    <input type="hidden" name="steps[${newIdx}][id]" value="">
+    <input type="hidden" name="steps[${newIdx}][position]" value="${newPos}">
+    <fieldset>
+      <legend>Typ</legend>
+      <label>
+        <input type="radio" name="steps[${newIdx}][type]" value="ingredients" checked data-toggle-type>
+        Zubereitung (mit Zutaten)
+      </label>
+      <label>
+        <input type="radio" name="steps[${newIdx}][type]" value="category" data-toggle-type>
+        Kategorie (Icon/Info)
+      </label>
+    </fieldset>
+    <div class="category-block" style="display:none;">
+      <label>Kategorie
+        <select name="steps[${newIdx}][category_id]">
+          <option value="">-- Bitte wählen --</option>
+          {% for cat in categories %}<option value="{{ cat.id }}">{{ cat.label_de }}</option>{% endfor %}
+        </select>
+      </label>
+    </div>
+    <div class="ingredients-block">
+      <input type="hidden" name="steps[${newIdx}][category_id]" value="1">
+      <div class="overflow-auto">
+        <table role="grid" class="striped ingredients-table">
+          <thead>
+            <tr>
+              <th style="width:10%;">Min</th>
+              <th style="width:10%;">Max</th>
+              <th style="width:20%;">Einheit</th>
+              <th style="width:30%;">Zutat</th>
+              <th style="width:20%;">Notiz</th>
+              <th style="width:10%;"></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <button type="button" class="outline" onclick="addIngredient(this)">+ Zutat hinzufügen</button>
+    </div>
+    <label>Text (Markdown erlaubt)
+      <textarea name="steps[${newIdx}][markdown_text]" rows="3"></textarea>
+    </label>
+  `;
+  
+  // Insert before the "Add Step" button
+  const addStepBtn = form.querySelector('button[onclick="addStep()"]');
+  form.insertBefore(newStep, addStepBtn);
+  
+  // Attach toggle listeners to new radios
+  newStep.querySelectorAll('[data-toggle-type]').forEach(function(radio) {
+    radio.addEventListener('change', function() {
+      var isIngredients = radio.value === 'ingredients';
+      var ingredientsBlock = newStep.querySelector('.ingredients-block');
+      var categoryBlock = newStep.querySelector('.category-block');
+      ingredientsBlock.style.display = isIngredients ? '' : 'none';
+      categoryBlock.style.display = !isIngredients ? '' : 'none';
+    });
+  });
+}
+
+// Update step positions and indices
+function updateStepPositions() {
+  const steps = document.querySelectorAll('.step-card');
+  steps.forEach((step, idx) => {
+    step.dataset.stepIndex = idx;
+    step.querySelector('header strong').textContent = `Schritt ${idx + 1}`;
+    step.querySelector('input[name*="[position]"]').value = idx + 1;
+  });
+}
+</script>
+{% endblock %}

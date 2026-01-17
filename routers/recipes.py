@@ -79,7 +79,7 @@ async def read_recipe(request: Request, recipe_id: int, db: aiosqlite.Connection
 
 @router.get("/recipe/{recipe_id}/edit", response_class=HTMLResponse)
 async def edit_recipe(request: Request, recipe_id: int, db: aiosqlite.Connection = Depends(get_db_connection)):
-    """ Edit recipe page (placeholder) """
+    """ Edit recipe page """
     user_ctx = await get_user_context(request, db)
     
     # Check recipe exists and permission
@@ -93,8 +93,50 @@ async def edit_recipe(request: Request, recipe_id: int, db: aiosqlite.Connection
     if not user_ctx["is_admin"] and user_ctx["user_id"] != recipe["owner_id"]:
         raise HTTPException(status_code=403, detail="Not authorized")
     
-    # TODO: Implement edit form
-    return HTMLResponse(content=f"<h1>Edit Recipe {recipe_id}</h1><p>Not implemented yet</p>")
+    # Get all steps with their ingredients
+    async with db.execute("""
+        SELECT s.*, c.label_de, c.id as category_id, c.is_ingredients
+        FROM steps s
+        LEFT JOIN step_categories c ON s.category_id = c.id
+        WHERE s.recipe_id = ?
+        ORDER BY s.position
+    """, (recipe_id,)) as cursor:
+        steps_raw = await cursor.fetchall()
+    
+    steps_data = []
+    for step in steps_raw:
+        s_dict = dict(step)
+        # Fetch ingredients for this step
+        async with db.execute("""
+            SELECT i.*, u.symbol, u.latex_code
+            FROM ingredients i
+            LEFT JOIN units u ON i.unit_id = u.id
+            WHERE step_id = ?
+            ORDER BY i.position
+        """, (step["id"],)) as i_cursor:
+            s_dict["ingredients"] = await i_cursor.fetchall()
+        steps_data.append(s_dict)
+    
+    # Get selectable categories (only non-ingredient, ids > 1)
+    async with db.execute("""
+        SELECT * FROM step_categories 
+        WHERE is_ingredients = 0 AND id > 1
+        ORDER BY label_de
+    """) as cursor:
+        categories = await cursor.fetchall()
+    
+    # Get all units for ingredient editor
+    async with db.execute("SELECT * FROM units ORDER BY name") as cursor:
+        units = await cursor.fetchall()
+    
+    return templates.TemplateResponse("edit_recipe.html", {
+        "request": request,
+        "recipe": recipe,
+        "steps": steps_data,
+        "categories": categories,
+        "units": units,
+        **user_ctx
+    })
 
 @router.get("/recipe/{recipe_id}/delete", response_class=HTMLResponse)
 async def delete_recipe(request: Request, recipe_id: int, db: aiosqlite.Connection = Depends(get_db_connection)):

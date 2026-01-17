@@ -21,15 +21,10 @@ nav.container-fluid {
     background-color: var(--card-background-color);
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     border-bottom: 1px solid var(--muted-border-color);
-    padding: 0 1rem;
     margin: 0;
     display: flex;
     align-items: center;
     overflow: visible; 
-}
-
-nav ul:last-child {
-    padding-right: 0.5rem;
 }
 
 /* -------- DROPDOWN-MENÜ -------- */
@@ -47,10 +42,10 @@ nav ul li details.dropdown ul {
     z-index: 1001;
     border: 1px solid var(--muted-border-color);
     border-radius: var(--border-radius);
-    min-width: 250px;
     margin-top: 0.5rem;
     display: flex;
     flex-direction: column;
+    padding: 0 0.5rem;
 }
 
 nav ul li details.dropdown ul li {
@@ -75,18 +70,9 @@ nav ul li details.dropdown ul li a:hover {
     background-color: var(--dropdown-hover-background-color);
 }
 
-nav ul li details.dropdown ul li.menu-separator {
-    padding: 0.75rem 1.5rem 0.5rem;
-    font-size: 0.75rem;
-    font-weight: bold;
-    color: var(--muted-color);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
-
 nav ul li details.dropdown ul li hr {
     margin: 0;
-}
+} */
 
 /* -------- MAIN CONTENT -------- */
 main.container {

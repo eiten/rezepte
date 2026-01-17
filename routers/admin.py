@@ -14,7 +14,7 @@ async def manage_categories(request: Request, db: aiosqlite.Connection = Depends
     if not user_ctx["is_admin"]:
         return RedirectResponse(url="/", status_code=303)
 
-    async with db.execute("SELECT * FROM step_categories ORDER BY label_de") as cursor:
+    async with db.execute("SELECT * FROM step_categories WHERE id > 1 ORDER BY label_de") as cursor:
         categories = await cursor.fetchall()
     
     return templates.TemplateResponse("admin_categories.html", {
