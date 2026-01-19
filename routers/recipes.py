@@ -362,7 +362,6 @@ async def add_recipe_form(request: Request, db: aiosqlite.Connection = Depends(g
         **user_ctx
     })
 
-# --- NEU: Neues Rezept speichern (POST) ---
 @router.post("/add")
 async def create_recipe(request: Request, db: aiosqlite.Connection = Depends(get_db_connection)):
     user_ctx = await get_user_context(request, db)
@@ -370,7 +369,9 @@ async def create_recipe(request: Request, db: aiosqlite.Connection = Depends(get
          raise HTTPException(status_code=403, detail="Nicht eingeloggt")
 
     form = await request.form()
-    
+    print("--- DEBUG: CREATE RECIPE ---")
+    print(f"Form Keys: {list(form.keys())}") # Zeigt uns ALLE gesendeten Felder
+
     # 1. Rezept INSERT
     cursor = await db.execute("""
         INSERT INTO recipes (folder_id, owner_id, name, author, source, preamble) 
@@ -384,10 +385,12 @@ async def create_recipe(request: Request, db: aiosqlite.Connection = Depends(get
     ))
     row = await cursor.fetchone()
     new_recipe_id = row[0]
+    print(f"Rezept erstellt: ID {new_recipe_id}")
 
     # 2. Schritte und Zutaten speichern
     step_idx = 0
     while f"steps[{step_idx}][position]" in form:
+        print(f"--> Verarbeite Schritt {step_idx}")
         s_prefix = f"steps[{step_idx}]"
         
         position = form.get(f"{s_prefix}[position]")
@@ -408,9 +411,17 @@ async def create_recipe(request: Request, db: aiosqlite.Connection = Depends(get
         """, (new_recipe_id, position, markdown_text, cat_id))
         step_row = await cursor.fetchone()
         current_step_db_id = step_row[0]
+        print(f"    Schritt DB-ID: {current_step_db_id}")
 
         # Zutaten INSERT
         ing_idx = 0
+        # Prüfe, ob der Key existiert
+        check_key = f"{s_prefix}[ingredients][{ing_idx}][item]"
+        if check_key in form:
+            print(f"    Zutat gefunden: {check_key}")
+        else:
+            print(f"    KEINE Zutat gefunden bei Key: {check_key}")
+
         while f"{s_prefix}[ingredients][{ing_idx}][item]" in form:
             i_prefix = f"{s_prefix}[ingredients][{ing_idx}]"
             
@@ -422,6 +433,8 @@ async def create_recipe(request: Request, db: aiosqlite.Connection = Depends(get
             item = form.get(f"{i_prefix}[item]")
             note = form.get(f"{i_prefix}[note]")
             
+            print(f"      -> Insert Zutat: {item} ({amount_min}-{amount_max})")
+            
             await db.execute("""
                 INSERT INTO ingredients (step_id, position, amount_min, amount_max, unit_id, item, note)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -431,6 +444,6 @@ async def create_recipe(request: Request, db: aiosqlite.Connection = Depends(get
         step_idx += 1
 
     await db.commit()
+    print("--- DEBUG ENDE ---")
     
-    # Weiterleitung zum neuen Rezept
-    return RedirectResponse(url=request.url_for("read_recipe", recipe_id=new_recipe_id), status_code=303)
+    return RedirectResponse(url=request.url_for("read_recipe", recipe_id=new_recipe_id), status_code=303)    

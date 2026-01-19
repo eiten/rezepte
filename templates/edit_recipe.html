@@ -14,13 +14,13 @@
         </div>
         <div class="flex gap-2">
             {% if mode == 'add' %}
-                <a href="{{ url_for('index') }}" class="px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors no-underline">Abbrechen</a>
+                <a href="{{ url_for('index') }}" class="px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors no-underline"><span class="ph-btn-icon text-lg mr-1">&#xE4F6;</span>  Abbrechen</a>
             {% else %}
-                <a href="{{ url_for('read_recipe', recipe_id=recipe.id) }}" class="px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors no-underline">Abbrechen</a>
+                <a href="{{ url_for('read_recipe', recipe_id=recipe.id) }}" class="px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors no-underline"><span class="ph-btn-icon text-lg mr-1">&#xE4F6;</span>  Abbrechen</a>
             {% endif %}
             
             <button type="submit" form="recipe-edit-form" class="px-6 py-2 bg-accent hover:bg-accent-dark text-white rounded-lg shadow-sm font-medium transition-colors">
-                {% if mode == 'add' %}Erstellen{% else %}Speichern{% endif %}
+                <span class="ph-btn-icon text-lg mr-1">&#xE248;</span> {% if mode == 'add' %}Erstellen{% else %}Speichern{% endif %}
             </button> 
         </div>
     </div>
@@ -186,6 +186,24 @@
         </div>
 
     </form>
+
+    <div class="mt-12 flex justify-center border-t border-slate-200 pt-8">
+        <div class="flex gap-4">
+            {% if mode == 'add' %}
+                <a href="{{ url_for('index') }}" class="px-6 py-2 rounded-lg text-slate-600 border border-slate-300 hover:bg-slate-50 transition-colors no-underline font-medium">
+                   <span class="ph-btn-icon text-lg mr-1">&#xE4F6;</span>  Abbrechen
+                </a>
+            {% else %}
+                <a href="{{ url_for('read_recipe', recipe_id=recipe.id) }}" class="px-6 py-2 rounded-lg text-slate-600 border border-slate-300 hover:bg-slate-50 transition-colors no-underline font-medium">
+                    <span class="ph-btn-icon text-lg mr-1">&#xE4F6;</span> Abbrechen
+                </a>
+            {% endif %}
+            
+            <button type="submit" form="recipe-edit-form" class="px-8 py-2 bg-accent hover:bg-accent-dark text-white rounded-lg shadow-md hover:shadow-lg font-bold transition-all transform hover:-translate-y-0.5">
+                <span class="ph-btn-icon text-lg mr-1">&#xE248;</span> {% if mode == 'add' %}Erstellen{% else %}Speichern{% endif %}
+            </button> 
+        </div>
+    </div>
 </div>
 
 <template id="ingredient-row-template">
@@ -226,7 +244,7 @@
 <template id="step-card-template">
     <div class="step-card group bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden transition-all hover:border-slate-300" 
         data-step-id="" 
-        data-step-index="___idx___">   
+        data-step-index="__IDX__">   
 
         <div class="bg-slate-50 px-4 py-3 border-b border-slate-200 flex items-center justify-between">
             <div class="flex items-center gap-3">
