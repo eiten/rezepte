@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Rezept bearbeiten{% endblock %}
+{% block title %}{% if mode == 'add' %}Neues Rezept{% else %}Rezept bearbeiten{% endif %}{% endblock %}
 
 {% block content %}
 <div class="max-w-4xl mx-auto pb-12">
@@ -8,15 +8,15 @@
             <h1 class="text-3xl font-bold text-slate-800 mb-1">
                 {% if mode == 'add' %}Neues Rezept erstellen{% else %}Rezept bearbeiten{% endif %}
             </h1>
-            {% if mode == 'edit' %}
-                <p class="text-slate-500 text-sm">ID: {{ recipe.id }}</p>
+            {% if mode != 'add' %}
+            <p class="text-slate-500 text-sm">ID: {{ recipe.id }}</p>
             {% endif %}
         </div>
         <div class="flex gap-2">
             {% if mode == 'add' %}
-                <a href="/" class="px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors no-underline">Abbrechen</a>
+                <a href="{{ url_for('index') }}" class="px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors no-underline">Abbrechen</a>
             {% else %}
-                <a href="/recipe/{{ recipe.id }}" class="px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors no-underline">Abbrechen</a>
+                <a href="{{ url_for('read_recipe', recipe_id=recipe.id) }}" class="px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors no-underline">Abbrechen</a>
             {% endif %}
             
             <button type="submit" form="recipe-edit-form" class="px-6 py-2 bg-accent hover:bg-accent-dark text-white rounded-lg shadow-sm font-medium transition-colors">
@@ -25,7 +25,7 @@
         </div>
     </div>
 
-    <form action="{% if mode == 'add' %}{{ url_for('add') }}{% else %}{{ url_for('edit_recipe', recipe_id=recipe.id) }}{% endif %}" method="post" id="recipe-edit-form" class="space-y-8">
+    <form action="{% if mode == 'add' %}{{ url_for('create_recipe') }}{% else %}{{ url_for('update_recipe', recipe_id=recipe.id) }}{% endif %}" method="post" id="recipe-edit-form" class="space-y-8">
         
         <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
             <h2 class="text-lg font-semibold text-slate-800 mb-4 border-b pb-2">Basisdaten</h2>
@@ -55,8 +55,10 @@
         <div id="steps-container" class="space-y-6">
             {% for step in steps %}
             {% set step_idx = loop.index0 %}
-            <div class="step-card group bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden transition-all hover:border-slate-300" data-step-id="{{ step.id }}">
-                
+            <div class="step-card group bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden transition-all hover:border-slate-300" 
+                data-step-id="{{ step.id }}" 
+                data-step-index="{{ step_idx }}">
+
                 <div class="bg-slate-50 px-4 py-3 border-b border-slate-200 flex items-center justify-between">
                     <div class="flex items-center gap-3">
                         <span class="step-number bg-slate-200 text-slate-600 text-xs font-bold px-2 py-1 rounded">#{{ step.position }}</span>
@@ -102,7 +104,6 @@
                                 <option value="{{ cat.id }}" {% if step.category_id == cat.id %}selected{% endif %}>{{ cat.label_de }}</option>
                                 {% endfor %}
                             </select>
-                            <p class="mt-2 text-xs text-slate-400">Wähle eine Kategorie, um z.B. einen Back-Schritt oder eine Wartezeit zu markieren.</p>
                         </div>
                     </div>
 
@@ -119,7 +120,7 @@
                                                name="steps[{{ step_idx }}][ingredients][{{ loop.index0 }}][amount_combined]" 
                                                value="{{ '%g'|format(ing.amount_min) if ing.amount_min else '' }}{{ '-' ~ '%g'|format(ing.amount_max) if ing.amount_max else '' }}"
                                                placeholder="Menge"
-                                               class="w-full text-right rounded-md border-slate-300 py-1.5 px-2 text-sm focus:border-accent focus:ring-accent font-mono"
+                                               class="w-full text-right rounded-md border-slate-300 py-1.5 px-2 text-sm focus:border-accent focus:ring-accent"
                                                inputmode="decimal"
                                                pattern="^(\s*-\s*)?[\d]+([.,][\d]+)?(\s*-\s*[\d]+([.,][\d]+)?)?$"
                                                title="Zahl oder Bereich"
@@ -220,8 +221,10 @@
 </template>
 
 <template id="step-card-template">
-    <div class="step-card group bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden transition-all hover:border-slate-300 mb-6" data-step-id="">
-        
+    <div class="step-card group bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden transition-all hover:border-slate-300" 
+        data-step-id="" 
+        data-step-index="___idx___">   
+
         <div class="bg-slate-50 px-4 py-3 border-b border-slate-200 flex items-center justify-between">
             <div class="flex items-center gap-3">
                 <span class="step-number bg-slate-200 text-slate-600 text-xs font-bold px-2 py-1 rounded">#__POS__</span>
@@ -291,26 +294,57 @@
 </template>
 
 <script>
+/* --- 1. Zutaten-Namen komplett neu berechnen --- */
+function updateIngredientIndices(stepCard) {
+    const stepIdx = stepCard.dataset.stepIndex; // Holt "0", "1" etc.
+    const rows = stepCard.querySelectorAll('.ingredient-row');
+    
+    rows.forEach((row, ingIdx) => {
+        // Wir verlassen uns auf die feste Reihenfolge im Template (5 Inputs/Selects)
+        // 1. ID (hidden), 2. Amount, 3. Unit, 4. Item, 5. Note
+        const inputs = row.querySelectorAll('input, select');
+        
+        if (inputs.length >= 5) {
+            inputs[0].name = `steps[${stepIdx}][ingredients][${ingIdx}][id]`;
+            inputs[1].name = `steps[${stepIdx}][ingredients][${ingIdx}][amount_combined]`;
+            inputs[2].name = `steps[${stepIdx}][ingredients][${ingIdx}][unit_id]`;
+            inputs[3].name = `steps[${stepIdx}][ingredients][${ingIdx}][item]`;
+            inputs[4].name = `steps[${stepIdx}][ingredients][${ingIdx}][note]`;
+        }
+    });
+}
+
+/* --- 2. Zutat hinzufügen --- */
 function addIngredient(btn) {
     const list = btn.previousElementSibling; 
     const stepCard = btn.closest('.step-card');
-    const stepIdx = stepCard.dataset.stepIndex;
-    const ingIdx = list.children.length;
-
     const template = document.getElementById('ingredient-row-template');
-    const clone = template.content.cloneNode(true);
     
-    const inputs = clone.querySelectorAll('input, select');
-    inputs[0].name = `steps[${stepIdx}][ingredients][${ingIdx}][id]`;
-    inputs[1].name = `steps[${stepIdx}][ingredients][${ingIdx}][amount_combined]`;
-    inputs[2].name = `steps[${stepIdx}][ingredients][${ingIdx}][unit_id]`;
-    inputs[3].name = `steps[${stepIdx}][ingredients][${ingIdx}][item]`;
-    inputs[4].name = `steps[${stepIdx}][ingredients][${ingIdx}][note]`;
-
+    // Klonen und anhängen (noch ohne Namen)
+    const clone = template.content.cloneNode(true);
     list.appendChild(clone);
+    
+    // JETZT Namen und Indizes korrekt setzen
+    updateIngredientIndices(stepCard);
+    
+    // Fokus auf das erste sichtbare Feld (Menge)
     list.lastElementChild.querySelector('input[type="text"]').focus();
 }
 
+/* --- 3. Zutat entfernen --- */
+function removeIngredient(btn) {
+    const row = btn.closest('.ingredient-row');
+    const stepCard = row.closest('.step-card');
+    const hasContent = Array.from(row.querySelectorAll('input')).some(i => i.value.trim() !== '');
+    
+    if (!hasContent || confirm('Zutat entfernen?')) {
+        row.remove();
+        // Lücken schließen
+        updateIngredientIndices(stepCard);
+    }
+}
+
+/* --- 4. Schritt hinzufügen --- */
 function addStep() {
     const container = document.getElementById('steps-container');
     const template = document.getElementById('step-card-template');
@@ -320,6 +354,7 @@ function addStep() {
     const newPos = newIdx + 1;
 
     let html = template.innerHTML;
+    // Platzhalter ersetzen
     html = html.replace(/__IDX__/g, newIdx);
     html = html.replace(/__POS__/g, newPos);
 
@@ -329,12 +364,72 @@ function addStep() {
 
     container.appendChild(newStepCard);
     
-    // FIX: Scrollt sanft zum neuen Element
+    // Initialisierung
     newStepCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
     const firstInput = newStepCard.querySelector('textarea');
     if(firstInput) firstInput.focus();
 }
 
+/* --- 5. Schritte neu nummerieren (und Zutaten updaten) --- */
+function updateStepPositions() {
+    const steps = document.querySelectorAll('.step-card');
+    steps.forEach((step, index) => {
+        const arrayIdx = index;
+        const pos = index + 1;
+
+        // Visuelle Nummer
+        const numberBadge = step.querySelector('.step-number');
+        if(numberBadge) numberBadge.textContent = '#' + pos;
+
+        // Hidden Position Input
+        const posInput = step.querySelector('input[name*="[position]"]');
+        if(posInput) posInput.value = pos;
+
+        // WICHTIG: Dataset aktualisieren, damit addIngredient weiß, wo wir sind
+        step.dataset.stepIndex = arrayIdx;
+
+        // Alle Inputs des Steps aktualisieren (steps[OLD] -> steps[NEW])
+        // Das deckt step-bezogene Felder ab (markdown_text, type, category_id)
+        const inputs = step.querySelectorAll('input, select, textarea');
+        inputs.forEach(input => {
+            if (input.name) {
+                // Nur den vorderen Teil steps[X] ersetzen
+                input.name = input.name.replace(/steps\[\d+\]/, `steps[${arrayIdx}]`);
+            }
+        });
+
+        // Zutaten für diesen Schritt sicherheitshalber komplett neu durchrechnen
+        // Damit stimmt auch dort steps[NEW][ingredients]...
+        updateIngredientIndices(step);
+    });
+}
+
+function moveStepUp(btn) {
+    const step = btn.closest('.step-card');
+    if (step && step.previousElementSibling) {
+        step.parentNode.insertBefore(step, step.previousElementSibling);
+        updateStepPositions();
+        step.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+
+function moveStepDown(btn) {
+    const step = btn.closest('.step-card');
+    if (step && step.nextElementSibling) {
+        step.parentNode.insertBefore(step.nextElementSibling, step);
+        updateStepPositions();
+        step.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+
+function removeStep(btn) {
+    if (confirm('Schritt wirklich löschen?')) {
+        btn.closest('.step-card').remove();
+        updateStepPositions();
+    }
+}
+
+// Global Event Listener für Toggle (Zubereitung vs Info)
 document.addEventListener('change', function(e) {
     if (e.target.matches('[data-toggle-type]')) {
         const radio = e.target;
@@ -349,64 +444,5 @@ document.addEventListener('change', function(e) {
         if (categoryBlock) categoryBlock.style.display = !isIngredients ? '' : 'none';
     }
 });
-
-function removeIngredient(btn) {
-    const row = btn.closest('.ingredient-row');
-    const hasContent = Array.from(row.querySelectorAll('input')).some(i => i.value.trim() !== '');
-    if (!hasContent || confirm('Zutat entfernen?')) {
-        row.remove();
-    }
-}
-
-function removeStep(btn) {
-    if (confirm('Schritt wirklich löschen?')) {
-        btn.closest('.step-card').remove();
-        updateStepPositions();
-    }
-}
-
-function updateStepPositions() {
-    const steps = document.querySelectorAll('.step-card');
-    steps.forEach((step, index) => {
-        const arrayIdx = index;
-        const pos = index + 1;
-
-        const numberBadge = step.querySelector('.step-number');
-        if(numberBadge) numberBadge.textContent = '#' + pos;
-
-        const posInput = step.querySelector('input[name*="[position]"]');
-        if(posInput) posInput.value = pos;
-
-        const inputs = step.querySelectorAll('input, select, textarea');
-        inputs.forEach(input => {
-            if (input.name) {
-                input.name = input.name.replace(/steps\[\d+\]/, `steps[${arrayIdx}]`);
-            }
-        });
-        
-        // Dataset Update ist wichtig für addIngredient
-        step.dataset.stepIndex = arrayIdx;
-    });
-}
-
-function moveStepUp(btn) {
-    const step = btn.closest('.step-card');
-    if (step && step.previousElementSibling) {
-        step.parentNode.insertBefore(step, step.previousElementSibling);
-        updateStepPositions();
-        // FIX: Scrollt mit dem Element mit
-        step.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-}
-
-function moveStepDown(btn) {
-    const step = btn.closest('.step-card');
-    if (step && step.nextElementSibling) {
-        step.parentNode.insertBefore(step.nextElementSibling, step);
-        updateStepPositions();
-        // FIX: Scrollt mit dem Element mit
-        step.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-}
 </script>
 {% endblock %}

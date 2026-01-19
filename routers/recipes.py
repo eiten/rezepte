@@ -330,20 +330,19 @@ async def delete_recipe(request: Request, recipe_id: int, db: aiosqlite.Connecti
 async def add_recipe_form(request: Request, db: aiosqlite.Connection = Depends(get_db_connection)):
     user_ctx = await get_user_context(request, db)
     
-    # Berechtigungscheck (optional, z.B. nur eingeloggte User)
     if not user_ctx["user_id"]:
          return RedirectResponse(url="/auth/login", status_code=303)
 
-    # Leeres Rezept-Gerüst für das Template
+    # Leeres Rezept-Gerüst
     empty_recipe = {
-        "id": 0, # Dummy ID
+        "id": 0, 
         "name": "", 
         "author": user_ctx["display_name"] or "", 
         "source": "", 
         "preamble": ""
     }
     
-    # Kategorien und Einheiten laden (gleicher Code wie bei Edit)
+    # Listen laden
     async with db.execute("SELECT * FROM step_categories WHERE is_ingredients = 0 AND id > 1 ORDER BY label_de") as cursor:
         categories = await cursor.fetchall()
     
@@ -353,9 +352,82 @@ async def add_recipe_form(request: Request, db: aiosqlite.Connection = Depends(g
     return templates.TemplateResponse("edit_recipe.html", {
         "request": request,
         "recipe": empty_recipe,
-        "steps": [],     # Leere Liste für Schritte
+        "steps": [],     
         "categories": categories,
         "units": units,
-        "mode": "add",   # WICHTIG: Modus setzen
+        "mode": "add",   # WICHTIG: Modus "add" steuert das Template
         **user_ctx
     })
+
+# --- NEU: Neues Rezept speichern (POST) ---
+@router.post("/add")
+async def create_recipe(request: Request, db: aiosqlite.Connection = Depends(get_db_connection)):
+    user_ctx = await get_user_context(request, db)
+    if not user_ctx["user_id"]:
+         raise HTTPException(status_code=403, detail="Nicht eingeloggt")
+
+    form = await request.form()
+    
+    # 1. Rezept INSERT
+    cursor = await db.execute("""
+        INSERT INTO recipes (folder_id, owner_id, name, author, source, preamble) 
+        VALUES (1, ?, ?, ?, ?, ?) RETURNING id
+    """, (
+        user_ctx["user_id"],
+        form.get("name"), 
+        form.get("author"), 
+        form.get("source"), 
+        form.get("preamble")
+    ))
+    row = await cursor.fetchone()
+    new_recipe_id = row[0]
+
+    # 2. Schritte und Zutaten speichern
+    step_idx = 0
+    while f"steps[{step_idx}][position]" in form:
+        s_prefix = f"steps[{step_idx}]"
+        
+        position = form.get(f"{s_prefix}[position]")
+        markdown_text = form.get(f"{s_prefix}[markdown_text]")
+        
+        # Typ/Kategorie Logik
+        step_type = form.get(f"{s_prefix}[type]")
+        if step_type == 'category':
+            raw_cat = form.get(f"{s_prefix}[category_id]")
+            cat_id = int(raw_cat) if raw_cat and raw_cat.isdigit() else 1
+        else:
+            cat_id = 1
+
+        # Step INSERT
+        cursor = await db.execute("""
+            INSERT INTO steps (recipe_id, position, markdown_text, category_id) 
+            VALUES (?, ?, ?, ?) RETURNING id
+        """, (new_recipe_id, position, markdown_text, cat_id))
+        step_row = await cursor.fetchone()
+        current_step_db_id = step_row[0]
+
+        # Zutaten INSERT
+        ing_idx = 0
+        while f"{s_prefix}[ingredients][{ing_idx}][item]" in form:
+            i_prefix = f"{s_prefix}[ingredients][{ing_idx}]"
+            
+            # Parsing
+            amt_combined = form.get(f"{i_prefix}[amount_combined]")
+            amount_min, amount_max = parse_amount(amt_combined)
+            
+            unit_id = form.get(f"{i_prefix}[unit_id]") or None
+            item = form.get(f"{i_prefix}[item]")
+            note = form.get(f"{i_prefix}[note]")
+            
+            await db.execute("""
+                INSERT INTO ingredients (step_id, position, amount_min, amount_max, unit_id, item, note)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, (current_step_db_id, ing_idx + 1, amount_min, amount_max, unit_id, item, note))
+            
+            ing_idx += 1
+        step_idx += 1
+
+    await db.commit()
+    
+    # Weiterleitung zum neuen Rezept
+    return RedirectResponse(url=request.url_for("read_recipe", recipe_id=new_recipe_id), status_code=303)
