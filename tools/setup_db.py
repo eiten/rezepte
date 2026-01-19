@@ -146,10 +146,10 @@ def init_db():
     # 1. Step Categories (Mit deinen neuen Codes!)
     categories_data = [
         (1, 'default', 'Zubereitung', '', None, 1),              # Kein Hintergrund
-        (2, 'warning', 'Achtung', 'E4E0', '#FEE2E2', 0), 
-        (3, 'info', 'Info', 'E2CE', '#DBEAFE', 0),            
-        (4, 'variation', 'Variante', 'E422', '#F3E8FF', 0),       
-        (5, 'tip', 'Tipp', 'E2DC', '#FEF3C7', 0)               
+        (2, 'warning', 'Achtung', 'E4E0', "#FF0000", 0), 
+        (3, 'info', 'Info', 'E2CE', "#006EFF", 0),            
+        (4, 'variation', 'Variante', 'E422', "#7B00FF", 0),       
+        (5, 'tip', 'Tipp', 'E2DC', "#FFCC00", 0)               
     ]
     cursor.execute("SELECT count(*) FROM step_categories")
     if cursor.fetchone()[0] == 0:

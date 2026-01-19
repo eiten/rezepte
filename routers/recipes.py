@@ -326,13 +326,36 @@ async def delete_recipe(request: Request, recipe_id: int, db: aiosqlite.Connecti
     # TODO: Implement delete confirmation
     return HTMLResponse(content=f"<h1>Delete Recipe {recipe_id}</h1><p>Not implemented yet</p>")
 
-@router.get("/profile", response_class=HTMLResponse)
-async def profile_page(request: Request, db: aiosqlite.Connection = Depends(get_db_connection)):
-    """ User profile page (placeholder) """
+@router.get("/add", response_class=HTMLResponse)
+async def add_recipe_form(request: Request, db: aiosqlite.Connection = Depends(get_db_connection)):
     user_ctx = await get_user_context(request, db)
     
-    if not user_ctx["username"]:
-        return RedirectResponse(url="/auth/login", status_code=303)
+    # Berechtigungscheck (optional, z.B. nur eingeloggte User)
+    if not user_ctx["user_id"]:
+         return RedirectResponse(url="/auth/login", status_code=303)
+
+    # Leeres Rezept-Gerüst für das Template
+    empty_recipe = {
+        "id": 0, # Dummy ID
+        "name": "", 
+        "author": user_ctx["display_name"] or "", 
+        "source": "", 
+        "preamble": ""
+    }
     
-    # TODO: Implement profile page
-    return HTMLResponse(content=f"<h1>Profile: {user_ctx['display_name']}</h1><p>Not implemented yet</p>")
+    # Kategorien und Einheiten laden (gleicher Code wie bei Edit)
+    async with db.execute("SELECT * FROM step_categories WHERE is_ingredients = 0 AND id > 1 ORDER BY label_de") as cursor:
+        categories = await cursor.fetchall()
+    
+    async with db.execute("SELECT * FROM units ORDER BY name") as cursor:
+        units = await cursor.fetchall()
+
+    return templates.TemplateResponse("edit_recipe.html", {
+        "request": request,
+        "recipe": empty_recipe,
+        "steps": [],     # Leere Liste für Schritte
+        "categories": categories,
+        "units": units,
+        "mode": "add",   # WICHTIG: Modus setzen
+        **user_ctx
+    })
