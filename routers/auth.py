@@ -31,12 +31,14 @@ async def login(
         })
 
     # Einfacher Session-Cookie (für den Anfang)
-    response = RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
+    redirect_url = request.url_for("index")
+    response = RedirectResponse(url=redirect_url, status_code=status.HTTP_303_SEE_OTHER)
     response.set_cookie(key="session_user", value=username, httponly=True)
     return response
 
 @router.get("/logout")
-async def logout():
-    response = RedirectResponse(url="/")
+async def logout(request: Request):
+    redirect_url = request.url_for("index")
+    response = RedirectResponse(url=redirect_url)
     response.delete_cookie("session_user")
     return response

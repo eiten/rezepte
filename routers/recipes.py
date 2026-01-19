@@ -7,8 +7,8 @@ from template_config import templates
 
 router = APIRouter()
 
-@router.get("/", response_class=HTMLResponse)
-async def read_root(request: Request, db: aiosqlite.Connection = Depends(get_db_connection)):
+@router.get("/", response_class=HTMLResponse, name="index")
+async def index(request: Request, db: aiosqlite.Connection = Depends(get_db_connection)):
     """ Home page: List all recipes """
     user_ctx = await get_user_context(request, db)
     

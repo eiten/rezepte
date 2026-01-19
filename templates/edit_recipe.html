@@ -9,7 +9,7 @@
             <p class="text-slate-500 text-sm">ID: {{ recipe.id }}</p>
         </div>
         <div class="flex gap-2">
-            <a href="/recipe/{{ recipe.id }}" class="px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors no-underline">Abbrechen</a>
+            <a href="javascript:history.back();" class="px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors no-underline">Abbrechen</a>
             <button type="submit" form="recipe-edit-form" class="px-6 py-2 bg-accent hover:bg-accent-dark text-white rounded-lg shadow-sm font-medium transition-colors">Speichern</button>
         </div>
     </div>
@@ -50,18 +50,18 @@
                     <div class="flex items-center gap-3">
                         <span class="step-number bg-slate-200 text-slate-600 text-xs font-bold px-2 py-1 rounded">#{{ step.position }}</span>
                         
-<div class="flex rounded-lg border border-slate-300 overflow-hidden divide-x divide-slate-300 bg-white shadow-sm">
-    <label class="group/lbl cursor-pointer relative px-3 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-50 transition-colors has-[:checked]:bg-accent/10 has-[:checked]:text-accent has-[:checked]:font-bold">
-        <input type="radio" name="steps[{{ step_idx }}][type]" value="ingredients" class="peer hidden" {% if step.is_ingredients %}checked{% endif %} data-toggle-type>
-        Zubereitung
-        <span class="absolute bottom-0 left-0 w-full h-0.5 bg-accent scale-x-0 peer-checked:scale-x-100 transition-transform"></span>
-    </label>
-    <label class="group/lbl cursor-pointer relative px-3 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-50 transition-colors has-[:checked]:bg-accent/10 has-[:checked]:text-accent has-[:checked]:font-bold">
-        <input type="radio" name="steps[{{ step_idx }}][type]" value="category" class="peer hidden" {% if not step.is_ingredients %}checked{% endif %} data-toggle-type>
-        Info / Kategorie
-        <span class="absolute bottom-0 left-0 w-full h-0.5 bg-accent scale-x-0 peer-checked:scale-x-100 transition-transform"></span>
-    </label>
-</div>
+                        <div class="flex rounded-lg border border-slate-300 overflow-hidden divide-x divide-slate-300 bg-white shadow-sm">
+                            <label class="group/lbl cursor-pointer relative px-3 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-50 transition-colors has-[:checked]:bg-accent/10 has-[:checked]:text-accent has-[:checked]:font-bold">
+                                <input type="radio" name="steps[{{ step_idx }}][type]" value="ingredients" class="peer hidden" {% if step.is_ingredients %}checked{% endif %} data-toggle-type>
+                                Zubereitung
+                                <span class="absolute bottom-0 left-0 w-full h-0.5 bg-accent scale-x-0 peer-checked:scale-x-100 transition-transform"></span>
+                            </label>
+                            <label class="group/lbl cursor-pointer relative px-3 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-50 transition-colors has-[:checked]:bg-accent/10 has-[:checked]:text-accent has-[:checked]:font-bold">
+                                <input type="radio" name="steps[{{ step_idx }}][type]" value="category" class="peer hidden" {% if not step.is_ingredients %}checked{% endif %} data-toggle-type>
+                                Info / Kategorie
+                                <span class="absolute bottom-0 left-0 w-full h-0.5 bg-accent scale-x-0 peer-checked:scale-x-100 transition-transform"></span>
+                            </label>
+                        </div>
                     </div>
 
                     <div class="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
@@ -152,13 +152,12 @@
                                 <span class="text-lg">+</span> Zutat hinzufügen
                             </button>
                         </div>
-
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Anleitung</label>
-                            <textarea name="steps[{{ step_idx }}][markdown_text]" rows="3" 
-                                      class="px-2 py-1 w-full rounded-lg border-slate-300 bg-slate-50 focus:bg-white focus:border-accent focus:ring-accent transition-colors"
-                                      placeholder="Beschreibe den Schritt...">{{ step.markdown_text or '' }}</textarea>
-                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Anleitung</label>
+                        <textarea name="steps[{{ step_idx }}][markdown_text]" rows="3" 
+                                    class="px-2 py-1 w-full rounded-lg border-slate-300 bg-slate-50 focus:bg-white focus:border-accent focus:ring-accent transition-colors"
+                                    placeholder="Beschreibe den Schritt...">{{ step.markdown_text or '' }}</textarea>
                     </div>
                 </div>
             </div>
@@ -236,13 +235,12 @@
                         <span class="text-lg">+</span> Zutat hinzufügen
                     </button>
                 </div>
-
-                <div>
-                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Anleitung</label>
-                    <textarea name="steps[__IDX__][markdown_text]" rows="3" 
-                              class="px-2 py-1 w-full rounded-lg border-slate-300 bg-slate-50 focus:bg-white focus:border-accent focus:ring-accent transition-colors"
-                              placeholder="Beschreibe den Schritt..."></textarea>
-                </div>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Anleitung</label>
+                <textarea name="steps[__IDX__][markdown_text]" rows="3" 
+                            class="px-2 py-1 w-full rounded-lg border-slate-300 bg-slate-50 focus:bg-white focus:border-accent focus:ring-accent transition-colors"
+                            placeholder="Beschreibe den Schritt..."></textarea>
             </div>
         </div>
     </div>
