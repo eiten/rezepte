@@ -18,6 +18,8 @@ async def read_root(request: Request, db: aiosqlite.Connection = Depends(get_db_
     return templates.TemplateResponse("index.html", {
         "request": request,
         "recipes": recipes,
+        "is_admin": user_ctx["is_admin"],
+        "current_user_id": user_ctx["user_id"],
         **user_ctx
     })
 

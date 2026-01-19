@@ -2,16 +2,17 @@ common:
   app_name: "Rezept Manager"
   version: "0.1.0"
 
-development:
+dev:
   host: "0.0.0.0"
   port: 8080
   debug: true
   reload: true
+  root_path: "/rezepte"
   # Relative path for development
   database_url: "sqlite+aiosqlite:///./data/recipes.db"
   pdf_cache_dir: "./cache"
 
-production:
+prod:
   host: "0.0.0.0"
   port: 80
   debug: false

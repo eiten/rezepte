@@ -9,7 +9,12 @@ from routers import recipes, pdf, auth, admin
 config = get_config()
 
 # App setup
-app = FastAPI(title=config['app_name'], debug=config['debug'])
+app = FastAPI(
+    title=config['app_name'],
+    debug=config['debug'],
+    root_path=config.get('root_path', "")
+)
+print(f"App root path: {app.root_path}")
 
 # Static files
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -22,4 +27,11 @@ app.include_router(auth.router)
 
 if __name__ == "__main__":
     print(f"🚀 Starting on port {config['port']}...")
-    uvicorn.run("main:app", host=config['host'], port=config['port'], reload=config['reload'])
+    uvicorn.run(
+        "main:app",
+        host=config['host'],
+        port=config['port'],
+        reload=config['reload'],
+        proxy_headers=True,
+        forwarded_allow_ips="*"
+    )

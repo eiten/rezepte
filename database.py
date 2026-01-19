@@ -6,7 +6,8 @@ from functools import lru_cache
 
 @lru_cache()
 def get_config():
-    env = os.getenv("APP_ENV", "development")
+    env = os.getenv("APP_ENV", "dev")
+    print(f"Loading configuration for environment: {env}")
     base_dir = os.path.dirname(os.path.abspath(__file__))
     config_path = os.path.join(base_dir, "config.yaml")
     

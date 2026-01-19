@@ -5,7 +5,7 @@
 /* -------- FONTS -------- */
 @font-face {
     font-family: 'Phosphor';
-    src: url('/static/fonts/Phosphor.ttf') format('truetype');
+    src: url('../fonts/Phosphor.ttf') format('truetype');
     font-weight: normal;
     font-style: normal;
 }
@@ -36,14 +36,26 @@
     -moz-osx-font-smoothing: grayscale;
 }
 
-.hint {
-    color: #d58e00;
+.ph-input-icon {
+    font-family: 'Phosphor';
+    font-style: normal;
+    font-weight: normal;
+    line-height: 1;
+    display: inline-block;
+    font-size: 1em; 
+    vertical-align: text-bottom;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
-.table-header-bold {
-    font-weight: bold;
-}
-
-.text-right {
-    text-align: right;
+.ph-hdr-icon {
+    font-family: 'Phosphor';
+    font-style: normal;
+    font-weight: normal;
+    line-height: 1;
+    display: inline-block;
+    font-size: 1.7em; 
+    vertical-align: text-bottom;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
