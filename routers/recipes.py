@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Request, HTTPException, Depends
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 import aiosqlite
 import markdown
 from database import get_db_connection, get_user_context
@@ -7,7 +7,41 @@ from template_config import templates
 
 router = APIRouter()
 
-@router.get("/", response_class=HTMLResponse, name="index")
+def parse_amount(amount_str: str):
+    """
+    Parst '300', '300-400', '300-400' oder '- 450' in min/max Werte.
+    Behandelt führende Bindestriche als Aufzählungszeichen.
+    """
+    if not amount_str:
+        return None, None
+    
+    # 1. Komma zu Punkt, Leerzeichen außen weg
+    s = amount_str.replace(',', '.').strip()
+    
+    # 2. NEU: Führende Bindestriche entfernen
+    # Aus "-450" oder "- 450" wird "450".
+    # Das verhindert, dass es fälschlicherweise als "bis 450" (Range) erkannt wird.
+    if s.startswith('-'):
+        s = s.lstrip('-').strip()
+
+    # 3. Bereichsprüfung (Bindestrich IN DER MITTE)
+    if '-' in s:
+        parts = s.split('-')
+        try:
+            # Strip nochmal, falls "300 - 400" (mit Leerzeichen um Strich)
+            val_min = float(parts[0].strip()) if parts[0].strip() else None
+            val_max = float(parts[1].strip()) if parts[1].strip() else None
+            return val_min, val_max
+        except ValueError:
+            return None, None
+            
+    # 4. Einzelwert
+    try:
+        return float(s), None
+    except ValueError:
+        return None, None
+    
+@router.get("/", response_class=HTMLResponse)
 async def index(request: Request, db: aiosqlite.Connection = Depends(get_db_connection)):
     """ Home page: List all recipes """
     user_ctx = await get_user_context(request, db)
@@ -92,11 +126,11 @@ async def edit_recipe(request: Request, recipe_id: int, db: aiosqlite.Connection
         recipe = await cursor.fetchone()
     
     if not recipe:
-        raise HTTPException(status_code=404, detail="Recipe not found")
+        raise HTTPException(status_code=404, detail="Rezept nicht gefunden")
     
     # Only admin or owner can edit
     if not user_ctx["is_admin"] and user_ctx["user_id"] != recipe["owner_id"]:
-        raise HTTPException(status_code=403, detail="Not authorized")
+        raise HTTPException(status_code=403, detail="Nicht autorisiert")
     
     # Get all steps with their ingredients
     async with db.execute("""
@@ -142,6 +176,136 @@ async def edit_recipe(request: Request, recipe_id: int, db: aiosqlite.Connection
         "units": units,
         **user_ctx
     })
+
+@router.post("/recipe/{recipe_id}/edit")
+async def update_recipe(request: Request, recipe_id: int, db: aiosqlite.Connection = Depends(get_db_connection)):
+    user_ctx = await get_user_context(request, db)
+    
+    # 1. Rechte prüfen
+    async with db.execute("SELECT owner_id FROM recipes WHERE id = ?", (recipe_id,)) as cursor:
+        row = await cursor.fetchone()
+        
+    if not row:
+        raise HTTPException(status_code=404, detail="Rezept nicht gefunden")
+    
+    if not user_ctx["is_admin"] and user_ctx["user_id"] != row["owner_id"]:
+        raise HTTPException(status_code=403, detail="Nicht autorisiert")
+
+    # 2. Formulardaten parsen
+    form = await request.form()
+    
+    # Basisdaten Update
+    await db.execute("""
+        UPDATE recipes 
+        SET name=?, author=?, source=?, preamble=?, updated_at=CURRENT_TIMESTAMP 
+        WHERE id=?
+    """, (
+        form.get("name"), 
+        form.get("author"), 
+        form.get("source"), 
+        form.get("preamble"), 
+        recipe_id
+    ))
+
+    # 3. Schritte & Zutaten verarbeiten
+    # Wir sammeln alle IDs, die im Formular vorkommen, um den Rest später zu löschen
+    kept_step_ids = []
+    
+    # Wir iterieren über den Index (0, 1, 2...), da dein JS die Indizes sauber neu durchnummeriert
+    step_idx = 0
+    while f"steps[{step_idx}][position]" in form:
+        s_prefix = f"steps[{step_idx}]"
+        
+        step_id_str = form.get(f"{s_prefix}[id]")
+        step_id = int(step_id_str) if step_id_str else None
+        
+        position = form.get(f"{s_prefix}[position]")
+        markdown_text = form.get(f"{s_prefix}[markdown_text]")
+        step_type = form.get(f"{s_prefix}[type]") # 'ingredients' oder 'category'
+        
+        if step_type == 'category':
+            # Wenn "Info / Kategorie" gewählt wurde, nehmen wir den Wert aus dem Dropdown
+            raw_cat = form.get(f"{s_prefix}[category_id]")
+            cat_id = int(raw_cat) if raw_cat and raw_cat.isdigit() else 1
+        else:
+            cat_id = 1
+
+        # Step Upsert (Update oder Insert)
+        if step_id:
+            await db.execute("""
+                UPDATE steps SET position=?, markdown_text=?, category_id=? WHERE id=?
+            """, (position, markdown_text, cat_id, step_id))
+            kept_step_ids.append(step_id)
+            current_step_db_id = step_id
+        else:
+            cursor = await db.execute("""
+                INSERT INTO steps (recipe_id, position, markdown_text, category_id) 
+                VALUES (?, ?, ?, ?) RETURNING id
+            """, (recipe_id, position, markdown_text, cat_id))
+            new_step_row = await cursor.fetchone()
+            current_step_db_id = new_step_row[0]
+            kept_step_ids.append(current_step_db_id)
+
+        # Zutaten für diesen Schritt verarbeiten
+        kept_ing_ids = []
+        ing_idx = 0
+        while f"{s_prefix}[ingredients][{ing_idx}][item]" in form:
+            i_prefix = f"{s_prefix}[ingredients][{ing_idx}]"
+            
+            ing_id_str = form.get(f"{i_prefix}[id]")
+            ing_id = int(ing_id_str) if ing_id_str else None
+            
+            # Menge parsen (z.B. "300-400")
+            amt_combined = form.get(f"{i_prefix}[amount_combined]")
+            amount_min, amount_max = parse_amount(amt_combined)
+            
+            unit_id = form.get(f"{i_prefix}[unit_id]") or None
+            item = form.get(f"{i_prefix}[item]")
+            note = form.get(f"{i_prefix}[note]")
+            
+            if ing_id:
+                await db.execute("""
+                    UPDATE ingredients 
+                    SET position=?, amount_min=?, amount_max=?, unit_id=?, item=?, note=?
+                    WHERE id=?
+                """, (ing_idx + 1, amount_min, amount_max, unit_id, item, note, ing_id))
+                kept_ing_ids.append(ing_id)
+            else:
+                await db.execute("""
+                    INSERT INTO ingredients (step_id, position, amount_min, amount_max, unit_id, item, note)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                """, (current_step_db_id, ing_idx + 1, amount_min, amount_max, unit_id, item, note))
+                # Neu eingefügte Zutaten müssen wir hier nicht zwingend tracken, 
+                # da wir gleich alles löschen, was NICHT in kept_ing_ids ist (für diesen Schritt).
+                # Aber Achtung: Das Löschen unten bezieht sich auf IDs, die VORHER da waren.
+                # Sicherer Weg: Lösche alle Zutaten dieses Schritts, die NICHT in kept_ing_ids sind.
+            
+            ing_idx += 1
+            
+        # Aufräumen: Zutaten löschen, die nicht mehr im Formular waren (nur für diesen Schritt!)
+        if kept_ing_ids:
+            placeholders = ",".join("?" * len(kept_ing_ids))
+            await db.execute(f"DELETE FROM ingredients WHERE step_id=? AND id NOT IN ({placeholders})", (current_step_db_id, *kept_ing_ids))
+        else:
+            # Wenn keine Zutaten mehr da sind, aber vorher welche da waren -> Alle löschen
+            # (Wir gehen davon aus, dass neu angelegte Steps keine alten Zutaten haben)
+            await db.execute("DELETE FROM ingredients WHERE step_id=?", (current_step_db_id,))
+            
+        step_idx += 1
+
+    # 4. Aufräumen: Schritte löschen, die komplett entfernt wurden
+    if kept_step_ids:
+        placeholders = ",".join("?" * len(kept_step_ids))
+        await db.execute(f"DELETE FROM steps WHERE recipe_id=? AND id NOT IN ({placeholders})", (recipe_id, *kept_step_ids))
+    else:
+        # Vorsicht: Wenn alle Schritte gelöscht wurden
+        await db.execute("DELETE FROM steps WHERE recipe_id=?", (recipe_id,))
+
+    await db.commit()
+    
+    # Redirect zur Ansicht
+    redirect_url = request.url_for("read_recipe", recipe_id=recipe_id)
+    return RedirectResponse(url=redirect_url, status_code=303)
 
 @router.get("/recipe/{recipe_id}/delete", response_class=HTMLResponse)
 async def delete_recipe(request: Request, recipe_id: int, db: aiosqlite.Connection = Depends(get_db_connection)):

@@ -14,7 +14,7 @@
         </div>
     </div>
 
-    <form action="/recipe/{{ recipe.id }}/edit" method="post" id="recipe-edit-form" class="space-y-8">
+    <form action="{{ url_for('edit_recipe', recipe_id=recipe.id) }}" method="post" id="recipe-edit-form" class="space-y-8">
         
         <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
             <h2 class="text-lg font-semibold text-slate-800 mb-4 border-b pb-2">Basisdaten</h2>
@@ -22,21 +22,21 @@
                 <div class="md:col-span-2">
                     <label class="block text-sm font-medium text-slate-700 mb-1">Rezeptname</label>
                     <input type="text" name="name" value="{{ recipe.name }}" required 
-                           class="w-full rounded-lg border-slate-300 focus:border-accent focus:ring-accent">
+                           class="px-2 w-full rounded-lg border-slate-300 focus:border-accent focus:ring-accent">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1">Autor</label>
                     <input type="text" name="author" value="{{ recipe.author }}"
-                           class="w-full rounded-lg border-slate-300 focus:border-accent focus:ring-accent">
+                           class="px-2 w-full rounded-lg border-slate-300 focus:border-accent focus:ring-accent">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1">Quelle</label>
                     <input type="text" name="source" value="{{ recipe.source }}"
-                           class="w-full rounded-lg border-slate-300 focus:border-accent focus:ring-accent">
+                           class="px-2 w-full rounded-lg border-slate-300 focus:border-accent focus:ring-accent">
                 </div>
                 <div class="md:col-span-2">
                     <label class="block text-sm font-medium text-slate-700 mb-1">Einführung / Preamble</label>
-                    <textarea name="preamble" rows="3" class="w-full rounded-lg border-slate-300 focus:border-accent focus:ring-accent">{{ recipe.preamble or '' }}</textarea>
+                    <textarea name="preamble" rows="3" class="px-2 w-full rounded-lg border-slate-300 focus:border-accent focus:ring-accent">{{ recipe.preamble or '' }}</textarea>
                 </div>
             </div>
         </div>
@@ -111,8 +111,10 @@
                                                value="{{ '%g'|format(ing.amount_min) if ing.amount_min else '' }}{{ '-' ~ '%g'|format(ing.amount_max) if ing.amount_max else '' }}"
                                                placeholder="Menge"
                                                class="w-full text-right rounded-md border-slate-300 py-1.5 px-2 text-sm focus:border-accent focus:ring-accent"
-                                               pattern="[0-9.,\-]*"
-                                               title="Zahl oder Bereich (z.B. 100-200)">
+                                               inputmode="decimal"
+                                               pattern="^(\s*-\s*)?[\d]+([.,][\d]+)?(\s*-\s*[\d]+([.,][\d]+)?)?$"
+                                               title="Zahl oder Bereich (z.B. 100-200.5)"
+                                               oninput="this.value = this.value.replace(/[^0-9.,\-\s]/g, '')">
                                     </div>
 
                                     <div class="w-20 shrink-0">
@@ -338,8 +340,49 @@ function removeIngredient(btn) {
     }
 }
 
-// Add Step Funktion (vereinfacht für Tailwind Template)
-// Hier müsstest du das HTML für eine neue Step-Card als Template-String hinterlegen,
-// ähnlich wie oben, nur halt für die ganze Karte.
+function updateStepPositions() {
+    const steps = document.querySelectorAll('.step-card');
+    steps.forEach((step, index) => {
+        // Index für Array (0-basiert)
+        const arrayIdx = index;
+        // Position für Anzeige (1-basiert)
+        const pos = index + 1;
+
+        // 1. Visuelle Nummer oben links aktualisieren
+        const numberBadge = step.querySelector('.step-number');
+        if(numberBadge) numberBadge.textContent = '#' + pos;
+
+        // 2. Hidden Input für Position aktualisieren
+        const posInput = step.querySelector('input[name*="[position]"]');
+        if(posInput) posInput.value = pos;
+
+        // 3. Name-Attribute neu nummerieren (Wichtig für Backend!)
+        // Das ist etwas aufwendiger, stellt aber sicher, dass beim Speichern steps[0], steps[1]... stimmt
+        // Regex sucht nach steps[Zahl] und ersetzt es durch steps[NeuerIndex]
+        const inputs = step.querySelectorAll('input, select, textarea');
+        inputs.forEach(input => {
+            if (input.name) {
+                input.name = input.name.replace(/steps\[\d+\]/, `steps[${arrayIdx}]`);
+            }
+        });
+    });
+}
+
+function moveStepUp(btn) {
+    const step = btn.closest('.step-card');
+    if (step && step.previousElementSibling) {
+        step.parentNode.insertBefore(step, step.previousElementSibling);
+        updateStepPositions();
+    }
+}
+
+function moveStepDown(btn) {
+    const step = btn.closest('.step-card');
+    if (step && step.nextElementSibling) {
+        step.parentNode.insertBefore(step.nextElementSibling, step);
+        updateStepPositions();
+    }
+}
+
 </script>
 {% endblock %}

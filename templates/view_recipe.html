@@ -47,7 +47,7 @@
                             <ul class="ingredient-list">
                                 {% for ing in step.ingredients %}
                                 <li class="ingredient-item">
-                                    {{ "%g" % ing.amount_min }} 
+                                    {% if ing.amount_min %}{{ "%g" % ing.amount_min }}{% endif %}
                                     {% if ing.amount_max %}- {{ "%g" % ing.amount_max }}{% endif %}
                                     {{ ing.unit_symbol }} 
                                     <strong>{{ ing.item }}</strong>
