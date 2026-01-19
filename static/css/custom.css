@@ -59,3 +59,32 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
+
+/* --- Tiptopf Recipe Styles --- */
+
+.recipe-view-container {
+    /* Schriftgröße leicht anheben für bessere Lesbarkeit */
+    font-size: 1.125rem; /* Entspricht text-lg (ca. 18px) */
+    line-height: 1.6;
+}
+
+/* In der schlichten Ansicht wollen wir, dass die Markdown-Absätze 
+   nicht zu riesige Abstände erzeugen */
+.recipe-view-container .prose p {
+    margin-bottom: 0.75rem;
+}
+
+.recipe-view-container .prose p:last-child {
+    margin-bottom: 0;
+}
+
+/* Print-Optimierung: Verstecke die Navigation beim Drucken */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    .recipe-view-container {
+        margin-top: 0 !important;
+        padding-bottom: 0 !important;
+    }
+}
