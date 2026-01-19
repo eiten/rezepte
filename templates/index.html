@@ -32,7 +32,7 @@
             <div class="flex items-center justify-between py-2 px-3 cursor-pointer sm:cursor-default" 
                  onclick="toggleMobileMenu('{{ recipe.id }}')">
                 
-                <div class="flex items-center gap-4 flex-1 min-w-0">
+                <div class="row-recipe flex items-center gap-4 flex-1 min-w-0" data-recipe-id="{{ recipe.id }}">
                     <div class="min-w-0">
                         <h2 class="text-lg font-semibold text-slate-800 truncate leading-tight group-hover:text-accent transition-colors">
                             <a href="{{ url_for('read_recipe', recipe_id=recipe.id) }}" class="no-underline">{{ recipe.name }}</a>
@@ -48,7 +48,7 @@
                     <a href="{{ url_for('edit_recipe', recipe_id=recipe.id) }}" class="px-2 py-1 border-r border-slate-400 color-nav-bg color-nav-text hover:bg-accent-soft hover:text-accent no-underline transition-colors"><span class="ph-btn-icon text-lg mr-1">&#xE3B4;</span><span class="hidden lg:inline"> Bearbeiten</span></a>
                     {% endif %}
                     {% if is_admin %}
-                    <a href="#" class="px-2 py-1 border-r border-slate-400 color-nav-bg color-nav-text text-danger bg-danger-soft hover:bg-danger hover:text-white no-underline transition-colors"><span class="ph-btn-icon text-lg mr-1">&#xE4A6;</span><span class="hidden lg:inline"> Löschen</span></a>
+                    <button onclick="removeRecipe(this)" data-delete-url="{{ url_for('delete_recipe', recipe_id=recipe.id) }}" class="px-2 py-1 border-r border-slate-400 color-nav-bg color-nav-text text-danger bg-danger-soft hover:bg-danger hover:text-white no-underline transition-colors"> <span class="ph-btn-icon text-lg mr-1">&#xE4A6;</span><span class="hidden lg:inline"> Löschen</span></button>
                     {% endif %}
                     <a href="{{ url_for('get_pdf', recipe_id=recipe.id) }}" class="px-2 py-1 color-nav-bg color-nav-text hover:bg-accent-soft hover:text-accent no-underline transition-colors"><span class="ph-btn-icon text-lg mr-1">&#xE702;</span><span class="hidden lg:inline"> PDF</span></a>
                 </div>
@@ -59,6 +59,16 @@
 </div>
 
 <script>
+function removeRecipe(btn) {
+    // URL direkt aus dem Attribut lesen
+    const deleteUrl = btn.getAttribute('data-delete-url');
+    
+    if (confirm('Rezept wirklich unwiderruflich löschen?')) {
+        // Direkt zur Lösch-URL navigieren
+        window.location.href = deleteUrl;
+    }
+}   
+
 function toggleMobileMenu(id) {
     if (window.innerWidth >= 768) return; // Nur auf Mobile
     

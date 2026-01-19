@@ -21,7 +21,7 @@
             
             <button type="submit" form="recipe-edit-form" class="px-6 py-2 bg-accent hover:bg-accent-dark text-white rounded-lg shadow-sm font-medium transition-colors">
                 {% if mode == 'add' %}Erstellen{% else %}Speichern{% endif %}
-            </button>
+            </button> 
         </div>
     </div>
 
@@ -33,21 +33,24 @@
                 <div class="md:col-span-2">
                     <label class="block text-sm font-medium text-slate-700 mb-1">Rezeptname</label>
                     <input type="text" name="name" value="{{ recipe.name }}" required 
-                           class="px-2 w-full rounded-lg border-slate-300 focus:border-accent focus:ring-accent">
+                           class="px-2 w-full rounded-lg border-slate-300 focus:border-accent focus:ring-accent"
+                           placeholder="Rezeptname...">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1">Autor</label>
                     <input type="text" name="author" value="{{ recipe.author }}"
-                           class="px-2 w-full rounded-lg border-slate-300 focus:border-accent focus:ring-accent">
+                           class="px-2 w-full rounded-lg border-slate-300 focus:border-accent focus:ring-accent"
+                           placeholder="Autor...">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1">Quelle</label>
                     <input type="text" name="source" value="{{ recipe.source }}"
-                           class="px-2 w-full rounded-lg border-slate-300 focus:border-accent focus:ring-accent">
+                           class="px-2 w-full rounded-lg border-slate-300 focus:border-accent focus:ring-accent"
+                           placeholder="Quelle, zum Beispiel Oma Gertrud...">
                 </div>
                 <div class="md:col-span-2">
                     <label class="block text-sm font-medium text-slate-700 mb-1">Einführung / Preamble</label>
-                    <textarea name="preamble" rows="3" class="px-2 w-full rounded-lg border-slate-300 focus:border-accent focus:ring-accent">{{ recipe.preamble or '' }}</textarea>
+                    <textarea name="preamble" rows="3" class="px-2 w-full rounded-lg border-slate-300 focus:border-accent focus:ring-accent" placeholder="Einführung, wenn gewünscht...">{{ recipe.preamble or '' }}</textarea>
                 </div>
             </div>
         </div>
