@@ -36,12 +36,14 @@
     Path = << FONT_PATH >>,
     Extension = .ttf,
     Renderer = HarfBuzz,
-    UprightFont = Phosphor,
-    Ligatures=TeX
+    UprightFont = Phosphor-Light, % Default is Light
+    BoldFont = Phosphor           % Bold switch uses Regular
 ]{Phosphor}
 
+\newcommand{\picon}[1]{\raisebox{-1.1pt}{\iconFont\symbol{"#1}}}
+
 % -- Layout --
-\usepackage[left=2.5cm, right=2.5cm, top=2cm, bottom=2cm, includehead, includefoot]{geometry}
+\usepackage[left=2cm, right=2cm, top=1.5cm, bottom=1.5cm, includehead, includefoot]{geometry}
 \usepackage{tabularx}
 \usepackage{booktabs}
 \usepackage{parskip} 
@@ -55,12 +57,11 @@
 \pagestyle{scrheadings}
 \clearpairofpagestyles 
 
-\ifoot[\footnotesize Generiert: << date_print >>]{\footnotesize Generiert: << date_print >>}
+\ifoot[\footnotesize Generiert: << date_print >>]{\footnotesize https://rezepte.iten.pro}
 \cfoot[\ccbyncsa]{\ccbyncsa}
 \ofoot[\footnotesize Stand: << date_version >>]{\footnotesize Letzte Änderung: << date_version >>}
 
 % -- Science & Units --
-\usepackage[version=4]{mhchem}
 \usepackage{siunitx}
 \sisetup{
   locale = DE, 
@@ -101,7 +102,7 @@ Von << recipe.author >>
 
 % -- Content Table --
 \noindent
-\begin{tabularx}{\textwidth}{@{} >{\raggedright\arraybackslash}p{4cm} X @{}}
+\begin{tabularx}{\textwidth}{@{} >{\raggedright\arraybackslash}p{3.5cm} X @{}}
     %\toprule
     \textbf{Zutaten} & \textbf{Zubereitung} \\
     \midrule
@@ -111,12 +112,18 @@ Von << recipe.author >>
             % -- CASE A: Normal ingredient list --
             <% if step.ingredients -%>
                 <% for ing in step.ingredients -%>
-                    <% if ing.amount_max -%>
-                        \qtyrange{<< ing.amount_min >>}{<< ing.amount_max >>}{<< ing.unit_cmd >>}
+                    <% if ing.amount_min -%>
+                        % -- Case 1: Quantity exists --
+                        <% if ing.amount_max -%>
+                            \qtyrange{<< ing.amount_min >>}{<< ing.amount_max >>}{<< ing.unit_cmd >>}
+                        <% else -%>
+                            \qty{<< ing.amount_min >>}{<< ing.unit_cmd >>}
+                        <% endif -%>
+                        ~<< ing.item >>
                     <% else -%>
-                        \qty{<< ing.amount_min >>}{<< ing.unit_cmd >>}
+                        % -- Case 2: No quantity (e.g. Bittermandelaroma) --
+                        << ing.item >>
                     <% endif -%>
-                     ~<< ing.item >>
                     <% if ing.note -%> \textit{\small{(<< ing.note >>)}}<% endif -%>
                     <% if not loop.last -%>\newline<% endif -%> 
                 <% endfor -%>

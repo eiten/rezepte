@@ -16,7 +16,7 @@ config = get_config()
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FONT_PATH = os.path.join(BASE_DIR, "latex_templates", "ttf", "") # Trailing slash is important!
 
-# Setup Jinja2
+# LaTeX Jinja2 environment with custom delimiters
 latex_jinja_env = jinja2.Environment(
     loader=jinja2.FileSystemLoader('latex_templates'),
     block_start_string='<%',
@@ -42,12 +42,42 @@ def escape_latex(text):
     return text
 
 def md_to_latex(text):
-    """Convert basic markdown formatting to LaTeX"""
+    """Convert markdown and emoticons to LaTeX icons"""
     if not text: return ""
     import re
-    text = re.sub(r'\*\*(.*?)\*\*', r'\\textbf{\1}', text)  # Bold
-    text = re.sub(r'\*(.*?)\*', r'\\textit{\1}', text)  # Italic
-    text = re.sub(r'(\d+)\s*°C', r'\\qty{\1}{\\degreeCelsius}', text)  # Temperature
+    
+    # 1. Trim and basic cleanup
+    text = text.strip().replace('\r\n', '\n')
+
+    # 2. Emoticon to Icon mapping (Phosphor Codepoints)
+    # We wrap them in a custom LaTeX command \picon{}
+    emoticons = {
+        r':\)':  'E436',  # Smiley
+        r':\(':  'E43E',  # Sad
+        r';\)':  'E666',  # Wink
+        r'\(y\)': 'E48E', # Thumb up (classic Skype/Messenger style)
+        r'<3':    'E2A8', # Heart
+        r'!!':    'E4E2', # Warning
+        r'@@':    'E19A', # Clock
+        r'!t':    'E5CC'  # Thermometer
+    }
+    for emo, code in emoticons.items():
+        # Using a regex with word boundaries or space checks to avoid 
+        # accidental replacements inside URLs etc.
+        text = re.sub(emo, rf'\\picon{{{code}}}', text)
+
+    # 3. Basic Markdown (Bold, Italic, Units)
+    text = re.sub(r'\*\*(.*?)\*\*', r'\\textbf{\1}', text)
+    text = re.sub(r'\*(.*?)\*', r'\\textit{\1}', text)
+    text = re.sub(r'(\d+)\s*°C', r'\\qty{\1}{\\degreeCelsius}', text)
+
+    # 4. Handle Newlines
+    # \addlinespace is great because you are already using booktabs
+    text = re.sub(r'\n\n+', r'\\addlinespace[0.5em] ', text)
+
+    # Convert single newlines
+    text = re.sub(r'\n', r'\\newline ', text)
+
     return text
 
 @router.get("/recipe/{recipe_id}/pdf")
@@ -134,6 +164,7 @@ async def get_pdf(recipe_id: int, db: aiosqlite.Connection = Depends(get_db_conn
                 ingredients = []
                 for ing in ing_rows:
                     i = dict(ing)
+                    
                     # Format amounts (strip trailing zeros)
                     if i['amount_min'] is not None: i['amount_min'] = f"{i['amount_min']:g}"
                     if i['amount_max'] is not None: i['amount_max'] = f"{i['amount_max']:g}"
@@ -143,17 +174,18 @@ async def get_pdf(recipe_id: int, db: aiosqlite.Connection = Depends(get_db_conn
                     
                     # Determine unit command for LaTeX
                     if i['latex_code']:
-                        # Fall 1: Perfekter Latex Code aus DB (z.B. \gram)
+                        # Case 1: Valid LaTeX code from database (e.g., \gram)
                         i['unit_cmd'] = i['latex_code']
                     elif i['symbol']:
-                        # Fall 2: Kein Latex Code, aber ein Symbol (z.B. "mg") -> Wir basteln "\mg"
+                        # Case 2: No LaTeX code, but symbol exists (e.g., "mg") -> create "\mg"
                         clean_sym = "".join([c for c in i['symbol'] if c.isalpha()])
                         if not clean_sym: 
-                            clean_sym = "UnitX" # Fallback für Symbole ohne Buchstaben
+                            clean_sym = "UnitX" # Fallback for non-alphabetic symbols
                         i['unit_cmd'] = f"\\{clean_sym}"
                     else:
-                        # Fall 3: Gar keine Einheit (z.B. "3 Eier" ohne 'Stk' Auswahl)
-                        i['unit_cmd'] = ""
+                        # Case 3: No unit at all (e.g., "3 Eggs")
+                        # We use empty braces {} because siunitx requires a second argument
+                        i['unit_cmd'] = "{}"
 
                     ingredients.append(i)
                 s_dict["ingredients"] = ingredients
