@@ -1,8 +1,12 @@
 {% extends "base.html" %}
-{% block title %}{% if mode == 'add' %}Neues Rezept{% else %}Rezept bearbeiten{% endif %}{% endblock %}
+{% block title %}{% if mode == 'add' %}New Recipe{% else %}Edit Recipe{% endif %}{% endblock %}
 
 {% block content %}
 <div class="max-w-4xl mx-auto pb-12">
+    
+    <!-- ================================= -->
+    <!-- PAGE HEADER WITH ACTION BUTTONS   -->
+    <!-- ================================= -->
     <div class="flex items-center justify-between mb-8">
         <div>
             <h1 class="text-3xl font-bold text-slate-800 mb-1">
@@ -25,8 +29,12 @@
         </div>
     </div>
 
+    <!-- ================================= -->
+    <!-- MAIN FORM                         -->
+    <!-- ================================= -->
     <form action="{% if mode == 'add' %}{{ url_for('create_recipe') }}{% else %}{{ url_for('update_recipe', recipe_id=recipe.id) }}{% endif %}" method="post" id="recipe-edit-form" class="space-y-8">
         
+        <!-- Basic Recipe Metadata -->
         <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
             <h2 class="text-lg font-semibold text-slate-800 mb-4 border-b pb-2">Basisdaten</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -55,6 +63,9 @@
             </div>
         </div>
 
+        <!-- ================================= -->
+        <!-- STEPS CONTAINER                   -->
+        <!-- ================================= -->
         <div id="steps-container" class="space-y-6">
             {% for step in steps %}
             {% set step_idx = loop.index0 %}
@@ -62,10 +73,12 @@
                 data-step-id="{{ step.id }}" 
                 data-step-index="{{ step_idx }}">
 
+                <!-- Step Card Header: Position Badge + Type Toggle + Move/Delete Buttons -->
                 <div class="bg-slate-50 px-4 py-3 border-b border-slate-200 flex items-center justify-between">
                     <div class="flex items-center gap-3">
                         <span class="step-number bg-slate-200 text-slate-600 text-xs font-bold px-2 py-1 rounded">#{{ step.position }}</span>
                         
+                        <!-- Type Toggle: Preparation (with ingredients) vs Info/Category -->
                         <div class="flex rounded-lg border border-slate-300 overflow-hidden divide-x divide-slate-300 bg-white shadow-sm">
                             <label class="group/lbl cursor-pointer relative px-3 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-50 transition-colors has-[:checked]:bg-accent/10 has-[:checked]:text-accent has-[:checked]:font-bold">
                                 <input type="radio" name="steps[{{ step_idx }}][type]" value="ingredients" class="peer hidden" {% if step.is_ingredients %}checked{% endif %} data-toggle-type>
@@ -80,24 +93,27 @@
                         </div>
                     </div>
 
+                    <!-- Move/Delete Buttons -->
                     <div class="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                        <button type="button" onclick="moveStepUp(this)" class="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200 rounded" title="Hoch">
+                        <button type="button" onclick="moveStepUp(this)" class="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200 rounded" title="Move Up">
                             <span class="ph-btn-icon text-lg">&#xE08E;</span>
                         </button>
-                        <button type="button" onclick="moveStepDown(this)" class="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200 rounded" title="Runter">
+                        <button type="button" onclick="moveStepDown(this)" class="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200 rounded" title="Move Down">
                             <span class="ph-btn-icon text-lg">&#xE03E;</span>
                         </button>
                         <div class="w-px h-4 bg-slate-300 mx-1"></div>
-                        <button type="button" onclick="removeStep(this)" class="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded" title="Löschen">
+                        <button type="button" onclick="removeStep(this)" class="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded" title="Delete">
                             <span class="ph-btn-icon text-lg">&#xE4A6;</span>
                         </button>
                     </div>
                 </div>
 
+                <!-- Step Card Body -->
                 <div class="p-4">
                     <input type="hidden" name="steps[{{ step_idx }}][id]" value="{{ step.id }}">
                     <input type="hidden" name="steps[{{ step_idx }}][position]" value="{{ step.position }}">
 
+                    <!-- Category Selection Block (shown for "Info/Category" type) -->
                     <div class="category-block" {% if step.is_ingredients %}style="display:none;"{% endif %}>
                         <div class="max-w-md">
                             <label class="block text-sm font-medium text-slate-700 mb-1">Kategorie wählen</label>
@@ -110,6 +126,7 @@
                         </div>
                     </div>
 
+                    <!-- Ingredients Block (shown for "Zubereitung" type) -->
                     <div class="ingredients-block" {% if not step.is_ingredients %}style="display:none;"{% endif %}>
                         <div class="mb-4">
                             <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Zutaten</label>
@@ -118,6 +135,7 @@
                                 <div class="ingredient-row flex items-start gap-2 group/ing">
                                     <input type="hidden" name="steps[{{ step_idx }}][ingredients][{{ loop.index0 }}][id]" value="{{ ing.id }}">
                                     
+                                    <!-- Amount Field -->
                                     <div class="w-24 shrink-0">
                                         <input type="text" 
                                                name="steps[{{ step_idx }}][ingredients][{{ loop.index0 }}][amount_combined]" 
@@ -130,6 +148,7 @@
                                                oninput="this.value = this.value.replace(/[^0-9.,\-\s]/g, '')">
                                     </div>
 
+                                    <!-- Unit Selector -->
                                     <div class="w-20 shrink-0">
                                         <select name="steps[{{ step_idx }}][ingredients][{{ loop.index0 }}][unit_id]" 
                                                 class="w-full rounded-md border-slate-300 py-1.5 px-2 text-sm focus:border-accent focus:ring-accent bg-slate-50">
@@ -140,6 +159,7 @@
                                         </select>
                                     </div>
 
+                                    <!-- Item Name -->
                                     <div class="grow">
                                         <input type="text" 
                                                name="steps[{{ step_idx }}][ingredients][{{ loop.index0 }}][item]" 
@@ -149,6 +169,7 @@
                                                class="w-full rounded-md border-slate-300 py-1.5 px-2 text-sm font-medium focus:border-accent focus:ring-accent">
                                     </div>
 
+                                    <!-- Optional Note -->
                                     <div class="w-1/4 hidden sm:block">
                                         <input type="text" 
                                                name="steps[{{ step_idx }}][ingredients][{{ loop.index0 }}][note]" 
@@ -157,6 +178,7 @@
                                                class="w-full rounded-md border-slate-200 py-1.5 px-2 text-sm text-slate-500 focus:border-accent focus:ring-accent">
                                     </div>
 
+                                    <!-- Remove Ingredient Button -->
                                     <button type="button" onclick="removeIngredient(this)" class="shrink-0 p-1.5 text-slate-300 hover:text-red-500 transition-colors">
                                         <span class="ph-btn-icon text-lg">&#xE4A6;</span>
                                     </button>
@@ -168,17 +190,19 @@
                             </button>
                         </div>
                     </div>
+                    <!-- Instructions Textarea -->
                     <div>
                         <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Anleitung</label>
                         <textarea name="steps[{{ step_idx }}][markdown_text]" rows="3" 
                                     class="px-2 py-1 w-full rounded-lg border-slate-300 bg-slate-50 focus:bg-white focus:border-accent focus:ring-accent transition-colors"
-                                    placeholder="Beschreibe den Schritt...">{{ step.markdown_text or '' }}</textarea>
+                                    placeholder="Describe the step...">{{ step.markdown_text or '' }}</textarea>
                     </div>
                 </div>
             </div>
             {% endfor %}
         </div>
 
+        <!-- Add Step Button -->
         <div class="text-center py-4 border-2 border-dashed border-slate-300 rounded-xl hover:border-accent hover:bg-accent-soft/10 transition-colors cursor-pointer" onclick="addStep()">
             <span class="text-accent font-medium flex items-center justify-center gap-2">
                 <span class="text-xl font-bold">+</span> Einen weiteren Schritt hinzufügen
@@ -187,6 +211,7 @@
 
     </form>
 
+    <!-- Bottom Action Buttons -->
     <div class="mt-12 flex justify-center border-t border-slate-200 pt-8">
         <div class="flex gap-4">
             {% if mode == 'add' %}
@@ -206,6 +231,11 @@
     </div>
 </div>
 
+<!-- ================================= -->
+<!-- TEMPLATES FOR DYNAMIC CONTENT     -->
+<!-- ================================= -->
+
+<!-- Template: Ingredient Row -->
 <template id="ingredient-row-template">
     <div class="ingredient-row flex items-start gap-2 group/ing animate-fade-in">
         <input type="hidden" name="" value=""> 
@@ -241,6 +271,7 @@
     </div>
 </template>
 
+<!-- Template: Step Card -->
 <template id="step-card-template">
     <div class="step-card group bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden transition-all hover:border-slate-300" 
         data-step-id="" 
@@ -265,14 +296,14 @@
             </div>
 
             <div class="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                <button type="button" onclick="moveStepUp(this)" class="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200 rounded" title="Hoch">
+                <button type="button" onclick="moveStepUp(this)" class="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200 rounded" title="Move Up">
                     <span class="ph-btn-icon text-lg">&#xE08E;</span>
                 </button>
-                <button type="button" onclick="moveStepDown(this)" class="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200 rounded" title="Runter">
+                <button type="button" onclick="moveStepDown(this)" class="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200 rounded" title="Move Down">
                     <span class="ph-btn-icon text-lg">&#xE03E;</span>
                 </button>
                 <div class="w-px h-4 bg-slate-300 mx-1"></div>
-                <button type="button" onclick="removeStep(this)" class="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded" title="Löschen">
+                <button type="button" onclick="removeStep(this)" class="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded" title="Delete">
                     <span class="ph-btn-icon text-lg">&#xE4A6;</span>
                 </button>
             </div>
@@ -308,20 +339,23 @@
                 <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Anleitung</label>
                 <textarea name="steps[__IDX__][markdown_text]" rows="3" 
                             class="px-2 py-1 w-full rounded-lg border-slate-300 bg-slate-50 focus:bg-white focus:border-accent focus:ring-accent transition-colors"
-                            placeholder="Beschreibe den Schritt..."></textarea>
+                            placeholder="Describe the step..."></textarea>
             </div>
         </div>
     </div>
 </template>
 
+<!-- ================================= -->
+<!-- JAVASCRIPT: DYNAMIC FORM HANDLING -->
+<!-- ================================= -->
 <script>
-/* --- 1. Zutaten-Namen komplett neu berechnen --- */
+/* Update ingredient field names after reordering */
 function updateIngredientIndices(stepCard) {
-    const stepIdx = stepCard.dataset.stepIndex; // Holt "0", "1" etc.
+    const stepIdx = stepCard.dataset.stepIndex;
     const rows = stepCard.querySelectorAll('.ingredient-row');
     
     rows.forEach((row, ingIdx) => {
-        // Wir verlassen uns auf die feste Reihenfolge im Template (5 Inputs/Selects)
+        // Fixed order in template: 5 inputs/selects
         // 1. ID (hidden), 2. Amount, 3. Unit, 4. Item, 5. Note
         const inputs = row.querySelectorAll('input, select');
         
@@ -335,37 +369,37 @@ function updateIngredientIndices(stepCard) {
     });
 }
 
-/* --- 2. Zutat hinzufügen --- */
+/* Add new ingredient row */
 function addIngredient(btn) {
     const list = btn.previousElementSibling; 
     const stepCard = btn.closest('.step-card');
     const template = document.getElementById('ingredient-row-template');
     
-    // Klonen und anhängen (noch ohne Namen)
+    // Clone and append (names not set yet)
     const clone = template.content.cloneNode(true);
     list.appendChild(clone);
     
-    // JETZT Namen und Indizes korrekt setzen
+    // Now update names and indices correctly
     updateIngredientIndices(stepCard);
     
-    // Fokus auf das erste sichtbare Feld (Menge)
+    // Focus on first visible field (amount)
     list.lastElementChild.querySelector('input[type="text"]').focus();
 }
 
-/* --- 3. Zutat entfernen --- */
+/* Remove ingredient row */
 function removeIngredient(btn) {
     const row = btn.closest('.ingredient-row');
     const stepCard = row.closest('.step-card');
     const hasContent = Array.from(row.querySelectorAll('input')).some(i => i.value.trim() !== '');
     
-    if (!hasContent || confirm('Zutat entfernen?')) {
+    if (!hasContent || confirm('Remove ingredient?')) {
         row.remove();
-        // Lücken schließen
+        // Close gaps
         updateIngredientIndices(stepCard);
     }
 }
 
-/* --- 4. Schritt hinzufügen --- */
+/* Add new step card */
 function addStep() {
     const container = document.getElementById('steps-container');
     const template = document.getElementById('step-card-template');
@@ -375,7 +409,7 @@ function addStep() {
     const newPos = newIdx + 1;
 
     let html = template.innerHTML;
-    // Platzhalter ersetzen
+    // Replace placeholders
     html = html.replace(/__IDX__/g, newIdx);
     html = html.replace(/__POS__/g, newPos);
 
@@ -385,46 +419,46 @@ function addStep() {
 
     container.appendChild(newStepCard);
     
-    // Initialisierung
+    // Initialize
     newStepCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
     const firstInput = newStepCard.querySelector('textarea');
     if(firstInput) firstInput.focus();
 }
 
-/* --- 5. Schritte neu nummerieren (und Zutaten updaten) --- */
+/* Renumber all steps and update form field names */
 function updateStepPositions() {
     const steps = document.querySelectorAll('.step-card');
     steps.forEach((step, index) => {
         const arrayIdx = index;
         const pos = index + 1;
 
-        // Visuelle Nummer
+        // Update visual position number
         const numberBadge = step.querySelector('.step-number');
         if(numberBadge) numberBadge.textContent = '#' + pos;
 
-        // Hidden Position Input
+        // Update hidden position field
         const posInput = step.querySelector('input[name*="[position]"]');
         if(posInput) posInput.value = pos;
 
-        // WICHTIG: Dataset aktualisieren, damit addIngredient weiß, wo wir sind
+        // Update dataset for JavaScript reference
         step.dataset.stepIndex = arrayIdx;
 
-        // Alle Inputs des Steps aktualisieren (steps[OLD] -> steps[NEW])
-        // Das deckt step-bezogene Felder ab (markdown_text, type, category_id)
+        // Update all field names: steps[OLD] -> steps[NEW]
         const inputs = step.querySelectorAll('input, select, textarea');
         inputs.forEach(input => {
             if (input.name) {
-                // Nur den vorderen Teil steps[X] ersetzen
+                // Only replace the steps[X] part at the front
                 input.name = input.name.replace(/steps\[\d+\]/, `steps[${arrayIdx}]`);
             }
         });
 
-        // Zutaten für diesen Schritt sicherheitshalber komplett neu durchrechnen
-        // Damit stimmt auch dort steps[NEW][ingredients]...
+        // Recalculate ingredient indices for this step
+        // This ensures steps[NEW][ingredients]... is also correct
         updateIngredientIndices(step);
     });
 }
 
+/* Move step up */
 function moveStepUp(btn) {
     const step = btn.closest('.step-card');
     if (step && step.previousElementSibling) {
@@ -434,6 +468,7 @@ function moveStepUp(btn) {
     }
 }
 
+/* Move step down */
 function moveStepDown(btn) {
     const step = btn.closest('.step-card');
     if (step && step.nextElementSibling) {
@@ -443,14 +478,15 @@ function moveStepDown(btn) {
     }
 }
 
+/* Remove step */
 function removeStep(btn) {
-    if (confirm('Schritt wirklich löschen?')) {
+    if (confirm('Really delete this step?')) {
         btn.closest('.step-card').remove();
         updateStepPositions();
     }
 }
 
-// Global Event Listener für Toggle (Zubereitung vs Info)
+/* Toggle between "Preparation" (ingredients) and "Info/Category" modes */
 document.addEventListener('change', function(e) {
     if (e.target.matches('[data-toggle-type]')) {
         const radio = e.target;

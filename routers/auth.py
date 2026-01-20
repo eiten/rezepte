@@ -19,18 +19,18 @@ async def login(
     password: str = Form(...),
     db: aiosqlite.Connection = Depends(get_db_connection)
 ):
-    # User in DB suchen
+    # Find user in database
     async with db.execute("SELECT * FROM users WHERE username = ?", (username,)) as cursor:
         user = await cursor.fetchone()
 
-    # Passwort prüfen (wir nutzen die Logik aus deiner setup_db.py)
+    # Verify password
     if not user or not pwd_context.verify(password, user["password_hash"]):
         return templates.TemplateResponse("login.html", {
             "request": request, 
-            "error": "Ungültiger Name oder Passwort"
+            "error": "Invalid username or password"
         })
 
-    # Einfacher Session-Cookie (für den Anfang)
+    # Set session cookie
     redirect_url = request.url_for("index")
     response = RedirectResponse(url=redirect_url, status_code=status.HTTP_303_SEE_OTHER)
     response.set_cookie(key="session_user", value=username, httponly=True)

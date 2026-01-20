@@ -12,6 +12,10 @@ from datetime import datetime
 router = APIRouter()
 config = get_config()
 
+# --- Path logic to go one level up from 'routers/' ---
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+FONT_PATH = os.path.join(BASE_DIR, "latex_templates", "ttf", "") # Trailing slash is important!
+
 # Setup Jinja2
 latex_jinja_env = jinja2.Environment(
     loader=jinja2.FileSystemLoader('latex_templates'),
@@ -26,6 +30,7 @@ latex_jinja_env = jinja2.Environment(
 )
 
 def escape_latex(text):
+    """Escape special LaTeX characters"""
     if not text: return ""
     replacements = {
         '\\': r'\textbackslash{}', '{': r'\{', '}': r'\}', '%': r'\%',
@@ -37,24 +42,25 @@ def escape_latex(text):
     return text
 
 def md_to_latex(text):
+    """Convert basic markdown formatting to LaTeX"""
     if not text: return ""
     import re
-    text = re.sub(r'\*\*(.*?)\*\*', r'\\textbf{\1}', text)
-    text = re.sub(r'\*(.*?)\*', r'\\textit{\1}', text)
-    text = re.sub(r'(\d+)\s*°C', r'\\qty{\1}{\\degreeCelsius}', text)
+    text = re.sub(r'\*\*(.*?)\*\*', r'\\textbf{\1}', text)  # Bold
+    text = re.sub(r'\*(.*?)\*', r'\\textit{\1}', text)  # Italic
+    text = re.sub(r'(\d+)\s*°C', r'\\qty{\1}{\\degreeCelsius}', text)  # Temperature
     return text
 
 @router.get("/recipe/{recipe_id}/pdf")
 async def get_pdf(recipe_id: int, db: aiosqlite.Connection = Depends(get_db_connection)):
     
-    # 1. Fetch Recipe Data (includes preamble & source now)
+    # Fetch recipe data
     async with db.execute("SELECT *, updated_at FROM recipes WHERE id = ?", (recipe_id,)) as cursor:
         recipe = await cursor.fetchone()
     
     if not recipe:
         raise HTTPException(status_code=404, detail="Recipe not found")
 
-    # 2. Setup Paths
+    # Setup cache paths
     cache_dir = os.path.abspath(config['pdf_cache_dir'])
     pdf_dir = os.path.join(cache_dir, "pdf")
     debug_dir = os.path.join(cache_dir, "debug")
@@ -62,18 +68,16 @@ async def get_pdf(recipe_id: int, db: aiosqlite.Connection = Depends(get_db_conn
 
     target_pdf_path = os.path.join(pdf_dir, f"{recipe_id}.pdf")
     
-    # Filename for download
+    # Sanitize filename for download
     safe_name = recipe['name'].replace(" ", "_").replace("/", "-").replace("\\", "-")
     download_filename = f"{safe_name}.pdf"
 
-    # 3. Smart Cache Check
+    # Check if PDF needs rebuild (compare timestamps)
     needs_rebuild = True
     if os.path.exists(target_pdf_path):
         pdf_mtime = os.path.getmtime(target_pdf_path)
         try:
-            # Check DB timestamp
             db_mtime = datetime.strptime(recipe['updated_at'], "%Y-%m-%d %H:%M:%S").timestamp()
-            # Check Template timestamp
             template_path = os.path.join("latex_templates", "master.tex")
             template_mtime = os.path.getmtime(template_path)
             
@@ -85,7 +89,7 @@ async def get_pdf(recipe_id: int, db: aiosqlite.Connection = Depends(get_db_conn
     if needs_rebuild:
         print(f"--> Building PDF for Recipe {recipe_id} ({recipe['name']})...")
 
-        # A. Fetch Unit Definitions
+        # Fetch custom unit definitions
         async with db.execute("SELECT symbol, latex_code FROM units WHERE type != 'si'") as cursor:
             custom_units = await cursor.fetchall()
         
@@ -96,8 +100,7 @@ async def get_pdf(recipe_id: int, db: aiosqlite.Connection = Depends(get_db_conn
             if not cmd_name: cmd_name = "UnitX"
             unit_defs += f"\\DeclareSIUnit\\{cmd_name}{{{u['symbol']}}}\n"
 
-        # B. Fetch Steps joined with Categories
-        # We need to know if it's an ingredient step (is_ingredients=1) or an icon step
+        # Fetch steps with category metadata
         query_steps = """
             SELECT s.*, c.codepoint, c.is_ingredients 
             FROM steps s
@@ -113,14 +116,13 @@ async def get_pdf(recipe_id: int, db: aiosqlite.Connection = Depends(get_db_conn
             s_dict = dict(step)
             s_dict['latex_text'] = md_to_latex(escape_latex(s_dict['markdown_text']))
 
-            # Handle LaTeX Icon
+            # Convert icon codepoint to integer
             if s_dict['codepoint']:
                  s_dict['latex_icon'] = int(s_dict['codepoint'], 16)
             else:
                  s_dict['latex_icon'] = None
 
-            # Fetch Ingredients only if this category displays them
-            # (Though fetching empty lists doesn't hurt, logically we only need them for is_ingredients=1)
+            # Fetch ingredients
             query_ing = """
                 SELECT i.*, u.symbol, u.latex_code
                 FROM ingredients i 
@@ -132,39 +134,45 @@ async def get_pdf(recipe_id: int, db: aiosqlite.Connection = Depends(get_db_conn
                 ingredients = []
                 for ing in ing_rows:
                     i = dict(ing)
+                    # Format amounts (strip trailing zeros)
                     if i['amount_min'] is not None: i['amount_min'] = f"{i['amount_min']:g}"
                     if i['amount_max'] is not None: i['amount_max'] = f"{i['amount_max']:g}"
                     
                     i['item'] = escape_latex(i['item'])
                     if i['note']: i['note'] = escape_latex(i['note'])
                     
-                    # Unit Logic
-                    if not i['latex_code']:
+                    # Determine unit command for LaTeX
+                    if i['latex_code']:
+                        # Fall 1: Perfekter Latex Code aus DB (z.B. \gram)
+                        i['unit_cmd'] = i['latex_code']
+                    elif i['symbol']:
+                        # Fall 2: Kein Latex Code, aber ein Symbol (z.B. "mg") -> Wir basteln "\mg"
                         clean_sym = "".join([c for c in i['symbol'] if c.isalpha()])
-                        if not clean_sym: clean_sym = "UnitX"
+                        if not clean_sym: 
+                            clean_sym = "UnitX" # Fallback für Symbole ohne Buchstaben
                         i['unit_cmd'] = f"\\{clean_sym}"
                     else:
-                        clean_code = i['latex_code'].replace("\\", "")
-                        i['unit_cmd'] = f"\\{clean_code}"
+                        # Fall 3: Gar keine Einheit (z.B. "3 Eier" ohne 'Stk' Auswahl)
+                        i['unit_cmd'] = ""
 
                     ingredients.append(i)
                 s_dict["ingredients"] = ingredients
             steps_data.append(s_dict)
 
-        # C. Metadata Handling
+        # Format metadata dates
         try:
             dt_update = datetime.strptime(recipe['updated_at'], "%Y-%m-%d %H:%M:%S")
             fmt_version_date = dt_update.strftime("%d.%m.%Y")
         except:
-            fmt_version_date = "Unbekannt"
+            fmt_version_date = "Unknown"
             
         fmt_print_date = datetime.now().strftime("%d.%m.%Y")
         
-        # Prepare optional fields
+        # Escape optional fields
         src_text = escape_latex(recipe['source']) if recipe['source'] else None
         preamble_text = md_to_latex(escape_latex(recipe['preamble'])) if recipe['preamble'] else None
 
-        # D. Render Template
+        # Render LaTeX template
         template = latex_jinja_env.get_template('master.tex')
         tex_content = template.render(
             recipe=recipe,
@@ -173,19 +181,22 @@ async def get_pdf(recipe_id: int, db: aiosqlite.Connection = Depends(get_db_conn
             unit_defs=unit_defs,
             date_version=fmt_version_date,
             date_print=fmt_print_date,
+            FONT_PATH=FONT_PATH,
             source=src_text
         )
 
-        # E. Build (Temp Dir)
+        # Build PDF in temporary directory
         with tempfile.TemporaryDirectory() as temp_dir:
             tex_path = os.path.join(temp_dir, "recipe.tex")
             with open(tex_path, "w") as f:
                 f.write(tex_content)
             
+            # Save .tex file for debugging if enabled
             if config.get('debug', False):
                 os.makedirs(debug_dir, exist_ok=True)
                 shutil.copy2(tex_path, os.path.join(debug_dir, f"{recipe_id}.tex"))
 
+            # Compile with latexmk
             cmd = [
                 "latexmk", "-pdf", "-lualatex", "-interaction=nonstopmode",
                 f"-output-directory={temp_dir}", tex_path
@@ -209,6 +220,6 @@ async def get_pdf(recipe_id: int, db: aiosqlite.Connection = Depends(get_db_conn
     return FileResponse(
         target_pdf_path, 
         media_type='application/pdf', 
-        content_disposition_type='inline', 
+        content_disposition_type='inline',
         filename=download_filename 
     )

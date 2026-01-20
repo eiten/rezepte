@@ -46,7 +46,7 @@ async def update_category(
 
 @router.get("/users", response_class=HTMLResponse)
 async def manage_users(request: Request, db: aiosqlite.Connection = Depends(get_db_connection)):
-    """ User management page (placeholder) """
+    """User management page (placeholder)"""
     user_ctx = await get_user_context(request, db)
     
     if not user_ctx["is_admin"]:
@@ -57,7 +57,7 @@ async def manage_users(request: Request, db: aiosqlite.Connection = Depends(get_
 
 @router.get("/paths", response_class=HTMLResponse)
 async def manage_paths(request: Request, db: aiosqlite.Connection = Depends(get_db_connection)):
-    """ Paths/folders management page (placeholder) """
+    """Path/folder management page (placeholder)"""
     user_ctx = await get_user_context(request, db)
     
     if not user_ctx["is_admin"]:

@@ -93,7 +93,7 @@
     </main>
 
     <script>
-        // --- User Menu Logik ---
+        // --- User Menu Logic ---
         const userMenuButton = document.getElementById('user-menu-button');
         const userMenu = document.getElementById('user-menu');
 
@@ -104,7 +104,7 @@
             });
         }
 
-        // --- Suche Mobile Logik ---
+        // --- Search Mobile Logic ---
         const searchToggle = document.getElementById('search-toggle');
         const searchContainer = document.getElementById('search-container');
         const navLogo = document.getElementById('nav-logo');
@@ -120,23 +120,23 @@
                     searchContainer.classList.remove('hidden', 'md:block');
                     navLogo.classList.add('hidden');
                     navUser.classList.add('hidden');
-                    searchIcon.innerHTML = '&#xE4F6;'; 
+                    searchIcon.innerHTML = '&#xE4F6;';  // Close icon
                     searchContainer.querySelector('input').focus();
                 } else {
                     searchContainer.classList.add('hidden', 'md:block');
                     navLogo.classList.remove('hidden');
                     navUser.classList.remove('hidden');
-                    searchIcon.innerHTML = '&#xE30C;'; // Lupe Icon
+                    searchIcon.innerHTML = '&#xE30C;';  // Magnifying glass icon
                 }
             });
         }
 
-        // --- Global: Schließen bei Klick außerhalb ---
+        // --- Global: Close on outside click ---
         document.addEventListener('click', (e) => {
             if (userMenu && !userMenu.contains(e.target) && !userMenuButton?.contains(e.target)) {
                 userMenu.classList.add('hidden');
             }
-            // Suche nur schließen, wenn wir auf Mobile sind und außerhalb klicken
+            // Close search only on mobile when clicking outside
             if (window.innerWidth < 768 && searchContainer && !searchContainer.contains(e.target) && !searchToggle.contains(e.target)) {
                 searchContainer.classList.add('hidden', 'md:block');
                 navLogo?.classList.remove('hidden');

@@ -1,9 +1,12 @@
 {% extends "base.html" %}
 
-{% block title %}Alle Rezepte{% endblock %}
+{% block title %}All Recipes{% endblock %}
 
 {% block content %}
 <div class="py-6">
+    <!-- ================================= -->
+    <!-- BREADCRUMB NAVIGATION             -->
+    <!-- ================================= -->
     <nav class="flex mb-4 text-sm text-slate-500" aria-label="Breadcrumb">
         <ol class="flex items-center space-x-2">
             <li><a href="/" class="hover:text-accent transition-colors">Rezepte</a></li>
@@ -17,6 +20,9 @@
         </ol>
     </nav>
 
+    <!-- ================================= -->
+    <!-- PAGE HEADER                       -->
+    <!-- ================================= -->
     <div class="flex items-baseline justify-between mb-8 border-b border-slate-200 pb-4">
         <h1 class="text-3xl font-bold text-slate-900">
             {% if search_query %}Suchergebnisse{% else %}Sammlung{% endif %}
@@ -26,12 +32,16 @@
         </span>
     </div>
 
+    <!-- ================================= -->
+    <!-- RECIPE LIST                       -->
+    <!-- ================================= -->
     <div class="space-y-2">
         {% for recipe in recipes %}
         <article class="group bg-white rounded-xl border border-slate-200 hover:border-accent/30 hover:shadow-md transition-all">
             <div class="flex items-center justify-between py-2 px-3 cursor-pointer sm:cursor-default" 
                  onclick="toggleMobileMenu('{{ recipe.id }}')">
                 
+                <!-- Recipe Info -->
                 <div class="row-recipe flex items-center gap-4 flex-1 min-w-0" data-recipe-id="{{ recipe.id }}">
                     <div class="min-w-0">
                         <h2 class="text-lg font-semibold text-slate-800 truncate leading-tight group-hover:text-accent transition-colors">
@@ -43,12 +53,13 @@
                     </div>
                 </div>
 
+                <!-- Action Buttons (Desktop only) -->
                 <div class="hidden sm:flex rounded-lg overflow-hidden border border-slate-400">
                     {% if is_admin or (current_user_id == recipe.owner_id) %}
                     <a href="{{ url_for('edit_recipe', recipe_id=recipe.id) }}" class="px-2 py-1 border-r border-slate-400 color-nav-bg color-nav-text hover:bg-accent-soft hover:text-accent no-underline transition-colors"><span class="ph-btn-icon text-lg mr-1">&#xE3B4;</span><span class="hidden lg:inline"> Bearbeiten</span></a>
                     {% endif %}
                     {% if is_admin %}
-                    <button onclick="removeRecipe(this)" data-delete-url="{{ url_for('delete_recipe', recipe_id=recipe.id) }}" class="px-2 py-1 border-r border-slate-400 color-nav-bg color-nav-text text-danger bg-danger-soft hover:bg-danger hover:text-white no-underline transition-colors"> <span class="ph-btn-icon text-lg mr-1">&#xE4A6;</span><span class="hidden lg:inline"> Löschen</span></button>
+                    <button onclick="removeRecipe(this)" data-delete-url="{{ url_for('delete_recipe', recipe_id=recipe.id) }}" class="px-2 py-1 border-r border-slate-400 color-nav-bg color-nav-text text-danger bg-danger-soft hover:bg-danger hover:text-white no-underline transition-colors"><span class="ph-btn-icon text-lg mr-1">&#xE4A6;</span><span class="hidden lg:inline"> Löschen</span></button>
                     {% endif %}
                     <a href="{{ url_for('get_pdf', recipe_id=recipe.id) }}" class="px-2 py-1 color-nav-bg color-nav-text hover:bg-accent-soft hover:text-accent no-underline transition-colors"><span class="ph-btn-icon text-lg mr-1">&#xE702;</span><span class="hidden lg:inline"> PDF</span></a>
                 </div>
@@ -58,19 +69,23 @@
     </div>
 </div>
 
+<!-- ================================= -->
+<!-- JAVASCRIPT                        -->
+<!-- ================================= -->
 <script>
+// Delete recipe with confirmation
 function removeRecipe(btn) {
-    // URL direkt aus dem Attribut lesen
     const deleteUrl = btn.getAttribute('data-delete-url');
-    
+
     if (confirm('Rezept wirklich unwiderruflich löschen?')) {
         // Direkt zur Lösch-URL navigieren
         window.location.href = deleteUrl;
     }
 }   
 
+// Toggle mobile menu (optional accordion behavior)
 function toggleMobileMenu(id) {
-    if (window.innerWidth >= 768) return; // Nur auf Mobile
+    if (window.innerWidth >= 768) return;
     
     const extra = document.getElementById('extra-' + id);
     const arrow = document.getElementById('arrow-' + id);
@@ -80,7 +95,7 @@ function toggleMobileMenu(id) {
         if (el.id !== 'extra-' + id) el.classList.add('hidden');
     });
     
-    // Dieses umschalten
+    // Toggle current menu
     const isHidden = extra.classList.contains('hidden');
     extra.classList.toggle('hidden');
     arrow.style.transform = isHidden ? 'rotate(90deg)' : 'rotate(0deg)';

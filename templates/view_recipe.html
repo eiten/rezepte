@@ -5,12 +5,16 @@
 {% block content %}
 <div class="max-w-4xl mx-auto pb-16 recipe-view-container text-slate-800">
     
+    <!-- ================================= -->
+    <!-- NAVIGATION BAR                    -->
+    <!-- ================================= -->
     <nav class="flex items-center justify-between mb-8 no-print">
         <a href="{{ url_for('index') }}" class="flex items-center text-slate-500 hover:text-accent transition-colors no-underline group">
             <span class="ph-btn-icon text-xl mr-2 group-hover:-translate-x-1 transition-transform">&#xE124;</span>
             <span class="font-medium">Zurück</span>
         </a>
 
+        <!-- Action Buttons -->
         <div class="flex gap-2">
             {% if can_edit %}
             <a href="{{ url_for('edit_recipe', recipe_id=recipe.id) }}" 
@@ -18,6 +22,13 @@
                 <span class="ph-btn-icon text-lg mr-0 sm:mr-1.5">&#xE3B4;</span>
                 <span class="hidden sm:inline font-medium text-sm">Bearbeiten</span>
             </a>
+            {% endif %}
+
+            {% if is_admin %}
+            <button onclick="removeRecipe(this)" data-delete-url="{{ url_for('delete_recipe', recipe_id=recipe.id) }}"
+                class="flex items-center px-3 py-1.5 rounded-lg border border-slate-300 text-danger bg-danger-soft hover:bg-danger hover:text-white no-underline transition-colors shadow-sm">
+                <span class="ph-btn-icon text-lg mr-1">&#xE4A6;</span>
+                <span class="hidden sm:inline font-medium text-sm"> Löschen</span></button>
             {% endif %}
 
             <a href="{{ url_for('get_pdf', recipe_id=recipe.id) }}" target="_blank"
@@ -28,7 +39,10 @@
         </div>
     </nav>
 
-    <header class="mb-10">
+    <!-- ================================= -->
+    <!-- RECIPE HEADER                     -->
+    <!-- ================================= -->
+    <header class="mb-10 px-4 md:px-0">
         <h1 class="text-3xl md:text-4xl font-bold text-slate-900 mb-2 tracking-tight">{{ recipe.name }}</h1>
         <div class="flex flex-wrap items-center gap-x-4 text-slate-500 text-sm md:text-base">
             <span>Von {{ recipe.author }}</span>
@@ -39,23 +53,36 @@
         </div>
     </header>
 
+    <!-- ================================= -->
+    <!-- RECIPE PREAMBLE/INTRODUCTION      -->
+    <!-- ================================= -->
     {% if recipe.preamble %}
-    <div class="mb-12 italic text-slate-600 leading-relaxed border-l-2 border-slate-200 pl-5 text-base md:text-lg">
+    <div class="mb-10 mx-4 md:mx-0 italic text-slate-600 leading-relaxed border-l-4 border-slate-200 pl-5 text-base md:text-lg">
         {{ recipe.preamble }}
     </div>
     {% endif %}
 
-    <div class="space-y-8 md:space-y-10">
+    <!-- ================================= -->
+    <!-- RECIPE STEPS                      -->
+    <!-- Two-column layout:                -->
+    <!-- Left: Ingredients or Icon         -->
+    <!-- Right: Instructions               -->
+    <!-- ================================= -->
+    <div class="space-y-0">
         {% for step in steps %}
         
-        <div class="{% if step.ingredients %}flex flex-col gap-y-2{% else %}flex flex-row gap-x-4{% endif %} md:grid md:grid-cols-12 md:gap-x-10 md:gap-y-4 items-start">
+        <div class="{% if loop.index is even %}bg-slate-100{% endif %}
+                    {% if step.ingredients %}flex flex-col gap-y-2{% else %}flex flex-row gap-x-4{% endif %} 
+                    md:grid md:grid-cols-12 md:gap-x-10 items-start py-4 px-2">
             
-            <div class="{% if step.ingredients %}w-full mb-1{% else %}w-12 shrink-0{% endif %} md:w-auto md:mb-0 md:col-span-4">
+            <!-- Left Column: Ingredients or Category Icon -->
+            <div class="{% if step.ingredients %}w-full{% else %}w-12 shrink-0{% endif %} md:w-auto md:col-span-4">
                 {% if step.ingredients %}
+                    <!-- Ingredient List -->
                     <ul class="space-y-1">
                         {% for ing in step.ingredients %}
                         <li class="leading-snug">
-                            <span class="whitespace-nowrap font-medium text-slate-700">
+                            <span class="whitespace-nowrap font-bold text-slate-700">
                                 {% if ing.amount_min %}{{ "%g" % ing.amount_min }}{% endif %}{% if ing.amount_max %}-{{ "%g" % ing.amount_max }}{% endif %}
                                 {{ ing.unit_symbol }}
                             </span>
@@ -67,6 +94,7 @@
                         {% endfor %}
                     </ul>
                 {% elif step.codepoint %}
+                    <!-- Category Icon -->
                     <div class="flex md:justify-end">
                         <span class="ph-icon text-3xl md:text-4xl opacity-70" style="color: {{ step.html_color }};">
                             &#x{{ step.codepoint }};
@@ -75,8 +103,9 @@
                 {% endif %}
             </div>
 
+            <!-- Right Column: Instructions (markdown rendered as HTML) -->
             <div class="flex-1 md:col-span-8">
-                <div class="prose prose-slate max-w-none prose-p:my-0 prose-strong:font-bold prose-sm md:prose-base leading-snug">
+                <div class="prose prose-slate max-w-none prose-p:my-0 prose-strong:font-bold prose-sm md:prose-base leading-relaxed">
                     {{ step.html_text | safe }}
                 </div>
             </div>

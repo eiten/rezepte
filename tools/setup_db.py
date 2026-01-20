@@ -168,7 +168,8 @@ def init_db():
         ('Prise', 'Prise', 'Prise', 'text'),
         ('Messerspitze', 'Msp.', 'Msp.', 'text'),
         ('Stück', 'Stk.', 'Stk', 'text'),
-        ('Packung', 'Pkg.', 'Pkg.', 'text')
+        ('Packung', 'Pkg.', 'Pkg.', 'text'),
+        ('Tropfen', 'Tr.', 'Tr.', 'text')
     ]
     cursor.execute("SELECT count(*) FROM units")
     if cursor.fetchone()[0] == 0:

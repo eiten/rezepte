@@ -9,33 +9,31 @@ router = APIRouter()
 
 def parse_amount(amount_str: str):
     """
-    Parst '300', '300-400', '300-400' oder '- 450' in min/max Werte.
-    Behandelt führende Bindestriche als Aufzählungszeichen.
+    Parse amount strings like '300', '300-400', or '- 450' into min/max values.
+    Treats leading hyphens as list bullets (not as range indicators).
     """
     if not amount_str:
         return None, None
     
-    # 1. Komma zu Punkt, Leerzeichen außen weg
+    # Normalize: comma to dot, trim whitespace
     s = amount_str.replace(',', '.').strip()
     
-    # 2. NEU: Führende Bindestriche entfernen
-    # Aus "-450" oder "- 450" wird "450".
-    # Das verhindert, dass es fälschlicherweise als "bis 450" (Range) erkannt wird.
+    # Remove leading hyphens (list bullet markers)
+    # Converts "-450" or "- 450" to "450"
     if s.startswith('-'):
         s = s.lstrip('-').strip()
 
-    # 3. Bereichsprüfung (Bindestrich IN DER MITTE)
+    # Check for range (hyphen in the middle)
     if '-' in s:
         parts = s.split('-')
         try:
-            # Strip nochmal, falls "300 - 400" (mit Leerzeichen um Strich)
             val_min = float(parts[0].strip()) if parts[0].strip() else None
             val_max = float(parts[1].strip()) if parts[1].strip() else None
             return val_min, val_max
         except ValueError:
             return None, None
             
-    # 4. Einzelwert
+    # Single value
     try:
         return float(s), None
     except ValueError:
@@ -62,14 +60,14 @@ async def read_recipe(request: Request, recipe_id: int, db: aiosqlite.Connection
     """ Detail view with permissions check """
     user_ctx = await get_user_context(request, db)
     
-    # 1. Get Recipe
+    # Fetch recipe
     async with db.execute("SELECT * FROM recipes WHERE id = ?", (recipe_id,)) as cursor:
         recipe = await cursor.fetchone()
         
     if not recipe:
         raise HTTPException(status_code=404, detail="Recipe not found")
 
-    # 2. Check Permissions
+    # Check permissions
     can_edit = False
     can_delete = False
     
@@ -79,7 +77,7 @@ async def read_recipe(request: Request, recipe_id: int, db: aiosqlite.Connection
     elif user_ctx["user_id"] and user_ctx["user_id"] == recipe["owner_id"]:
         can_edit = True
 
-    # 3. Get Steps
+    # Fetch steps with category metadata
     query_steps = """
         SELECT s.*, c.html_color, c.label_de, c.codepoint
         FROM steps s
@@ -90,11 +88,10 @@ async def read_recipe(request: Request, recipe_id: int, db: aiosqlite.Connection
     async with db.execute(query_steps, (recipe_id,)) as cursor:
         steps = await cursor.fetchall()
         
-    # 4. Aggregate Ingredients + render markdown to HTML
+    # Fetch ingredients and render markdown
     steps_data = []
     for step in steps:
         s_dict = dict(step)
-        # Render markdown to HTML for display
         s_dict["html_text"] = markdown.markdown(s_dict.get("markdown_text") or "", extensions=["extra"]) 
         query = """
             SELECT i.*, u.symbol as unit_symbol 
@@ -121,18 +118,17 @@ async def edit_recipe(request: Request, recipe_id: int, db: aiosqlite.Connection
     """ Edit recipe page """
     user_ctx = await get_user_context(request, db)
     
-    # Check recipe exists and permission
     async with db.execute("SELECT * FROM recipes WHERE id = ?", (recipe_id,)) as cursor:
         recipe = await cursor.fetchone()
     
     if not recipe:
-        raise HTTPException(status_code=404, detail="Rezept nicht gefunden")
+        raise HTTPException(status_code=404, detail="Recipe not found")
     
     # Only admin or owner can edit
     if not user_ctx["is_admin"] and user_ctx["user_id"] != recipe["owner_id"]:
-        raise HTTPException(status_code=403, detail="Nicht autorisiert")
+        raise HTTPException(status_code=403, detail="Not authorized")
     
-    # Get all steps with their ingredients
+    # Fetch steps with ingredients
     async with db.execute("""
         SELECT s.*, c.label_de, c.id as category_id, c.is_ingredients
         FROM steps s
@@ -145,7 +141,6 @@ async def edit_recipe(request: Request, recipe_id: int, db: aiosqlite.Connection
     steps_data = []
     for step in steps_raw:
         s_dict = dict(step)
-        # Fetch ingredients for this step
         async with db.execute("""
             SELECT i.*, u.symbol, u.latex_code
             FROM ingredients i
@@ -156,7 +151,7 @@ async def edit_recipe(request: Request, recipe_id: int, db: aiosqlite.Connection
             s_dict["ingredients"] = await i_cursor.fetchall()
         steps_data.append(s_dict)
     
-    # Get selectable categories (only non-ingredient, ids > 1)
+    # Get selectable categories (non-ingredient, id > 1)
     async with db.execute("""
         SELECT * FROM step_categories 
         WHERE is_ingredients = 0 AND id > 1
@@ -181,20 +176,20 @@ async def edit_recipe(request: Request, recipe_id: int, db: aiosqlite.Connection
 async def update_recipe(request: Request, recipe_id: int, db: aiosqlite.Connection = Depends(get_db_connection)):
     user_ctx = await get_user_context(request, db)
     
-    # 1. Rechte prüfen
+    # Check permissions
     async with db.execute("SELECT owner_id FROM recipes WHERE id = ?", (recipe_id,)) as cursor:
         row = await cursor.fetchone()
         
     if not row:
-        raise HTTPException(status_code=404, detail="Rezept nicht gefunden")
+        raise HTTPException(status_code=404, detail="Recipe not found")
     
     if not user_ctx["is_admin"] and user_ctx["user_id"] != row["owner_id"]:
-        raise HTTPException(status_code=403, detail="Nicht autorisiert")
+        raise HTTPException(status_code=403, detail="Not authorized")
 
-    # 2. Formulardaten parsen
+    # Parse form data
     form = await request.form()
     
-    # Basisdaten Update
+    # Update base recipe data
     await db.execute("""
         UPDATE recipes 
         SET name=?, author=?, source=?, preamble=?, updated_at=CURRENT_TIMESTAMP 
@@ -207,7 +202,7 @@ async def update_recipe(request: Request, recipe_id: int, db: aiosqlite.Connecti
         recipe_id
     ))
 
-    # 3. Schritte & Zutaten verarbeiten
+    # Process steps and ingredients
     kept_step_ids = []
     
     step_idx = 0
@@ -228,7 +223,7 @@ async def update_recipe(request: Request, recipe_id: int, db: aiosqlite.Connecti
         else:
             cat_id = 1
 
-        # Step Upsert
+        # Upsert step
         if step_id:
             await db.execute("""
                 UPDATE steps SET position=?, markdown_text=?, category_id=? WHERE id=?
@@ -236,8 +231,8 @@ async def update_recipe(request: Request, recipe_id: int, db: aiosqlite.Connecti
             kept_step_ids.append(step_id)
             current_step_db_id = step_id
         else:
-            # RETURNING id wird von neueren SQLite Versionen unterstützt, 
-            # alternativ cursor.lastrowid (siehe unten bei Zutaten)
+            # RETURNING id is supported by newer SQLite versions,
+            # alternatively use cursor.lastrowid (see below for ingredients)
             cursor = await db.execute("""
                 INSERT INTO steps (recipe_id, position, markdown_text, category_id) 
                 VALUES (?, ?, ?, ?) RETURNING id
@@ -246,7 +241,7 @@ async def update_recipe(request: Request, recipe_id: int, db: aiosqlite.Connecti
             current_step_db_id = new_step_row[0]
             kept_step_ids.append(current_step_db_id)
 
-        # Zutaten verarbeiten
+        # Process ingredients
         kept_ing_ids = []
         ing_idx = 0
         while f"{s_prefix}[ingredients][{ing_idx}][item]" in form:
@@ -284,17 +279,17 @@ async def update_recipe(request: Request, recipe_id: int, db: aiosqlite.Connecti
             
             ing_idx += 1
             
-        # Aufräumen: Lösche alle Zutaten dieses Schritts, die NICHT bearbeitet/erstellt wurden
+        # Cleanup: Delete all ingredients of this step that were NOT edited/created
         if kept_ing_ids:
             placeholders = ",".join("?" * len(kept_ing_ids))
             await db.execute(f"DELETE FROM ingredients WHERE step_id=? AND id NOT IN ({placeholders})", (current_step_db_id, *kept_ing_ids))
         else:
-            # Wenn gar keine Zutaten mehr da sind -> Alle löschen
+            # If no ingredients remain -> Delete all
             await db.execute("DELETE FROM ingredients WHERE step_id=?", (current_step_db_id,))
             
         step_idx += 1
 
-    # 4. Aufräumen: Schritte löschen
+    # Cleanup: Delete steps
     if kept_step_ids:
         placeholders = ",".join("?" * len(kept_step_ids))
         await db.execute(f"DELETE FROM steps WHERE recipe_id=? AND id NOT IN ({placeholders})", (recipe_id, *kept_step_ids))
@@ -310,22 +305,22 @@ async def update_recipe(request: Request, recipe_id: int, db: aiosqlite.Connecti
 async def delete_recipe(request: Request, recipe_id: int, db: aiosqlite.Connection = Depends(get_db_connection)):
     user_ctx = await get_user_context(request, db)
     
-    # 1. Rechte prüfen
+    # Check rights
     async with db.execute("SELECT owner_id FROM recipes WHERE id = ?", (recipe_id,)) as cursor:
         row = await cursor.fetchone()
         
     if not row:
-        raise HTTPException(status_code=404, detail="Rezept nicht gefunden")
+        raise HTTPException(status_code=404, detail="Recipe not found")
         
-    # Nur Admin darf löschen (laut deinem Button-Check)
+    # Only admins can delete
     if not user_ctx["is_admin"]:
-        raise HTTPException(status_code=403, detail="Nur Admins dürfen löschen")
+        raise HTTPException(status_code=403, detail="Only admins can delete")
 
-    # 2. Löschen (Dank ON DELETE CASCADE in der DB werden Steps/Ingredients automatisch mitgelöscht)
+    # Delete (thanks to ON DELETE CASCADE in DB, steps/ingredients are deleted automatically)
     await db.execute("DELETE FROM recipes WHERE id = ?", (recipe_id,))
     await db.commit()
     
-    # 3. Zurück zur Liste
+    # Back to list
     redirect_url = request.url_for("index")
     return RedirectResponse(url=redirect_url, status_code=303)
 
@@ -336,7 +331,7 @@ async def add_recipe_form(request: Request, db: aiosqlite.Connection = Depends(g
     if not user_ctx["user_id"]:
          return RedirectResponse(url="/auth/login", status_code=303)
 
-    # Leeres Rezept-Gerüst
+    # Empty recipe skeleton
     empty_recipe = {
         "id": 0, 
         "name": "", 
