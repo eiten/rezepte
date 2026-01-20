@@ -1,35 +1,53 @@
 {% extends "base.html" %}
 
 {% block title %}Rezepte{% endblock %}
+{% macro render_folder_options(folders, level=0, current_id=None) %}
+    {% for f in folders %}
+        <option value="{{ f.id }}" {% if current_id == f.id %}selected{% endif %}>
+            {{ ("&nbsp;&nbsp;&nbsp;&nbsp;" * level) | safe }}📁 {{ f.name }}
+        </option>
+        {% if f.children %}
+            {{ render_folder_options(f.children, level + 1, current_id) }}
+        {% endif %}
+    {% endfor %}
+{% endmacro %}
 
 {% block content %}
 <div class="py-6">
     <!-- ================================= -->
-    <!-- BREADCRUMB NAVIGATION             -->
+    <!-- PAGE HEADER WITH NAVIGATION       -->
     <!-- ================================= -->
-    <nav class="flex mb-4 text-sm text-slate-500" aria-label="Breadcrumb">
-        <ol class="flex items-center space-x-2">
-            <li><a href="/" class="hover:text-accent transition-colors">Rezepte</a></li>
-            {% if search_query %}
-                <li><span class="mx-2">/</span></li>
-                <li class="text-slate-900 font-medium">Suche: {{ search_query }}</li>
-            {% else %}
-                <li><span class="mx-2">/</span></li>
-                <li class="text-slate-900 font-medium">Alle</li>
-            {% endif %}
-        </ol>
-    </nav>
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+        
+        <div class="flex-1">
+            <nav class="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
+                {% for crumb in breadcrumbs %}
+                    <a href="{{ url_for('index') }}?folder={{ crumb.id }}" class="hover:text-accent">{{ crumb.name }}</a>
+                    {% if not loop.last %}
+                        <span class="text-slate-400 font-normal">&#x276F;</span>
+                    {% endif %}
+                {% endfor %}
+            </nav>
+            <h1 class="text-2xl font-bold text-slate-800">
+                {% if breadcrumbs %}{{ breadcrumbs[-1].name }}{% else %}Alle Rezepte{% endif %}
+            </h1>
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1 inline-block">
+                {{ recipes|length }} Einträge
+            </span>
+        </div>
 
-    <!-- ================================= -->
-    <!-- PAGE HEADER                       -->
-    <!-- ================================= -->
-    <div class="flex items-baseline justify-between mb-8 border-b border-slate-200 pb-4">
-        <h1 class="text-3xl font-bold text-slate-900">
-            {% if search_query %}Suchergebnisse{% else %}Sammlung{% endif %}
-        </h1>
-        <span class="text-xs font-bold text-slate-400 uppercase tracking-widest bg-slate-100 px-3 py-1 rounded-lg">
-            {{ recipes|length }} Einträge
-        </span>
+        <div class="w-full md:w-64">
+            <form action="{{ url_for('index') }}" method="get" id="folder-filter-form">
+                <select name="folder" 
+                        onchange="this.form.submit()"
+                        class="w-full rounded-lg border-slate-200 text-sm focus:border-accent focus:ring-accent">
+                    {{ render_folder_options(folder_tree, 0, current_folder) }}
+                </select>
+                {% if request.query_params.q %}
+                    <input type="hidden" name="q" value="{{ request.query_params.q }}">
+                {% endif %}
+            </form>
+        </div>
     </div>
 
     <!-- ================================= -->
@@ -42,7 +60,7 @@
                  onclick="toggleMobileMenu('{{ recipe.id }}')">
                 
                 <!-- Recipe Info -->
-                <div class="row-recipe flex items-center gap-4 flex-1 min-w-0" data-recipe-id="{{ recipe.id }}">
+                <div class="row-recipe flex items-center gap-4 flex-1 min-w-0 cursor-pointer" data-recipe-id="{{ recipe.id }}" data-href="{{ url_for('read_recipe', recipe_id=recipe.id) }}">
                     <div class="min-w-0">
                         <h2 class="text-lg font-semibold text-slate-800 truncate leading-tight group-hover:text-accent transition-colors">
                             <a href="{{ url_for('read_recipe', recipe_id=recipe.id) }}" class="no-underline">{{ recipe.name }}</a>
@@ -78,7 +96,6 @@ function removeRecipe(btn) {
     const deleteUrl = btn.getAttribute('data-delete-url');
 
     if (confirm('Rezept wirklich unwiderruflich löschen?')) {
-        // Direkt zur Lösch-URL navigieren
         window.location.href = deleteUrl;
     }
 }   
@@ -90,7 +107,7 @@ function toggleMobileMenu(id) {
     const extra = document.getElementById('extra-' + id);
     const arrow = document.getElementById('arrow-' + id);
     
-    // Alle anderen schließen (optional, für saubere Optik)
+    // Close all other menus
     document.querySelectorAll('[id^="extra-"]').forEach(el => {
         if (el.id !== 'extra-' + id) el.classList.add('hidden');
     });
@@ -100,5 +117,17 @@ function toggleMobileMenu(id) {
     extra.classList.toggle('hidden');
     arrow.style.transform = isHidden ? 'rotate(90deg)' : 'rotate(0deg)';
 }
+
+// Click on recipe row to open detail (ignores button/link clicks)
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.row-recipe').forEach(row => {
+        const target = row.dataset.href;
+        if (!target) return;
+        row.addEventListener('click', (e) => {
+            if (e.target.closest('a, button')) return; // do not hijack link/button clicks
+            window.location.href = target;
+        });
+    });
+});
 </script>
 {% endblock %}

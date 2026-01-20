@@ -1,5 +1,22 @@
 {% extends "base.html" %}
+
 {% block title %}{% if mode == 'add' %}New Recipe{% else %}Edit Recipe{% endif %}{% endblock %}
+
+{% macro render_folder_options(folders, level=0) %}
+    {% for folder in folders %}
+        <option value="{{ folder.id }}" {% if recipe and recipe.folder_id == folder.id %}selected{% endif %}>
+            {# Einrückung und Symbol basierend auf der Ebene #}
+            {% if level > 0 %}
+                {{ ("&nbsp;" * (level * 4)) | safe }} &#x1F4C1; {{ folder.name }}
+            {% else %}
+                &#128230; {{ folder.name }}
+            {% endif %}
+        </option>
+        {% if folder.children %}
+            {{ render_folder_options(folder.children, level + 1) }}
+        {% endif %}
+    {% endfor %}
+{% endmacro %}
 
 {% block content %}
 <div class="max-w-4xl mx-auto pb-12">
@@ -38,6 +55,12 @@
         <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
             <h2 class="text-lg font-semibold text-slate-800 mb-4 border-b pb-2">Basisdaten</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Speicherort (Ordner)</label>
+                    <select name="folder_id" class="w-full rounded-lg border-slate-300 focus:border-accent focus:ring-accent font-medium">
+                        {{ render_folder_options(folder_tree) }}
+                    </select>
+                </div>
                 <div class="md:col-span-2">
                     <label class="block text-sm font-medium text-slate-700 mb-1">Rezeptname</label>
                     <input type="text" name="name" value="{{ recipe.name }}" required 

@@ -38,20 +38,83 @@ def parse_amount(amount_str: str):
         return float(s), None
     except ValueError:
         return None, None
+
+async def get_breadcrumbs(db, folder_id):
+    """Berechnet rekursiv den Pfad für die Breadcrumbs"""
+    breadcrumbs = []
+    current_id = folder_id
+    while current_id:
+        async with db.execute("SELECT id, name, parent_id FROM folders WHERE id = ?", (current_id,)) as cursor:
+            folder = await cursor.fetchone()
+            if folder:
+                breadcrumbs.insert(0, dict(folder))
+                current_id = folder['parent_id']
+            else:
+                break
+    return breadcrumbs
+
+async def get_all_child_folder_ids(db, folder_id):
+    """Gibt eine Liste aller Unterordner-IDs inklusive der eigenen ID zurück."""
+    ids = [folder_id]
+    async with db.execute("SELECT id FROM folders WHERE parent_id = ?", (folder_id,)) as cursor:
+        rows = await cursor.fetchall()
+        for row in rows:
+            child_ids = await get_all_child_folder_ids(db, row['id'])
+            ids.extend(child_ids)
+    return ids
     
 @router.get("/", response_class=HTMLResponse)
-async def index(request: Request, db: aiosqlite.Connection = Depends(get_db_connection)):
+async def index(
+    request: Request, 
+    q: str = None,
+    folder: int = None,
+    db: aiosqlite.Connection = Depends(get_db_connection)
+):
     """ Home page: List all recipes """
     user_ctx = await get_user_context(request, db)
+
+    # Folders
+    async with db.execute("SELECT * FROM folders ORDER BY parent_id, name") as cursor:
+        folder_rows = await cursor.fetchall()
+        all_folders = [dict(r) for r in folder_rows]
+    folder_dict = {f['id']: {**f, 'children': []} for f in all_folders}
+    folder_tree = []
+    for f_id, f_data in folder_dict.items():
+        if f_data['parent_id'] and f_data['parent_id'] in folder_dict:
+            folder_dict[f_data['parent_id']]['children'].append(f_data)
+        else:
+            folder_tree.append(f_data)    
+
+    #filter foilders
+    query = "SELECT * FROM recipes WHERE 1=1"
+    params = []
+
+    if q:
+        query += " AND (title LIKE ? OR ingredients LIKE ?)"
+        params.extend([f"%{q}%", f"%{q}%"])
+
+    if folder:
+        # Rekursiv alle Unterordner-IDs holen
+        allowed_ids = await get_all_child_folder_ids(db, folder)
+        placeholders = ', '.join(['?'] * len(allowed_ids))
+        query += f" AND folder_id IN ({placeholders})"
+        params.extend(allowed_ids)
+
+    query += " ORDER BY created_at DESC"
     
-    async with db.execute("SELECT id, name, author FROM recipes") as cursor:
+    async with db.execute(query, params) as cursor:
         recipes = await cursor.fetchall()
         
+    breadcrumbs = await get_breadcrumbs(db, folder) if folder else []
+
     return templates.TemplateResponse("index.html", {
         "request": request,
         "recipes": recipes,
+        "folder_tree": folder_tree,
+        "current_folder": folder,
         "is_admin": user_ctx["is_admin"],
         "current_user_id": user_ctx["user_id"],
+        "breadcrumbs": breadcrumbs,
         **user_ctx
     })
 
@@ -112,11 +175,15 @@ async def read_recipe(request: Request, recipe_id: int, db: aiosqlite.Connection
     # Render markdown in preamble
     preamble_html = md_to_html(recipe.get("preamble") or "")
 
+    # Get breadcrumbs
+    breadcrumbs = await get_breadcrumbs(db, recipe["folder_id"])
+    
     return templates.TemplateResponse("view_recipe.html", {
         "request": request, 
         "recipe": recipe, 
         "preamble_html": preamble_html,
         "steps": steps_data,
+        "breadcrumbs": breadcrumbs,
         "can_edit": can_edit,
         "can_delete": can_delete,
         **user_ctx
@@ -172,11 +239,24 @@ async def edit_recipe(request: Request, recipe_id: int, db: aiosqlite.Connection
     async with db.execute("SELECT * FROM units ORDER BY name") as cursor:
         units = await cursor.fetchall()
     
+    # Get folders for dropdown
+    async with db.execute("SELECT * FROM folders ORDER BY parent_id, name") as cursor:
+        rows = await cursor.fetchall()
+        folders = [dict(r) for r in rows]
+    folder_dict = {f['id']: {**f, 'children': []} for f in folders}
+    folder_tree = []
+    for f_id, f_data in folder_dict.items():
+        if f_data['parent_id'] and f_data['parent_id'] in folder_dict:
+            folder_dict[f_data['parent_id']]['children'].append(f_data)
+        else:
+            folder_tree.append(f_data)
+
     return templates.TemplateResponse("edit_recipe.html", {
         "request": request,
         "recipe": recipe,
         "steps": steps_data,
         "categories": categories,
+        "folder_tree": folder_tree,
         "units": units,
         **user_ctx
     })
@@ -201,9 +281,10 @@ async def update_recipe(request: Request, recipe_id: int, db: aiosqlite.Connecti
     # Update base recipe data
     await db.execute("""
         UPDATE recipes 
-        SET name=?, author=?, source=?, preamble=?, updated_at=CURRENT_TIMESTAMP 
+        SET folder_id=?, name=?, author=?, source=?, preamble=?, updated_at=CURRENT_TIMESTAMP 
         WHERE id=?
     """, (
+        form.get("folder_id"),
         form.get("name"), 
         form.get("author"), 
         form.get("source"), 
@@ -349,10 +430,11 @@ async def add_recipe_form(request: Request, db: aiosqlite.Connection = Depends(g
         "preamble": ""
     }
     
-    # Listen laden
+    # Categories
     async with db.execute("SELECT * FROM step_categories WHERE is_ingredients = 0 AND id > 1 ORDER BY label_de") as cursor:
         categories = await cursor.fetchall()
     
+    # Units
     async with db.execute("SELECT * FROM units ORDER BY name") as cursor:
         units = await cursor.fetchall()
 
@@ -379,8 +461,9 @@ async def create_recipe(request: Request, db: aiosqlite.Connection = Depends(get
     # 1. Rezept INSERT
     cursor = await db.execute("""
         INSERT INTO recipes (folder_id, owner_id, name, author, source, preamble) 
-        VALUES (1, ?, ?, ?, ?, ?) RETURNING id
+        VALUES (?, ?, ?, ?, ?, ?) RETURNING id
     """, (
+        form.get("folder_id"),
         user_ctx["user_id"],
         form.get("name"), 
         form.get("author"), 

@@ -5,7 +5,7 @@ import aiosqlite
 import sqlite3
 from functools import lru_cache
 
-SCHEMA_VERSION = 4
+SCHEMA_VERSION = 5
 
 async def init_db():
     """
@@ -58,6 +58,149 @@ async def init_db():
             
             await db.execute("UPDATE db_metadata SET value = '4' WHERE key = 'schema_version'")
             current_version = 4
+
+        if current_version < 5:
+            print("Migrating to Schema v5: Adding recipe full-text search (FTS5)...")
+
+            # FTS5 virtual table (contentless; rowid = recipe_id)
+            await db.execute(
+                """
+                CREATE VIRTUAL TABLE IF NOT EXISTS recipe_fts USING fts5(
+                    name,
+                    author,
+                    source,
+                    preamble,
+                    ingredients,
+                    steps,
+                    content=''
+                )
+                """
+            )
+
+            # Drop old triggers to ensure idempotency when rerunning migrations
+            trigger_names = [
+                "recipe_fts_ai", "recipe_fts_au", "recipe_fts_ad",
+                "recipe_fts_steps_ai", "recipe_fts_steps_au", "recipe_fts_steps_ad",
+                "recipe_fts_ing_ai", "recipe_fts_ing_au", "recipe_fts_ing_ad"
+            ]
+            for t in trigger_names:
+                await db.execute(f"DROP TRIGGER IF EXISTS {t}")
+
+            # Helper SQL fragments (inline in triggers)
+            ingredients_subquery = """
+                (SELECT group_concat(item || ' ' || COALESCE(note,''), ' ')
+                 FROM (
+                     SELECT i.item, i.note
+                     FROM ingredients i
+                     JOIN steps s ON i.step_id = s.id
+                     WHERE s.recipe_id = R.id
+                     ORDER BY s.position, i.position
+                 ))
+            """
+
+            steps_subquery = """
+                (SELECT group_concat(markdown_text, ' ')
+                 FROM (
+                     SELECT markdown_text
+                     FROM steps
+                     WHERE recipe_id = R.id
+                     ORDER BY position
+                 ))
+            """
+
+            # Trigger bodies reuse the same INSERT ... SELECT pattern via literal SQL
+            insert_select_sql = f"""
+                INSERT INTO recipe_fts(rowid, name, author, source, preamble, ingredients, steps)
+                SELECT
+                    R.id,
+                    COALESCE(R.name, ''),
+                    COALESCE(R.author, ''),
+                    COALESCE(R.source, ''),
+                    COALESCE(R.preamble, ''),
+                    COALESCE({ingredients_subquery}, ''),
+                    COALESCE({steps_subquery}, '')
+                FROM recipes R
+                WHERE R.id = :recipe_id;
+            """
+
+            # Recipes INSERT
+            await db.execute(
+                f"""
+                CREATE TRIGGER recipe_fts_ai AFTER INSERT ON recipes BEGIN
+                    DELETE FROM recipe_fts WHERE rowid = NEW.id;
+                    {insert_select_sql.replace(':recipe_id', 'NEW.id')}
+                END;
+                """
+            )
+
+            # Recipes UPDATE
+            await db.execute(
+                f"""
+                CREATE TRIGGER recipe_fts_au AFTER UPDATE ON recipes BEGIN
+                    DELETE FROM recipe_fts WHERE rowid = NEW.id;
+                    {insert_select_sql.replace(':recipe_id', 'NEW.id')}
+                END;
+                """
+            )
+
+            # Recipes DELETE
+            await db.execute(
+                """
+                CREATE TRIGGER recipe_fts_ad AFTER DELETE ON recipes BEGIN
+                    DELETE FROM recipe_fts WHERE rowid = OLD.id;
+                END;
+                """
+            )
+
+            # Steps INSERT/UPDATE/DELETE → recompute owning recipe
+            for trigger_name, timing, ref in [
+                ("recipe_fts_steps_ai", "INSERT", "NEW.recipe_id"),
+                ("recipe_fts_steps_au", "UPDATE", "NEW.recipe_id"),
+                ("recipe_fts_steps_ad", "DELETE", "OLD.recipe_id")
+            ]:
+                await db.execute(
+                    f"""
+                    CREATE TRIGGER {trigger_name} AFTER {timing} ON steps BEGIN
+                        DELETE FROM recipe_fts WHERE rowid = {ref};
+                        {insert_select_sql.replace(':recipe_id', ref)}
+                    END;
+                    """
+                )
+
+            # Ingredients INSERT/UPDATE/DELETE → recompute owning recipe
+            for trigger_name, timing, ref in [
+                ("recipe_fts_ing_ai", "INSERT", "(SELECT recipe_id FROM steps WHERE id = NEW.step_id)"),
+                ("recipe_fts_ing_au", "UPDATE", "(SELECT recipe_id FROM steps WHERE id = NEW.step_id)"),
+                ("recipe_fts_ing_ad", "DELETE", "(SELECT recipe_id FROM steps WHERE id = OLD.step_id)")
+            ]:
+                await db.execute(
+                    f"""
+                    CREATE TRIGGER {trigger_name} AFTER {timing} ON ingredients BEGIN
+                        DELETE FROM recipe_fts WHERE rowid = {ref};
+                        {insert_select_sql.replace(':recipe_id', ref)}
+                    END;
+                    """
+                )
+
+            # Backfill existing data
+            await db.execute("DELETE FROM recipe_fts")
+            await db.execute(
+                f"""
+                INSERT INTO recipe_fts(rowid, name, author, source, preamble, ingredients, steps)
+                SELECT
+                    R.id,
+                    COALESCE(R.name, ''),
+                    COALESCE(R.author, ''),
+                    COALESCE(R.source, ''),
+                    COALESCE(R.preamble, ''),
+                    COALESCE({ingredients_subquery.replace('R.id', 'R.id')}, ''),
+                    COALESCE({steps_subquery.replace('R.id', 'R.id')}, '')
+                FROM recipes R;
+                """
+            )
+
+            await db.execute("UPDATE db_metadata SET value = '5' WHERE key = 'schema_version'")
+            current_version = 5
 
         await db.commit()
         print(f"Database schema is up to date at version {current_version}.")

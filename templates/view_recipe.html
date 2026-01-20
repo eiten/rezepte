@@ -2,6 +2,17 @@
 
 {% block title %}{{ recipe.name }}{% endblock %}
 
+{% macro render_folder_options(folders, level=0, current_id=None) %}
+    {% for f in folders %}
+        <option value="{{ f.id }}" {% if current_id == f.id %}selected{% endif %}>
+            {{ ("&nbsp;" * (level * 4)) | safe }}{% if level > 0 %}└─ {% endif %}{{ f.name }}
+        </option>
+        {% if f.children %}
+            {{ render_folder_options(f.children, level + 1, current_id) }}
+        {% endif %}
+    {% endfor %}
+{% endmacro %}
+
 {% block content %}
 <div class="max-w-4xl mx-auto pb-16 recipe-view-container text-slate-800">
     
@@ -43,6 +54,14 @@
     <!-- RECIPE HEADER                     -->
     <!-- ================================= -->
     <header class="mb-10 px-4 md:px-0">
+        <nav class="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 no-print">
+            {% for crumb in breadcrumbs %}
+                <a href="#" class="hover:text-accent transition-colors no-underline">{{ crumb.name }}</a>
+                {% if not loop.last %}
+                    <span class="text-slate-500 font-normal">&#x276F;</span>
+                {% endif %}
+            {% endfor %}
+        </nav>
         <h1 class="text-3xl md:text-4xl font-bold text-slate-900 mb-2 tracking-tight">{{ recipe.name }}</h1>
         <div class="flex flex-wrap items-center gap-x-4 text-slate-500 text-sm md:text-base">
             <span>Von {{ recipe.author }}</span>
