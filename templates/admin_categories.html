@@ -2,50 +2,114 @@
 {% block title %}Admin - Kategorien{% endblock %}
 
 {% block content %}
-<article>
-    <hgroup>
-        <h1>Kategorien verwalten</h1>
-        <small>Icons und Farben für Rezeptschritte anpassen</small>
-    </hgroup>
+<div class="max-w-6xl mx-auto pb-12">
+    
+    <div class="flex items-center justify-between mb-6">
+        <h1 class="text-2xl font-bold text-slate-800">Kategorien verwalten</h1>
+    </div>
 
-    <table role="grid">
-        <thead>
-            <tr>
-                <th>Icon</th>
-                <th>Name</th>
-                <th>Farbe</th>
-                <th>Phosphor-Hex</th>
-                <th>Aktion</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for cat in categories %}
-            <tr>
-                <td>
-                    <span class="ph-icon" style="color: {{ cat.html_color }}; opacity: 1; font-size: 1.5rem;">
-                        &#x{{ cat.codepoint }};
-                    </span>
-                </td>
-                <form action="/admin/categories/update" method="post">
-                    <input type="hidden" name="id" value="{{ cat.id }}">
-                    <td><input type="text" name="label_de" value="{{ cat.label_de }}" required></td>
-                    <td><input type="color" name="html_color" value="{{ cat.html_color }}"></td>
-                    <td><input type="text" name="codepoint" value="{{ cat.codepoint }}" required></td>
-                    <td><button type="submit" class="outline contrast">Speichern</button></td>
-                </form>
-            </tr>
-            {% endfor %}
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <table class="w-full border-collapse">
+            <thead class="bg-slate-50 border-b border-slate-200">
+                <tr>
+                    <th class="px-4 py-3 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest w-16">Icon</th>
+                    <th class="px-4 py-3 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest">Name</th>
+                    <th class="px-4 py-3 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest w-32">Farbe</th>
+                    <th class="px-4 py-3 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest w-32">Hex-Code</th>
+                    <th class="px-4 py-3 text-right text-[10px] font-bold text-slate-400 uppercase tracking-widest w-24">Aktion</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+                {% for cat in categories %}
+                <tr class="hover:bg-slate-50/50 transition-colors category-row">
+                    <form action="/admin/categories/update" method="post">
+                        <input type="hidden" name="id" value="{{ cat.id }}">
+                        <td class="px-4 py-2">
+                            <span class="ph-icon text-2xl preview-icon" style="color: {{ cat.html_color }};">
+                                &#x{{ cat.codepoint }};
+                            </span>
+                        </td>
+                        <td class="px-4 py-2">
+                            <input type="text" name="label_de" value="{{ cat.label_de }}" required
+                                   class="w-full rounded-md border-slate-200 py-1 px-2 text-sm focus:border-accent focus:ring-accent">
+                        </td>
+                        <td class="px-4 py-2">
+                            <input type="color" name="html_color" value="{{ cat.html_color }}" 
+                                   class="h-8 w-full p-0.5 rounded border border-slate-200 cursor-pointer color-input">
+                        </td>
+                        <td class="px-4 py-2">
+                            <input type="text" name="codepoint" value="{{ cat.codepoint }}" required
+                                   class="w-full rounded-md border-slate-200 py-1 px-2 text-sm font-mono focus:border-accent focus:ring-accent codepoint-input">
+                        </td>
+                        <td class="px-4 py-2 text-right">
+                            <button type="submit" class="p-2 text-slate-400 hover:text-accent transition-colors" title="Speichern">
+                                <span class="ph-btn-icon text-xl">&#xE248;</span>
+                            </button>
+                        </td>
+                    </form>
+                </tr>
+                {% endfor %}
+
+                <tr class="bg-accent-soft/5 category-row">
+                    <form action="/admin/categories/add" method="post">
+                        <td class="px-4 py-3">
+                            <span class="ph-icon text-2xl preview-icon" style="color: #FF9900;">
+                                &#xE2AA;
+                            </span>
+                        </td>
+                        <td class="px-4 py-3">
+                            <input type="text" name="label_de" placeholder="Name..." required
+                                   class="w-full rounded-md border-accent/20 py-1 px-2 text-sm focus:border-accent focus:ring-accent bg-white">
+                        </td>
+                        <td class="px-4 py-3">
+                            <input type="color" name="html_color" value="#FF9900" 
+                                   class="h-8 w-full p-0.5 rounded border border-accent/20 cursor-pointer bg-white color-input">
+                        </td>
+                        <td class="px-4 py-3">
+                            <input type="text" name="codepoint" placeholder="E2AA" required
+                                   class="w-full rounded-md border-accent/20 py-1 px-2 text-sm font-mono focus:border-accent focus:ring-accent bg-white codepoint-input">
+                        </td>
+                        <td class="px-4 py-3 text-right">
+                            <button type="submit" class="p-2 text-accent hover:text-accent-dark transition-colors" title="Hinzufügen">
+                                <span class="ph-btn-icon text-xl">&#xE3D6;</span>
+                            </button>
+                        </td>
+                    </form>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Funktion zum Aktualisieren einer einzelnen Zeile
+    function updatePreview(row) {
+        const colorInput = row.querySelector('.color-input');
+        const codepointInput = row.querySelector('.codepoint-input');
+        const previewIcon = row.querySelector('.preview-icon');
+
+        if (previewIcon) {
+            // Farbe aktualisieren
+            previewIcon.style.color = colorInput.value;
             
-            <tr style="background-color: var(--pico-card-sectioning-background-color);">
-                <td>Neu:</td>
-                <form action="/admin/categories/add" method="post">
-                    <td><input type="text" name="label_de" placeholder="z.B. Backen" required></td>
-                    <td><input type="color" name="html_color" value="#000000"></td>
-                    <td><input type="text" name="codepoint" placeholder="e.g. E2AA" required></td>
-                    <td><button type="submit">Hinzufügen</button></td>
-                </form>
-            </tr>
-        </tbody>
-    </table>
-</article>
+            // Icon (Codepoint) aktualisieren
+            // Wir nutzen innerHTML, um die Hex-Entity korrekt zu rendern
+            let code = codepointInput.value.trim();
+            if (code) {
+                previewIcon.innerHTML = `&#x${code};`;
+            }
+        }
+    }
+
+    // Event-Delegation für alle Inputs in der Tabelle
+    const tbody = document.querySelector('tbody');
+    tbody.addEventListener('input', function(e) {
+        if (e.target.classList.contains('color-input') || e.target.classList.contains('codepoint-input')) {
+            const row = e.target.closest('.category-row');
+            updatePreview(row);
+        }
+    });
+});
+</script>
 {% endblock %}

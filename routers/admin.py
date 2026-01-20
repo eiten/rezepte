@@ -4,6 +4,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 import aiosqlite
 from database import get_db_connection, get_user_context
 from template_config import templates
+from routers.auth import pwd_context
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -46,14 +47,80 @@ async def update_category(
 
 @router.get("/users", response_class=HTMLResponse)
 async def manage_users(request: Request, db: aiosqlite.Connection = Depends(get_db_connection)):
-    """User management page (placeholder)"""
     user_ctx = await get_user_context(request, db)
     
     if not user_ctx["is_admin"]:
         return RedirectResponse(url="/", status_code=303)
     
-    # TODO: Implement user management
-    return HTMLResponse(content="<h1>User Management</h1><p>Not implemented yet</p>")
+    # Nutzer laden (inklusive des neuen is_active Feldes)
+    async with db.execute("SELECT id, username, display_name, role, is_active, email FROM users ORDER BY username") as cursor:
+        users = await cursor.fetchall()
+    
+    return templates.TemplateResponse("admin_users.html", {
+        "request": request,
+        "users": users,
+        **user_ctx
+    })
+
+@router.post("/users/update")
+async def update_user(
+    request: Request,
+    user_id: int = Form(...),
+    username: str = Form(...),
+    display_name: str = Form(...),
+    email: str = Form(None),
+    new_password: str = Form(None),
+    is_admin: bool = Form(False),
+    is_active: bool = Form(False),
+    db: aiosqlite.Connection = Depends(get_db_connection)
+):
+    user_ctx = await get_user_context(request, db)
+    if not user_ctx["is_admin"]:
+        raise HTTPException(status_code=403)
+
+    role = "admin" if is_admin else "guest"
+    active_val = 1 if is_active else 0
+
+    # 1. Basis-Daten aktualisieren (inkl. Email und is_active)
+    await db.execute(
+        "UPDATE users SET username = ?, display_name = ?, email = ?, role = ?, is_active = ? WHERE id = ?",
+        (username, display_name, email, role, active_val, user_id)
+    )
+
+    # 2. Passwort nur ändern, wenn ein neues eingegeben wurde
+    if new_password and new_password.strip():
+        hashed_password = pwd_context.hash(new_password)
+        await db.execute("UPDATE users SET password_hash = ? WHERE id = ?", (hashed_password, user_id))
+
+    await db.commit()
+    redirect_url = request.url_for("manage_users")
+    return RedirectResponse(url=redirect_url, status_code=303)
+
+@router.post("/users/add")
+async def add_user(
+    request: Request,
+    username: str = Form(...),
+    display_name: str = Form(...),
+    email: str = Form(None),
+    password: str = Form(...),
+    is_admin: bool = Form(False),
+    db: aiosqlite.Connection = Depends(get_db_connection)
+):
+    user_ctx = await get_user_context(request, db)
+    if not user_ctx["is_admin"]:
+        raise HTTPException(status_code=403)
+
+    role = "admin" if is_admin else "guest"
+    hashed_password = pwd_context.hash(password)
+
+    # Neue User werden standardmäßig mit is_active = 1 angelegt
+    await db.execute(
+        "INSERT INTO users (username, display_name, email, password_hash, role, is_active) VALUES (?, ?, ?, ?, ?, 1)",
+        (username, display_name, email, hashed_password, role)
+    )
+    await db.commit()
+    redirect_url = request.url_for("manage_users")
+    return RedirectResponse(url=redirect_url, status_code=303)
 
 @router.get("/paths", response_class=HTMLResponse)
 async def manage_paths(request: Request, db: aiosqlite.Connection = Depends(get_db_connection)):

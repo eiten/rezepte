@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="{{ url_for('static', path='/css/custom.css') }}">
     <link rel="icon" type="image/svg+xml" href="{{ url_for('static', path='logo-web.svg') }}">
     <link rel="shortcut icon" href="{{ url_for('static', path='favicon.ico') }}" type="image/x-icon">
-    
+
 </head>
 <body class="bg-gray-50">
     <nav class="fixed top-0 left-0 right-0 z-50 bg-nav-bg shadow-lg">
@@ -64,13 +64,13 @@
                                     <div class="px-4 py-2 mt-2 border-t border-gray-50">
                                         <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Verwaltung</p>
                                     </div>
-                                    <a href="/admin/categories" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-accent-soft hover:text-accent no-underline">
+                                    <a href="{{ url_for('manage_categories') }}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-accent-soft hover:text-accent no-underline">
                                         <span class="ph-btn-icon mr-3 text-lg">&#xE8C4;</span> Kategorien
                                     </a>
                                     <a href="/admin/paths" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-accent-soft hover:text-accent no-underline">
                                         <span class="ph-btn-icon mr-3 text-lg">&#xE260;</span> Pfade
                                     </a>
-                                    <a href="/admin/users" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-accent-soft hover:text-accent no-underline">
+                                    <a href="{{ url_for('manage_users') }}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-accent-soft hover:text-accent no-underline">
                                         <span class="ph-btn-icon mr-3 text-lg">&#xE4D6;</span> Benutzer
                                     </a>
                                 {% endif %}

@@ -1,22 +1,32 @@
 # main.py
 import uvicorn
 import os
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-from database import get_config
+from database import get_config, init_db
 from routers import recipes, pdf, auth, admin
 
 # Load config
 config = get_config()
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Alles hier drin wird beim Start ausgeführt
+    await init_db() # Jetzt korrekt mit await!
+    yield
+
+
 # App setup
 app = FastAPI(
     title=config['app_name'],
     debug=config['debug'],
-    root_path=config.get('root_path', "")
+    root_path=config.get('root_path', ""),
+    lifespan=lifespan
 )
 print(f"App root path: {app.root_path}")
+
 
 # Static files
 @app.get("/favicon.ico", include_in_schema=False)
