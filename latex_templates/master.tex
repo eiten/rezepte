@@ -1,5 +1,5 @@
 % FIX: 'footsepline' enforces the footer line globally and reliably
-\documentclass[a4paper,12pt,footsepline]{scrartcl}
+\documentclass[a4paper,12pt]{scrartcl}
 
 % -- LuaLaTeX Setup --
 \usepackage{fontspec}
@@ -42,22 +42,46 @@
 
 \newcommand{\picon}[1]{\raisebox{-1.1pt}{\iconFont\symbol{"#1}}}
 
-% -- Layout --
+% -- Layout & Tables --
 \usepackage[left=2cm, right=2cm, top=1.5cm, bottom=1.5cm, includehead, includefoot]{geometry}
-\usepackage{tabularx}
+\usepackage{xltabular} % Replacement for tabularx to allow page breaks 
 \usepackage{booktabs}
 \usepackage{parskip} 
 \usepackage{array} 
 \usepackage{xcolor}
 
-% -- Footer Setup --
+% -- Header/Footer Setup --
+\usepackage{scrlayer-scrpage}
+\pagestyle{scrheadings}
+\clearpairofpagestyles 
+
+% Content for page 2 and onwards 
+\ihead[]{\headmark} % Recipe name on the left
+\ohead[]{Seite \thepage} % Page number on the right
+\automark{section}% -- Layout & Tables --
+\usepackage[left=2cm, right=2cm, top=1.5cm, bottom=1.5cm, includehead, includefoot]{geometry}
+\usepackage{xltabular} % Replacement for tabularx to allow page breaks 
+\usepackage{booktabs}
+\usepackage{parskip} 
+\usepackage{array} 
+\usepackage{xcolor}
+
+% -- Header/Footer Setup --
 \usepackage{scrlayer-scrpage}
 \usepackage{ccicons}
 
 \pagestyle{scrheadings}
 \clearpairofpagestyles 
 
-\ifoot[\footnotesize Generiert: << date_print >>]{\footnotesize https://rezepte.iten.pro}
+% Content for page 2 and onwards 
+\ihead[]{\footnotesize \headmark} % Recipe name on the left
+\ohead[]{\footnotesize Seite \thepage} % Page number on the right
+\automark{section}
+
+\atbegindocument{\thispagestyle{plain}}
+
+% Footer content for all pages
+\ifoot[\footnotesize https://rezepte.iten.pro]{\footnotesize https://rezepte.iten.pro}
 \cfoot[\ccbyncsa]{\ccbyncsa}
 \ofoot[\footnotesize Stand: << date_version >>]{\footnotesize Letzte Änderung: << date_version >>}
 
@@ -83,6 +107,8 @@
 
 % -- Header --
 \section*{<< recipe.name >>}
+% This line ensures the recipe name appears in \headmark for page 2+
+\markboth{<< recipe.name >>}{<< recipe.name >>}
 
 \noindent
 Von << recipe.author >>
@@ -100,14 +126,20 @@ Von << recipe.author >>
 
 \vspace{1em}
 
-% -- Content Table --
+% -- Content Table (with page breaks) --
 \noindent
-\begin{tabularx}{\textwidth}{@{} >{\raggedright\arraybackslash}p{3.5cm} X @{}}
-    %\toprule
+\begin{xltabular}{\textwidth}{@{} >{\raggedright\arraybackslash}p{3.5cm} X @{}}
+    % Header for the very first page
     \textbf{Zutaten} & \textbf{Zubereitung} \\
     \midrule
+    \endfirsthead
+    
+    % Header for all following pages 
+    \textbf{Zutaten} & \textbf{Zubereitung} \\
+    \midrule
+    \endhead
+
     <% for step in steps -%>
-        
         <% if step.is_ingredients == 1 -%>
             % -- CASE A: Normal ingredient list --
             <% if step.ingredients -%>
@@ -132,12 +164,10 @@ Von << recipe.author >>
         <% else -%>
             \hfill \raisebox{-4pt}{\iconFont\large{\symbol{<< step.latex_icon >>}}}
         <% endif -%>
-
         &
         << step.latex_text >> \\
         <% if not loop.last -%>\addlinespace[1em]<% endif -%>
     <% endfor -%>
-    %\bottomrule
-\end{tabularx}
+\end{xltabular}
 
 \end{document}
