@@ -56,9 +56,9 @@
     <!-- ================================= -->
     <!-- RECIPE PREAMBLE/INTRODUCTION      -->
     <!-- ================================= -->
-    {% if recipe.preamble %}
+    {% if preamble_html %}
     <div class="mb-10 mx-4 md:mx-0 italic text-slate-600 leading-relaxed border-l-4 border-slate-200 pl-5 text-base md:text-lg">
-        {{ recipe.preamble }}
+        {{ preamble_html | safe }}
     </div>
     {% endif %}
 

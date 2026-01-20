@@ -501,5 +501,25 @@ document.addEventListener('change', function(e) {
         if (categoryBlock) categoryBlock.style.display = !isIngredients ? '' : 'none';
     }
 });
+
+/* Keyboard shortcut: Ctrl+S or Cmd+S to save the form */
+document.addEventListener('keydown', function(e) {
+    // Support for Ctrl+S (Win/Linux) and Cmd+S (Mac)
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        
+        // Find the submit button by its attribute
+        const saveButton = document.querySelector('button[form="recipe-edit-form"]');
+        
+        if (saveButton) {
+            console.log("Saving recipe via shortcut...");
+            saveButton.click(); // This triggers the form with the correct URL
+        } else {
+            // Fallback: if button is not found, try the form directly
+            const form = document.getElementById('recipe-edit-form');
+            if (form) form.submit();
+        }
+    }
+});
 </script>
 {% endblock %}

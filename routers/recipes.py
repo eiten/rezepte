@@ -62,10 +62,12 @@ async def read_recipe(request: Request, recipe_id: int, db: aiosqlite.Connection
     
     # Fetch recipe
     async with db.execute("SELECT * FROM recipes WHERE id = ?", (recipe_id,)) as cursor:
-        recipe = await cursor.fetchone()
+        row = await cursor.fetchone()
         
-    if not recipe:
+    if not row:
         raise HTTPException(status_code=404, detail="Recipe not found")
+
+    recipe = dict(row)
 
     # Check permissions
     can_edit = False
@@ -89,10 +91,13 @@ async def read_recipe(request: Request, recipe_id: int, db: aiosqlite.Connection
         steps = await cursor.fetchall()
         
     # Fetch ingredients and render markdown
+    from md import md_to_html
+
     steps_data = []
     for step in steps:
         s_dict = dict(step)
-        s_dict["html_text"] = markdown.markdown(s_dict.get("markdown_text") or "", extensions=["extra"]) 
+        # s_dict["html_text"] = markdown.markdown(s_dict.get("markdown_text") or "", extensions=["extra"]) 
+        s_dict["html_text"] = md_to_html(s_dict.get("markdown_text") or "")
         query = """
             SELECT i.*, u.symbol as unit_symbol 
             FROM ingredients i 
@@ -104,9 +109,13 @@ async def read_recipe(request: Request, recipe_id: int, db: aiosqlite.Connection
             s_dict["ingredients"] = await i_cursor.fetchall()
         steps_data.append(s_dict)
 
+    # Render markdown in preamble
+    preamble_html = md_to_html(recipe.get("preamble") or "")
+
     return templates.TemplateResponse("view_recipe.html", {
         "request": request, 
         "recipe": recipe, 
+        "preamble_html": preamble_html,
         "steps": steps_data,
         "can_edit": can_edit,
         "can_delete": can_delete,

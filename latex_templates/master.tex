@@ -10,7 +10,7 @@
 % Using \setmainfont changes the body text.
 % Using \setsansfont ensures headers (like "Zubereitung") match.
 \setmainfont{source-sans-3-latin-300-normal.ttf}[
-    Path = << FONT_PATH >>,
+    Path = << font_path >>,
     BoldFont = source-sans-3-latin-400-normal.ttf,
     ItalicFont = source-sans-3-latin-300-italic.ttf,
     BoldItalicFont = source-sans-3-latin-400-italic.ttf
@@ -18,7 +18,7 @@
 
 % Add this to fix \textbf looking like Computer Modern
 \setsansfont{source-sans-3-latin-300-normal.ttf}[
-    Path = << FONT_PATH >>,
+    Path = << font_path >>,
     BoldFont = source-sans-3-latin-400-normal.ttf,
     ItalicFont = source-sans-3-latin-300-italic.ttf,
     BoldItalicFont = source-sans-3-latin-400-italic.ttf
@@ -33,7 +33,7 @@
 % Load the font directly from the folder.
 % "Ligatures=TeX" ensures that words like "Warning" become icons.
 \newfontfamily\iconFont[
-    Path = << FONT_PATH >>,
+    Path = << font_path >>,
     Extension = .ttf,
     Renderer = HarfBuzz,
     UprightFont = Phosphor-Light, % Default is Light
@@ -43,7 +43,14 @@
 \newcommand{\picon}[1]{\raisebox{-1.1pt}{\iconFont\symbol{"#1}}}
 
 % -- Layout & Tables --
-\usepackage[left=2cm, right=2cm, top=1.5cm, bottom=1.5cm, includehead, includefoot]{geometry}
+\usepackage[
+    left=2cm,
+    right=2cm,
+    top=1.5cm,
+    bottom=1.8cm,
+    footskip=0.5cm,
+    includehead,
+]{geometry}
 \usepackage{xltabular} % Replacement for tabularx to allow page breaks 
 \usepackage{booktabs}
 \usepackage{parskip} 
@@ -59,7 +66,7 @@
 \ihead[]{\headmark} % Recipe name on the left
 \ohead[]{Seite \thepage} % Page number on the right
 \automark{section}% -- Layout & Tables --
-\usepackage[left=2cm, right=2cm, top=1.5cm, bottom=1.5cm, includehead, includefoot]{geometry}
+
 \usepackage{xltabular} % Replacement for tabularx to allow page breaks 
 \usepackage{booktabs}
 \usepackage{parskip} 
@@ -81,7 +88,7 @@
 \atbegindocument{\thispagestyle{plain}}
 
 % Footer content for all pages
-\ifoot[\footnotesize https://rezepte.iten.pro]{\footnotesize https://rezepte.iten.pro}
+\ifoot[\footnotesize << base_url >>]{\footnotesize << base_url >>}
 \cfoot[\ccbyncsa]{\ccbyncsa}
 \ofoot[\footnotesize Stand: << date_version >>]{\footnotesize Letzte Änderung: << date_version >>}
 
@@ -138,7 +145,6 @@ Von << recipe.author >>
     \textbf{Zutaten} & \textbf{Zubereitung} \\
     \midrule
     \endhead
-
     <% for step in steps -%>
         <% if step.is_ingredients == 1 -%>
             % -- CASE A: Normal ingredient list --
@@ -151,10 +157,10 @@ Von << recipe.author >>
                         <% else -%>
                             \qty{<< ing.amount_min >>}{<< ing.unit_cmd >>}
                         <% endif -%>
-                        ~<< ing.item >>
+                        ~\textbf{<< ing.item >>}
                     <% else -%>
                         % -- Case 2: No quantity (e.g. Bittermandelaroma) --
-                        << ing.item >>
+                        \textbf{<< ing.item >>}
                     <% endif -%>
                     <% if ing.note -%> \textit{\small{(<< ing.note >>)}}<% endif -%>
                     <% if not loop.last -%>\newline<% endif -%> 
@@ -164,9 +170,10 @@ Von << recipe.author >>
         <% else -%>
             \hfill \raisebox{-4pt}{\iconFont\large{\symbol{<< step.latex_icon >>}}}
         <% endif -%>
+        <% if not loop.last -%>\rule[-1em]{0pt}{0pt}<% endif -%>
         &
-        << step.latex_text >> \\
-        <% if not loop.last -%>\addlinespace[1em]<% endif -%>
+        << step.latex_text >>
+        <% if not loop.last -%>\rule[-1em]{0pt}{0pt}\\<% endif -%>
     <% endfor -%>
 \end{xltabular}
 

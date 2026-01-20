@@ -3,11 +3,13 @@ import subprocess
 import jinja2
 import tempfile
 import shutil
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
 from fastapi.responses import FileResponse
 import aiosqlite
 from database import get_db_connection, get_config
 from datetime import datetime
+from md import md_to_latex
+
 
 router = APIRouter()
 config = get_config()
@@ -41,47 +43,12 @@ def escape_latex(text):
         text = text.replace(char, replacement)
     return text
 
-def md_to_latex(text):
-    """Convert markdown and emoticons to LaTeX icons"""
-    if not text: return ""
-    import re
-    
-    # 1. Trim and basic cleanup
-    text = text.strip().replace('\r\n', '\n')
-
-    # 2. Emoticon to Icon mapping (Phosphor Codepoints)
-    # We wrap them in a custom LaTeX command \picon{}
-    emoticons = {
-        r':\)':  'E436',  # Smiley
-        r':\(':  'E43E',  # Sad
-        r';\)':  'E666',  # Wink
-        r'\(y\)': 'E48E', # Thumb up (classic Skype/Messenger style)
-        r'<3':    'E2A8', # Heart
-        r'!!':    'E4E2', # Warning
-        r'@@':    'E19A', # Clock
-        r'!t':    'E5CC'  # Thermometer
-    }
-    for emo, code in emoticons.items():
-        # Using a regex with word boundaries or space checks to avoid 
-        # accidental replacements inside URLs etc.
-        text = re.sub(emo, rf'\\picon{{{code}}}', text)
-
-    # 3. Basic Markdown (Bold, Italic, Units)
-    text = re.sub(r'\*\*(.*?)\*\*', r'\\textbf{\1}', text)
-    text = re.sub(r'\*(.*?)\*', r'\\textit{\1}', text)
-    text = re.sub(r'(\d+)\s*°C', r'\\qty{\1}{\\degreeCelsius}', text)
-
-    # 4. Handle Newlines
-    # \addlinespace is great because you are already using booktabs
-    text = re.sub(r'\n\n+', r'\\addlinespace[0.5em] ', text)
-
-    # Convert single newlines
-    text = re.sub(r'\n', r'\\newline ', text)
-
-    return text
-
 @router.get("/recipe/{recipe_id}/pdf")
-async def get_pdf(recipe_id: int, db: aiosqlite.Connection = Depends(get_db_connection)):
+async def get_pdf(
+    recipe_id: int, 
+    request: Request,
+    db: aiosqlite.Connection = Depends(get_db_connection)
+):
     
     # Fetch recipe data
     async with db.execute("SELECT *, updated_at FROM recipes WHERE id = ?", (recipe_id,)) as cursor:
@@ -204,6 +171,9 @@ async def get_pdf(recipe_id: int, db: aiosqlite.Connection = Depends(get_db_conn
         src_text = escape_latex(recipe['source']) if recipe['source'] else None
         preamble_text = md_to_latex(escape_latex(recipe['preamble'])) if recipe['preamble'] else None
 
+        # get base URL
+        base_url = str(request.base_url).rstrip('/')
+
         # Render LaTeX template
         template = latex_jinja_env.get_template('master.tex')
         tex_content = template.render(
@@ -213,7 +183,8 @@ async def get_pdf(recipe_id: int, db: aiosqlite.Connection = Depends(get_db_conn
             unit_defs=unit_defs,
             date_version=fmt_version_date,
             date_print=fmt_print_date,
-            FONT_PATH=FONT_PATH,
+            font_path=FONT_PATH,
+            base_url=escape_latex(base_url),
             source=src_text
         )
 

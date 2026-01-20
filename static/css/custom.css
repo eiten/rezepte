@@ -60,6 +60,15 @@
     -moz-osx-font-smoothing: grayscale;
 }
 
+.ph-emo {
+    font-family: 'Phosphor';
+    /*font-weight: 300; /* Default to Light */
+    font-style: normal;
+    line-height: 1;
+    display: inline-block;
+    vertical-align: -0.15em; /* Fine-tuning vertical alignment like \raisebox */
+    -webkit-font-smoothing: antialiased;
+}
 /* --- Tiptopf Recipe Styles --- */
 
 .recipe-view-container {

@@ -1,7 +1,9 @@
 # main.py
 import uvicorn
+import os
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from database import get_config
 from routers import recipes, pdf, auth, admin
 
@@ -17,6 +19,11 @@ app = FastAPI(
 print(f"App root path: {app.root_path}")
 
 # Static files
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    # Pfad zu deiner konvertierten ICO-Datei
+    file_path = os.path.join("static", "favicon.ico")
+    return FileResponse(file_path)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Include routers
