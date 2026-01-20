@@ -122,13 +122,81 @@ async def add_user(
     redirect_url = request.url_for("manage_users")
     return RedirectResponse(url=redirect_url, status_code=303)
 
+# routers/admin.py
+
 @router.get("/paths", response_class=HTMLResponse)
 async def manage_paths(request: Request, db: aiosqlite.Connection = Depends(get_db_connection)):
-    """Path/folder management page (placeholder)"""
     user_ctx = await get_user_context(request, db)
-    
     if not user_ctx["is_admin"]:
         return RedirectResponse(url="/", status_code=303)
+
+    # Alle Ordner holen
+    async with db.execute("SELECT * FROM folders ORDER BY parent_id, name") as cursor:
+        rows = await cursor.fetchall()
+        folders = [dict(r) for r in rows]
+
+    # Baum bauen (rekursiv oder per Referenz)
+    folder_dict = {f['id']: {**f, 'children': []} for f in folders}
+    root_nodes = []
+    for f_id, f_data in folder_dict.items():
+        if f_data['parent_id'] and f_data['parent_id'] in folder_dict:
+            folder_dict[f_data['parent_id']]['children'].append(f_data)
+        else:
+            root_nodes.append(f_data)
+
+    return templates.TemplateResponse("admin_paths.html", {
+        "request": request,
+        "folder_tree": root_nodes,
+        "all_folders": folders, # Für Dropdowns beim Verschieben
+        **user_ctx
+    })
+
+# routers/admin.py
+
+@router.post("/paths/update")
+async def update_path(
+    request: Request,
+    id: int = Form(...),
+    name: str = Form(...),
+    parent_id: str = Form(None), # String, da leere Option im HTML "" sendet
+    db: aiosqlite.Connection = Depends(get_db_connection)
+):
+    user_ctx = await get_user_context(request, db)
+    if not user_ctx["is_admin"]:
+        raise HTTPException(status_code=403)
+
+    # Validierung: parent_id in int umwandeln oder None lassen
+    p_id = int(parent_id) if parent_id and parent_id.isdigit() else None
     
-    # TODO: Implement path/folder management
-    return HTMLResponse(content="<h1>Path Management</h1><p>Not implemented yet</p>")
+    # Sicherheitscheck: Ein Ordner kann nicht sein eigenes Parent sein
+    if p_id == id:
+        p_id = None 
+
+    await db.execute(
+        "UPDATE folders SET name = ?, parent_id = ? WHERE id = ?",
+        (name, p_id, id)
+    )
+    await db.commit()
+    redirect_url = request.url_for("manage_paths")
+    return RedirectResponse(url=redirect_url, status_code=303)
+
+@router.post("/paths/add")
+async def add_path(
+    request: Request,
+    name: str = Form(...),
+    parent_id: str = Form(None),
+    db: aiosqlite.Connection = Depends(get_db_connection)
+):
+    user_ctx = await get_user_context(request, db)
+    if not user_ctx["is_admin"]:
+        raise HTTPException(status_code=403)
+
+    p_id = int(parent_id) if parent_id and parent_id.isdigit() and int(parent_id) > 0 else 1
+
+    await db.execute(
+        "INSERT INTO folders (name, parent_id) VALUES (?, ?)",
+        (name, p_id)
+    )
+    await db.commit()
+    redirect_url = request.url_for("manage_paths")
+    return RedirectResponse(url=redirect_url, status_code=303)

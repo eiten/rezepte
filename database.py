@@ -5,7 +5,7 @@ import aiosqlite
 import sqlite3
 from functools import lru_cache
 
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
 
 async def init_db():
     """
@@ -47,6 +47,17 @@ async def init_db():
             
             await db.execute("UPDATE db_metadata SET value = '3' WHERE key = 'schema_version'")
             current_version = 3
+
+        if current_version < 4:
+            print("Migrating to Schema v4: Ensuring root folder exists...")
+            # Prüfen, ob überhaupt ein Ordner existiert
+            async with db.execute("SELECT COUNT(*) FROM folders") as cursor:
+                count = await cursor.fetchone()
+                if count[0] == 0:
+                    await db.execute("INSERT INTO folders (name) VALUES ('Hauptverzeichnis')")
+            
+            await db.execute("UPDATE db_metadata SET value = '4' WHERE key = 'schema_version'")
+            current_version = 4
 
         await db.commit()
         print(f"Database schema is up to date at version {current_version}.")
