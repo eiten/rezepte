@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.10] - 2026-01-21
+
+### Changed
+- Use specific SSH key filename (id_rezepte_deploy) for clearer identification
+- SSH authentication with IdentitiesOnly option (fail fast if key doesn't work)
+
+### Fixed
+- Corrected SSH key secret (was using wrong key)
+
 ## [1.1.9] - 2026-01-21
 
 ### Added
