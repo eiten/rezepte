@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.4] - 2026-01-21
+
+### Changed
+- Remove TeX/LaTeX from workflow (ccicons.sty requires excessive package footprint)
+- PDF generation moved to optional post-deploy step on server
+- Smoke tests simplified (no PDF endpoint test)
+
 ## [1.1.3] - 2026-01-21
 
 ### Changed
