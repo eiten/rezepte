@@ -132,13 +132,35 @@ jobs:
           echo ""
           TAG="${GITHUB_REF#refs/tags/}"
           echo "Deploying tag: $TAG"
-          ssh -o StrictHostKeyChecking=no "$USER@$HOST" "
+          echo ""
+          echo "SSH command to execute:"
+          echo "ssh -v -o StrictHostKeyChecking=no $USER@$HOST"
+          echo ""
+          echo "Remote commands:"
+          echo "  cd $PATH_DIR"
+          echo "  sudo systemctl stop $SERVICE"
+          echo "  git fetch --tags origin"
+          echo "  git fetch origin main"
+          echo "  git checkout -f tags/$TAG"
+          echo "  rm -rf cache"
+          echo "  sudo systemctl start $SERVICE"
+          echo ""
+          echo "Executing SSH deploy..."
+          ssh -v -o StrictHostKeyChecking=no "$USER@$HOST" "
             set -e
-            cd \"$PATH_DIR\"
+            echo 'Connected to server, starting deployment...'
+            cd \"$PATH_DIR\" && echo \"Changed to: $(pwd)\"
+            echo 'Stopping service...'
             sudo systemctl stop \"$SERVICE\"
+            echo 'Fetching tags...'
             git fetch --tags origin
+            echo 'Fetching main branch...'
             git fetch origin main
+            echo 'Checking out tag...'
             git checkout -f \"tags/$TAG\"
+            echo 'Clearing cache...'
             rm -rf cache
+            echo 'Starting service...'
             sudo systemctl start \"$SERVICE\"
+            echo 'Deployment complete!'
           "
