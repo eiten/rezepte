@@ -13,8 +13,18 @@ Rezeptverwaltung mit FastAPI, SQLite und FTS5 (Volltextsuche). Login mit servers
 
 ## Setup (Dev)
 1. Abhängigkeiten installieren: `pip install -r requirements.txt`
+2. venv starten: `source venv/bin/activate`
 2. DB erstellen: `APP_ENV=dev python tools/setup_db.py`
-3. Start: `APP_ENV=dev uvicorn main:app --reload`
+3. Start: `APP_ENV=dev python main.py`
+
+## Starten der produktiven APP:
+1. venv sourcen
+2. `APP_ENV=prod python main.py`
+
+Alternativ kann auch direkt die app gestartet werden, zum Beispiel aus einer service unit:
+```bash
+APP_ENV=prod /arbeitsverzeichnis/venv/bin/python /arbeitsverzeichnis/main.py
+```
 
 ### Tailwind CSS im Entwicklermodus
 - Für CSS-Änderungen muss der Watcher laufen, sonst wird `static/css/main.css` nicht neu generiert.
