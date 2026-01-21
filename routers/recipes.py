@@ -364,7 +364,7 @@ async def update_recipe(request: Request, recipe_id: int, db: aiosqlite.Connecti
     user_ctx = await get_user_context(request, db)
     
     # Check permissions
-    async with db.execute("SELECT owner_id FROM recipes WHERE id = ?", (recipe_id,)) as cursor:
+    async with db.execute("SELECT owner_id, folder_id, name, author, source, preamble FROM recipes WHERE id = ?", (recipe_id,)) as cursor:
         row = await cursor.fetchone()
         
     if not row:
@@ -376,22 +376,39 @@ async def update_recipe(request: Request, recipe_id: int, db: aiosqlite.Connecti
     # Parse form data
     form = await request.form()
     
-    # Update base recipe data
-    await db.execute("""
-        UPDATE recipes 
-        SET folder_id=?, name=?, author=?, source=?, preamble=?, updated_at=CURRENT_TIMESTAMP 
-        WHERE id=?
-    """, (
-        form.get("folder_id"),
-        form.get("name"), 
-        form.get("author"), 
-        form.get("source"), 
-        form.get("preamble"), 
-        recipe_id
-    ))
+    # Get new values
+    new_folder_id = form.get("folder_id")
+    new_name = form.get("name")
+    new_author = form.get("author")
+    new_source = form.get("source")
+    new_preamble = form.get("preamble")
+    
+    # Check if base recipe data changed
+    base_data_changed = (
+        str(row["folder_id"] or "") != str(new_folder_id or "") or
+        row["name"] != new_name or
+        row["author"] != new_author or
+        row["source"] != new_source or
+        row["preamble"] != new_preamble
+    )
+    
+    # Update base recipe data - only set updated_at if something changed
+    if base_data_changed:
+        await db.execute("""
+            UPDATE recipes 
+            SET folder_id=?, name=?, author=?, source=?, preamble=?, updated_at=CURRENT_TIMESTAMP 
+            WHERE id=?
+        """, (new_folder_id, new_name, new_author, new_source, new_preamble, recipe_id))
+    else:
+        await db.execute("""
+            UPDATE recipes 
+            SET folder_id=?, name=?, author=?, source=?, preamble=?
+            WHERE id=?
+        """, (new_folder_id, new_name, new_author, new_source, new_preamble, recipe_id))
 
     # Process steps and ingredients
     kept_step_ids = []
+    steps_changed = False
     
     step_idx = 0
     while f"steps[{step_idx}][position]" in form:
@@ -413,9 +430,24 @@ async def update_recipe(request: Request, recipe_id: int, db: aiosqlite.Connecti
 
         # Upsert step
         if step_id:
-            await db.execute("""
-                UPDATE steps SET position=?, markdown_text=?, category_id=? WHERE id=?
-            """, (position, markdown_text, cat_id, step_id))
+            # Fetch old values to check if anything changed
+            async with db.execute("SELECT position, markdown_text, category_id FROM steps WHERE id=?", (step_id,)) as cursor:
+                old_step = await cursor.fetchone()
+            
+            step_changed = (
+                old_step and (
+                    str(old_step["position"]) != str(position) or
+                    old_step["markdown_text"] != markdown_text or
+                    old_step["category_id"] != cat_id
+                )
+            )
+            
+            if step_changed:
+                await db.execute("""
+                    UPDATE steps SET position=?, markdown_text=?, category_id=? WHERE id=?
+                """, (position, markdown_text, cat_id, step_id))
+                steps_changed = True
+                
             kept_step_ids.append(step_id)
             current_step_db_id = step_id
         else:
@@ -428,6 +460,7 @@ async def update_recipe(request: Request, recipe_id: int, db: aiosqlite.Connecti
             new_step_row = await cursor.fetchone()
             current_step_db_id = new_step_row[0]
             kept_step_ids.append(current_step_db_id)
+            steps_changed = True
 
         # Process ingredients
         kept_ing_ids = []
@@ -447,12 +480,29 @@ async def update_recipe(request: Request, recipe_id: int, db: aiosqlite.Connecti
             note = form.get(f"{i_prefix}[note]")
             
             if ing_id:
-                # Update existierende Zutat
-                await db.execute("""
-                    UPDATE ingredients 
-                    SET position=?, amount_min=?, amount_max=?, unit_id=?, item=?, note=?
-                    WHERE id=?
-                """, (ing_idx + 1, amount_min, amount_max, unit_id, item, note, ing_id))
+                # Fetch old values to check if anything changed
+                async with db.execute("SELECT position, amount_min, amount_max, unit_id, item, note FROM ingredients WHERE id=?", (ing_id,)) as cursor:
+                    old_ing = await cursor.fetchone()
+                
+                ing_changed = (
+                    old_ing and (
+                        old_ing["position"] != ing_idx + 1 or
+                        old_ing["amount_min"] != amount_min or
+                        old_ing["amount_max"] != amount_max or
+                        str(old_ing["unit_id"] or "") != str(unit_id or "") or
+                        old_ing["item"] != item or
+                        old_ing["note"] != note
+                    )
+                )
+                
+                if ing_changed:
+                    await db.execute("""
+                        UPDATE ingredients 
+                        SET position=?, amount_min=?, amount_max=?, unit_id=?, item=?, note=?
+                        WHERE id=?
+                    """, (ing_idx + 1, amount_min, amount_max, unit_id, item, note, ing_id))
+                    steps_changed = True
+                    
                 kept_ing_ids.append(ing_id)
             else:
                 # Insert NEUE Zutat - WICHTIG: Cursor nutzen um ID zu holen!
@@ -464,25 +514,40 @@ async def update_recipe(request: Request, recipe_id: int, db: aiosqlite.Connecti
                 # FIX: Die ID der neuen Zutat auf die "Behalten-Liste" setzen!
                 new_ing_id = cursor.lastrowid 
                 kept_ing_ids.append(new_ing_id)
+                steps_changed = True
             
             ing_idx += 1
             
         # Cleanup: Delete all ingredients of this step that were NOT edited/created
         if kept_ing_ids:
             placeholders = ",".join("?" * len(kept_ing_ids))
-            await db.execute(f"DELETE FROM ingredients WHERE step_id=? AND id NOT IN ({placeholders})", (current_step_db_id, *kept_ing_ids))
+            result = await db.execute(f"DELETE FROM ingredients WHERE step_id=? AND id NOT IN ({placeholders})", (current_step_db_id, *kept_ing_ids))
+            if result.rowcount > 0:
+                steps_changed = True
         else:
             # If no ingredients remain -> Delete all
-            await db.execute("DELETE FROM ingredients WHERE step_id=?", (current_step_db_id,))
+            result = await db.execute("DELETE FROM ingredients WHERE step_id=?", (current_step_db_id,))
+            if result.rowcount > 0:
+                steps_changed = True
             
         step_idx += 1
 
     # Cleanup: Delete steps
     if kept_step_ids:
         placeholders = ",".join("?" * len(kept_step_ids))
-        await db.execute(f"DELETE FROM steps WHERE recipe_id=? AND id NOT IN ({placeholders})", (recipe_id, *kept_step_ids))
+        result = await db.execute(f"DELETE FROM steps WHERE recipe_id=? AND id NOT IN ({placeholders})", (recipe_id, *kept_step_ids))
+        if result.rowcount > 0:
+            steps_changed = True
     else:
-        await db.execute("DELETE FROM steps WHERE recipe_id=?", (recipe_id,))
+        result = await db.execute("DELETE FROM steps WHERE recipe_id=?", (recipe_id,))
+        if result.rowcount > 0:
+            steps_changed = True
+    
+    # Only update recipe timestamp if there were actual changes to base data or steps
+    if steps_changed and not base_data_changed:
+        await db.execute("""
+            UPDATE recipes SET updated_at=CURRENT_TIMESTAMP WHERE id=?
+        """, (recipe_id,))
 
     await db.commit()
     

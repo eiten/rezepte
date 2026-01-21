@@ -2,6 +2,8 @@
 
 Rezeptverwaltung mit FastAPI, SQLite und FTS5 (Volltextsuche). Login mit serverseitigen Sessions, PDF-Export via LaTeX, und einem Markdown-ähnlichen Editor für Schritte.
 
+📋 **[Changelog](CHANGELOG.md)** – View version history and release notes
+
 ## Kurzfeatures
 - Serverseitige Sessions (SQLite `sessions`-Tabelle), Cookie `rezepte_session_token`, Rolling Expiry (7 Tage, wird bei Nutzung verlängert)
 - Volltextsuche über Rezepte/Schritte/Zutaten (SQLite FTS5)
