@@ -101,11 +101,11 @@ jobs:
           echo "KNOWN_HOSTS set: $([ -z "$KNOWN_HOSTS" ] && echo "NO" || echo "YES")"
           mkdir -p ~/.ssh
           if [ -n "$SSH_PRIVATE_KEY" ]; then
-            echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
-            chmod 600 ~/.ssh/id_ed25519
-            echo "SSH key written to ~/.ssh/id_ed25519"
+            echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rezepte_deploy
+            chmod 600 ~/.ssh/id_rezepte_deploy
+            echo "SSH key written to ~/.ssh/id_rezepte_deploy"
             echo "SSH key fingerprint:"
-            ssh-keygen -l -f ~/.ssh/id_ed25519
+            ssh-keygen -l -f ~/.ssh/id_rezepte_deploy
           else
             echo "ERROR: SSH_PRIVATE_KEY is empty!"
           fi
@@ -138,7 +138,7 @@ jobs:
           echo "Deploying tag: $TAG"
           echo ""
           echo "SSH command to execute:"
-          echo "ssh -i ~/.ssh/id_ed25519 -v -o StrictHostKeyChecking=no -o IdentitiesOnly=yes $USER@$HOST"
+          echo "ssh -i ~/.ssh/id_rezepte_deploy -v -o StrictHostKeyChecking=no -o IdentitiesOnly=yes $USER@$HOST"
           echo ""
           echo "Remote commands:"
           echo "  cd $PATH_DIR"
@@ -150,7 +150,7 @@ jobs:
           echo "  sudo systemctl start $SERVICE"
           echo ""
           echo "Executing SSH deploy..."
-          ssh -i ~/.ssh/id_ed25519 -v -o StrictHostKeyChecking=no -o IdentitiesOnly=yes "$USER@$HOST" "
+          ssh -i ~/.ssh/id_rezepte_deploy -v -o StrictHostKeyChecking=no -o IdentitiesOnly=yes "$USER@$HOST" "
             set -e
             echo 'Connected to server, starting deployment...'
             cd \"$PATH_DIR\" && echo \"Changed to: $(pwd)\"
