@@ -1,3 +1,9 @@
+{# Template: index.html
+    Purpose: Recipe list view with folder breadcrumb, filter by folder, and search integration.
+    Notes:
+    - Click on a recipe row opens detail unless a link/button was clicked.
+    - Admins/owners see edit/delete; everyone can fetch PDF.
+#}
 {% extends "base.html" %}
 
 {% block title %}Rezepte{% endblock %}
@@ -14,9 +20,9 @@
 
 {% block content %}
 <div class="py-6">
-    <!-- ================================= -->
-    <!-- PAGE HEADER WITH NAVIGATION       -->
-    <!-- ================================= -->
+    {# ================================= #}
+    {# PAGE HEADER WITH NAVIGATION       #}
+    {# ================================= #}
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
         
         <div class="flex-1">
@@ -53,9 +59,9 @@
         </div>
     </div>
 
-    <!-- ================================= -->
-    <!-- ERROR MESSAGE (if search failed)  -->
-    <!-- ================================= -->
+    {# ================================= #}
+    {# ERROR MESSAGE (if search failed)  #}
+    {# ================================= #}
     {% if search_error %}
     <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm">
         <div class="flex items-start gap-3">
@@ -73,16 +79,16 @@
     </div>
     {% endif %}
 
-    <!-- ================================= -->
-    <!-- RECIPE LIST                       -->
-    <!-- ================================= -->
+    {# ================================= #}
+    {# RECIPE LIST                       #}
+    {# ================================= #}
     <div class="space-y-2">
         {% for recipe in recipes %}
         <article class="group bg-white rounded-xl border border-slate-200 hover:border-accent/30 hover:shadow-md transition-all">
             <div class="flex items-center justify-between py-2 px-3 cursor-pointer sm:cursor-default" 
                  onclick="toggleMobileMenu('{{ recipe.id }}')">
                 
-                <!-- Recipe Info -->
+                {# Recipe Info #}
                 <div class="row-recipe flex items-center gap-4 flex-1 min-w-0 cursor-pointer" data-recipe-id="{{ recipe.id }}" data-href="{{ url_for('read_recipe', recipe_id=recipe.id) }}">
                     <div class="min-w-0">
                         <h2 class="text-lg font-semibold text-slate-800 truncate leading-tight group-hover:text-accent transition-colors">
@@ -94,7 +100,7 @@
                     </div>
                 </div>
 
-                <!-- Action Buttons (Desktop only) -->
+                {# Action Buttons (Desktop only) #}
                 <div class="hidden sm:flex rounded-lg overflow-hidden border border-slate-400">
                     {% if is_admin or (current_user_id == recipe.owner_id) %}
                     <a href="{{ url_for('edit_recipe', recipe_id=recipe.id) }}" class="px-2 py-1 border-r border-slate-400 color-nav-bg color-nav-text hover:bg-accent-soft hover:text-accent no-underline transition-colors"><span class="ph-btn-icon text-lg mr-1">&#xE3B4;</span><span class="hidden lg:inline"> Bearbeiten</span></a>
@@ -110,9 +116,9 @@
     </div>
 </div>
 
-<!-- ================================= -->
-<!-- JAVASCRIPT                        -->
-<!-- ================================= -->
+{# ================================= #}
+{# JAVASCRIPT                        #}
+{# ================================= #}
 <script>
 // Delete recipe with confirmation
 function removeRecipe(btn) {

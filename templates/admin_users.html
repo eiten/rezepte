@@ -1,3 +1,8 @@
+{# Template: admin_users.html
+    Purpose: Admin user management (edit user fields, set admin/active, add new users).
+    Notes:
+    - Uses per-row forms posting to `update_user`; add-row posts to `add_user`.
+#}
 {% extends "base.html" %}
 {% block title %}Admin - Benutzerverwaltung{% endblock %}
 

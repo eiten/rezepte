@@ -1,3 +1,10 @@
+{# Template: edit_recipe.html
+    Purpose: Recipe create/edit form with dynamic steps, ingredients, and an in-page help modal.
+    Notes:
+    - Shows floating help button from base.html; listeners attached on DOMContentLoaded.
+    - Help modal fetches data from /api/help using FastAPI `root_path` (works in dev/prod).
+    - Form supports reordering steps and ingredients; names are updated live.
+#}
 {% extends "base.html" %}
 
 {% block title %}{% if mode == 'add' %}New Recipe{% else %}Edit Recipe{% endif %}{% endblock %}
@@ -19,11 +26,137 @@
 {% endmacro %}
 
 {% block content %}
+{# Show help button on edit pages and setup help modal #}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const helpBtn = document.getElementById('help-button');
+        if (helpBtn) helpBtn.classList.remove('hidden');
+    });
+</script>
+
+{# Help Modal (only on edit pages) #}
+<div id="help-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+    <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+            <h2 class="text-2xl font-bold text-gray-900">Editor Syntax Hilfe</h2>
+            <button id="help-close" class="text-gray-500 hover:text-gray-700 focus:outline-none">
+                <span class="text-2xl">✕</span>
+            </button>
+        </div>
+
+        <div class="p-6 space-y-6">
+            {# Quantities Section #}
+            <div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-3">Mengen & Einheiten</h3>
+                <div class="grid gap-2 text-sm">
+                    <div class="bg-gray-50 p-3 rounded border border-gray-200">
+                        <code class="font-mono text-accent font-medium">[8g]</code>
+                        <span class="text-gray-600 ml-2">→ 8 g</span>
+                    </div>
+                    <div class="bg-gray-50 p-3 rounded border border-gray-200">
+                        <code class="font-mono text-accent font-medium">[2-8 ml]</code>
+                        <span class="text-gray-600 ml-2">→ 2–8 ml</span>
+                    </div>
+                    <div class="bg-gray-50 p-3 rounded border border-gray-200">
+                        <code class="font-mono text-accent font-medium">[4×6 cm]</code>
+                        <span class="text-gray-600 ml-2">→ 4×6 cm</span>
+                    </div>
+                </div>
+            </div>
+
+            {# Formatting Section #}
+            <div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-3">Textformatierung</h3>
+                <div class="grid gap-2 text-sm">
+                    <div class="bg-gray-50 p-3 rounded border border-gray-200">
+                        <code class="font-mono text-accent font-medium">**bold**</code>
+                        <span class="text-gray-600 ml-2">→ <strong>bold</strong></span>
+                    </div>
+                    <div class="bg-gray-50 p-3 rounded border border-gray-200">
+                        <code class="font-mono text-accent font-medium">*italic*</code>
+                        <span class="text-gray-600 ml-2">→ <em>italic</em></span>
+                    </div>
+                    <div class="bg-gray-50 p-3 rounded border border-gray-200">
+                        <code class="font-mono text-accent font-medium">^super^</code>
+                        <span class="text-gray-600 ml-2">→ <sup>super</sup></span>
+                    </div>
+                    <div class="bg-gray-50 p-3 rounded border border-gray-200">
+                        <code class="font-mono text-accent font-medium">_sub_</code>
+                        <span class="text-gray-600 ml-2">→ <sub>sub</sub></span>
+                    </div>
+                </div>
+            </div>
+
+            {# Emoticons Section #}
+            <div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-3">Emoticon Kurzbefehle</h3>
+                <div id="emoticons-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
+                    {# Populated by JavaScript #}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Help Modal Logic #}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const helpButton = document.getElementById('help-button');
+        const helpModal = document.getElementById('help-modal');
+        const helpClose = document.getElementById('help-close');
+        const emoticonsGrid = document.getElementById('emoticons-grid');
+
+        if (helpButton) {
+            helpButton.addEventListener('click', async () => {
+                // Load help data via API (respect app root_path)
+                console.log('Fetching help data from {{ request.scope.get("root_path", "") }}/api/help');
+                const response = await fetch('{{ request.scope.get("root_path", "") }}/api/help');
+                const data = await response.json();
+
+                // Populate emoticons
+                emoticonsGrid.innerHTML = '';
+                data.emoticons.forEach(emo => {
+                    const div = document.createElement('div');
+                    div.className = 'bg-gray-50 p-2 rounded border border-gray-200 flex items-center gap-2';
+                    div.innerHTML = `
+                        <code class="font-mono text-accent font-medium flex-shrink-0">${escapeHtml(emo.shortcut)}</code>
+                        <span class="text-xl" style="font-family: 'Phosphor', sans-serif;">&#x${emo.code};</span>
+                    `;
+                    emoticonsGrid.appendChild(div);
+                });
+
+                helpModal.classList.remove('hidden');
+            });
+        }
+
+        if (helpClose) {
+            helpClose.addEventListener('click', () => {
+                helpModal.classList.add('hidden');
+            });
+        }
+
+        if (helpModal) {
+            helpModal.addEventListener('click', (e) => {
+                if (e.target === helpModal) {
+                    helpModal.classList.add('hidden');
+                }
+            });
+        }
+    });
+
+    // Helper function
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+</script>
+
 <div class="max-w-4xl mx-auto pb-12">
     
-    <!-- ================================= -->
-    <!-- PAGE HEADER WITH ACTION BUTTONS   -->
-    <!-- ================================= -->
+    {# ================================= #}
+    {# PAGE HEADER WITH ACTION BUTTONS   #}
+    {# ================================= #}
     <div class="flex items-center justify-between mb-8">
         <div>
             <h1 class="text-3xl font-bold text-slate-800 mb-1">
@@ -46,12 +179,12 @@
         </div>
     </div>
 
-    <!-- ================================= -->
-    <!-- MAIN FORM                         -->
-    <!-- ================================= -->
+    {# ================================= #}
+    {# MAIN FORM                         #}
+    {# ================================= #}
     <form action="{% if mode == 'add' %}{{ url_for('create_recipe') }}{% else %}{{ url_for('update_recipe', recipe_id=recipe.id) }}{% endif %}" method="post" id="recipe-edit-form" class="space-y-8">
         
-        <!-- Basic Recipe Metadata -->
+        {# Basic Recipe Metadata #}
         <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
             <h2 class="text-lg font-semibold text-slate-800 mb-4 border-b pb-2">Basisdaten</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -86,9 +219,9 @@
             </div>
         </div>
 
-        <!-- ================================= -->
-        <!-- STEPS CONTAINER                   -->
-        <!-- ================================= -->
+        {# ================================= #}
+        {# STEPS CONTAINER                   #}
+        {# ================================= #}
         <div id="steps-container" class="space-y-6">
             {% for step in steps %}
             {% set step_idx = loop.index0 %}
@@ -96,12 +229,12 @@
                 data-step-id="{{ step.id }}" 
                 data-step-index="{{ step_idx }}">
 
-                <!-- Step Card Header: Position Badge + Type Toggle + Move/Delete Buttons -->
+                {# Step Card Header: Position Badge + Type Toggle + Move/Delete Buttons #}
                 <div class="bg-slate-50 px-4 py-3 border-b border-slate-200 flex items-center justify-between">
                     <div class="flex items-center gap-3">
                         <span class="step-number bg-slate-200 text-slate-600 text-xs font-bold px-2 py-1 rounded">#{{ step.position }}</span>
                         
-                        <!-- Type Toggle: Preparation (with ingredients) vs Info/Category -->
+                        {# Type Toggle: Preparation (with ingredients) vs Info/Category #}
                         <div class="flex rounded-lg border border-slate-300 overflow-hidden divide-x divide-slate-300 bg-white shadow-sm">
                             <label class="group/lbl cursor-pointer relative px-3 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-50 transition-colors has-[:checked]:bg-accent/10 has-[:checked]:text-accent has-[:checked]:font-bold">
                                 <input type="radio" name="steps[{{ step_idx }}][type]" value="ingredients" class="peer hidden" {% if step.is_ingredients %}checked{% endif %} data-toggle-type>
@@ -116,7 +249,7 @@
                         </div>
                     </div>
 
-                    <!-- Move/Delete Buttons -->
+                    {# Move/Delete Buttons #}
                     <div class="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                         <button type="button" onclick="moveStepUp(this)" class="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200 rounded" title="Move Up">
                             <span class="ph-btn-icon text-lg">&#xE08E;</span>
@@ -131,12 +264,12 @@
                     </div>
                 </div>
 
-                <!-- Step Card Body -->
+                {# Step Card Body #}
                 <div class="p-4">
                     <input type="hidden" name="steps[{{ step_idx }}][id]" value="{{ step.id }}">
                     <input type="hidden" name="steps[{{ step_idx }}][position]" value="{{ step.position }}">
 
-                    <!-- Category Selection Block (shown for "Info/Category" type) -->
+                    {# Category Selection Block (shown for "Info/Category" type) #}
                     <div class="category-block" {% if step.is_ingredients %}style="display:none;"{% endif %}>
                         <div class="max-w-md">
                             <label class="block text-sm font-medium text-slate-700 mb-1">Kategorie wählen</label>
@@ -149,7 +282,7 @@
                         </div>
                     </div>
 
-                    <!-- Ingredients Block (shown for "Zubereitung" type) -->
+                    {# Ingredients Block (shown for "Zubereitung" type) #}
                     <div class="ingredients-block" {% if not step.is_ingredients %}style="display:none;"{% endif %}>
                         <div class="mb-4">
                             <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Zutaten</label>
@@ -158,7 +291,7 @@
                                 <div class="ingredient-row flex items-start gap-2 group/ing">
                                     <input type="hidden" name="steps[{{ step_idx }}][ingredients][{{ loop.index0 }}][id]" value="{{ ing.id }}">
                                     
-                                    <!-- Amount Field -->
+                                    {# Amount Field #}
                                     <div class="w-24 shrink-0">
                                         <input type="text" 
                                                name="steps[{{ step_idx }}][ingredients][{{ loop.index0 }}][amount_combined]" 
@@ -171,7 +304,7 @@
                                                oninput="this.value = this.value.replace(/[^0-9.,\-\s]/g, '')">
                                     </div>
 
-                                    <!-- Unit Selector -->
+                                    {# Unit Selector #}
                                     <div class="w-20 shrink-0">
                                         <select name="steps[{{ step_idx }}][ingredients][{{ loop.index0 }}][unit_id]" 
                                                 class="w-full rounded-md border-slate-300 py-1.5 px-2 text-sm focus:border-accent focus:ring-accent bg-slate-50">
@@ -182,7 +315,7 @@
                                         </select>
                                     </div>
 
-                                    <!-- Item Name -->
+                                    {# Item Name #}
                                     <div class="grow">
                                         <input type="text" 
                                                name="steps[{{ step_idx }}][ingredients][{{ loop.index0 }}][item]" 
@@ -192,7 +325,7 @@
                                                class="w-full rounded-md border-slate-300 py-1.5 px-2 text-sm font-medium focus:border-accent focus:ring-accent">
                                     </div>
 
-                                    <!-- Optional Note -->
+                                    {# Optional Note #}
                                     <div class="w-1/4 hidden sm:block">
                                         <input type="text" 
                                                name="steps[{{ step_idx }}][ingredients][{{ loop.index0 }}][note]" 
@@ -201,7 +334,7 @@
                                                class="w-full rounded-md border-slate-200 py-1.5 px-2 text-sm text-slate-500 focus:border-accent focus:ring-accent">
                                     </div>
 
-                                    <!-- Remove Ingredient Button -->
+                                    {# Remove Ingredient Button #}
                                     <button type="button" onclick="removeIngredient(this)" class="shrink-0 p-1.5 text-slate-300 hover:text-red-500 transition-colors">
                                         <span class="ph-btn-icon text-lg">&#xE4A6;</span>
                                     </button>
@@ -213,7 +346,7 @@
                             </button>
                         </div>
                     </div>
-                    <!-- Instructions Textarea -->
+                    {# Instructions Textarea #}
                     <div>
                         <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Anleitung</label>
                         <textarea name="steps[{{ step_idx }}][markdown_text]" rows="3" 
@@ -225,7 +358,7 @@
             {% endfor %}
         </div>
 
-        <!-- Add Step Button -->
+        {# Add Step Button #}
         <div class="text-center py-4 border-2 border-dashed border-slate-300 rounded-xl hover:border-accent hover:bg-accent-soft/10 transition-colors cursor-pointer" onclick="addStep()">
             <span class="text-accent font-medium flex items-center justify-center gap-2">
                 <span class="text-xl font-bold">+</span> Einen weiteren Schritt hinzufügen
@@ -234,7 +367,7 @@
 
     </form>
 
-    <!-- Bottom Action Buttons -->
+    {# Bottom Action Buttons #}
     <div class="mt-12 flex justify-center border-t border-slate-200 pt-8">
         <div class="flex gap-4">
             {% if mode == 'add' %}
@@ -254,11 +387,11 @@
     </div>
 </div>
 
-<!-- ================================= -->
-<!-- TEMPLATES FOR DYNAMIC CONTENT     -->
-<!-- ================================= -->
+{# ================================= #}
+{# TEMPLATES FOR DYNAMIC CONTENT     #}
+{# ================================= #}
 
-<!-- Template: Ingredient Row -->
+{# Template: Ingredient Row #}
 <template id="ingredient-row-template">
     <div class="ingredient-row flex items-start gap-2 group/ing animate-fade-in">
         <input type="hidden" name="" value=""> 
@@ -294,7 +427,7 @@
     </div>
 </template>
 
-<!-- Template: Step Card -->
+{# Template: Step Card #}
 <template id="step-card-template">
     <div class="step-card group bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden transition-all hover:border-slate-300" 
         data-step-id="" 
@@ -368,9 +501,9 @@
     </div>
 </template>
 
-<!-- ================================= -->
-<!-- JAVASCRIPT: DYNAMIC FORM HANDLING -->
-<!-- ================================= -->
+{# ================================= #}
+{# JAVASCRIPT: DYNAMIC FORM HANDLING #}
+{# ================================= #}
 <script>
 /* Update ingredient field names after reordering */
 function updateIngredientIndices(stepCard) {

@@ -2,6 +2,8 @@
 
 Rezeptverwaltung mit FastAPI, SQLite und FTS5 (Volltextsuche). Login mit serverseitigen Sessions, PDF-Export via LaTeX, und einem Markdown-ähnlichen Editor für Schritte.
 
+📋 **[Changelog](CHANGELOG.md)** – View version history and release notes
+
 ## Kurzfeatures
 - Serverseitige Sessions (SQLite `sessions`-Tabelle), Cookie `rezepte_session_token`, Rolling Expiry (7 Tage, wird bei Nutzung verlängert)
 - Volltextsuche über Rezepte/Schritte/Zutaten (SQLite FTS5)
@@ -13,6 +15,17 @@ Rezeptverwaltung mit FastAPI, SQLite und FTS5 (Volltextsuche). Login mit servers
 1. Abhängigkeiten installieren: `pip install -r requirements.txt`
 2. DB erstellen: `APP_ENV=dev python tools/setup_db.py`
 3. Start: `APP_ENV=dev uvicorn main:app --reload`
+
+### Tailwind CSS im Entwicklermodus
+- Für CSS-Änderungen muss der Watcher laufen, sonst wird `static/css/main.css` nicht neu generiert.
+- Watcher starten:
+
+```bash
+./tools/watch_css.sh
+```
+
+- Der Watcher lauscht auf `static/css/src.css` und schreibt nach `static/css/main.css`.
+- In Produktion wird die CSS-Datei nicht automatisch gebaut; der Watcher ist nur für lokale Entwicklung gedacht. 
 
 ## Login / Sessions
 - Login unter `/auth/login`, Logout unter `/auth/logout`
@@ -61,3 +74,4 @@ Die Schritt-Texte unterstützen einen schlanken Satz an Markierungen. Sie gelten
 ## Hinweise
 - IP-Logging ist hinter sslh/Caddy aktuell 127.0.0.1; Sessions funktionieren dennoch.
 - Root-Pfad (prod) ist `/rezepte` (siehe `config.yaml`).
+ - API-URLs in Templates respektieren den `root_path`; z.B. der Hilfe-Dialog lädt Daten über `/api/help` mit Präfix in Dev (`/rezepte`).

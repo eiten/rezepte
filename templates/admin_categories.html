@@ -1,3 +1,9 @@
+{# Template: admin_categories.html
+    Purpose: Manage categories (label, color, icon codepoint), and add new entries.
+    Notes:
+    - Live preview updates when color or codepoint inputs change.
+    - Per-row forms post to `/admin/categories/update`; add-row posts to `/admin/categories/add`.
+#}
 {% extends "base.html" %}
 {% block title %}Admin - Kategorien{% endblock %}
 
