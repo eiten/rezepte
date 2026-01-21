@@ -1,0 +1,100 @@
+/* ============================================
+   REZEPTE APP - Custom CSS
+   ============================================ */
+
+/* -------- FONTS -------- */
+@font-face {
+    font-family: 'Phosphor';
+    src: url('../fonts/Phosphor.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+/* -------- ICONS -------- */
+.ph-icon {
+    font-family: 'Phosphor';
+    font-style: normal;
+    font-weight: normal;
+    line-height: 1;
+    display: inline-block;
+    font-size: 1.8rem;
+    opacity: 0.7;
+    filter: brightness(0.9) saturate(150%);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.ph-btn-icon {
+    font-family: 'Phosphor';
+    font-style: normal;
+    font-weight: normal;
+    line-height: 1;
+    display: inline-block;
+    font-size: 1.3em; 
+    vertical-align: text-bottom;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.ph-input-icon {
+    font-family: 'Phosphor';
+    font-style: normal;
+    font-weight: normal;
+    line-height: 1;
+    display: inline-block;
+    font-size: 1em; 
+    vertical-align: text-bottom;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.ph-hdr-icon {
+    font-family: 'Phosphor';
+    font-style: normal;
+    font-weight: normal;
+    line-height: 1;
+    display: inline-block;
+    font-size: 1.7em; 
+    vertical-align: text-bottom;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.ph-emo {
+    font-family: 'Phosphor';
+    /*font-weight: 300; /* Default to Light */
+    font-style: normal;
+    line-height: 1;
+    display: inline-block;
+    transform: translateY(0.05em);
+    -webkit-font-smoothing: antialiased;
+}
+
+
+/* --- Tiptopf Recipe Styles --- */
+
+.recipe-view-container {
+    /* Schriftgröße leicht anheben für bessere Lesbarkeit */
+    font-size: 1.125rem; /* Entspricht text-lg (ca. 18px) */
+}
+
+/* In der schlichten Ansicht wollen wir, dass die Markdown-Absätze 
+   nicht zu riesige Abstände erzeugen */
+.recipe-view-container .prose p {
+    margin-bottom: 0.75rem;
+}
+
+.recipe-view-container .prose p:last-child {
+    margin-bottom: 0;
+}
+
+/* Print-Optimierung: Verstecke die Navigation beim Drucken */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    .recipe-view-container {
+        margin-top: 0 !important;
+        padding-bottom: 0 !important;
+    }
+}

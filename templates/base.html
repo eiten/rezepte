@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Rezepte App{% endblock %}</title>
+    
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/main.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/custom.css') }}">
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', path='logo-web.svg') }}">
+    <link rel="shortcut icon" href="{{ url_for('static', path='favicon.ico') }}" type="image/x-icon">
+
+</head>
+<body class="bg-gray-50">
+    <nav class="fixed top-0 left-0 right-0 z-50 bg-nav-bg shadow-lg">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div class="flex h-16 items-center justify-between gap-4">
+                
+                <div id="nav-logo" class="flex items-center flex-shrink-0">
+                    <span class="ph-hdr-icon text-accent mr-2">&#xE6CA;</span>
+                    <a href="{{ url_for('index') }}" class="text-white font-bold text-xl no-underline block">Edis Rezepte</a>
+                </div>
+
+                <div class="flex-1 flex justify-end md:justify-start max-w-md">
+                    <form action="{{ url_for('index') }}" method="get" id="search-form" class="w-full relative flex items-center">
+                        
+                        <button type="button" id="search-toggle" class="md:hidden p-2 text-nav-text hover:text-white focus:outline-none z-50">
+                            <span id="search-icon" class="ph-btn-icon text-2xl m-0 leading-none">&#xE30C;</span>
+                        </button>
+
+                        <div id="search-container" class="hidden md:block w-full">
+                            <div class="relative flex items-center"> 
+                                <input type="text" name="q" placeholder="Rezepte suchen..." 
+                                    class="w-full bg-gray-900/40 text-white text-sm rounded-xl py-2 pl-10 pr-4 border border-gray-700 focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-all"
+                                    {% if request.query_params.q %} value="{{ request.query_params.q }}" {% endif %}>
+                                <span class="absolute left-3 top-1/2 -translate-y-1/2 ph-input-icon text-gray-500 text-sm flex items-center justify-center leading-none">
+                                    &#xE30C;
+                                </span>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <div id="nav-user" class="flex items-center">
+                    {% if username %}
+                        <div class="relative">
+                            <button id="user-menu-button" class="flex items-center gap-2 text-nav-text hover:text-white transition-colors py-2 focus:outline-none">
+                                <span class="ph-btn-icon text-xl">&#xE4C2;</span>
+                                <span class="font-medium hidden sm:block">{{ display_name or username }}</span>
+                                <span class="text-[0.6rem] opacity-50 ph-btn-icon">&#xE136;</span>
+                            </button>
+
+                            <div id="user-menu" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-2xl border border-gray-200 py-2 ring-1 ring-black/5">
+                                <div class="px-4 py-2 border-b border-gray-100 mb-1 sm:hidden">
+                                    <p class="text-xs text-gray-400 uppercase font-bold tracking-wider">Benutzer</p>
+                                    <p class="text-sm font-medium text-gray-900 truncate">{{ display_name or username }}</p>
+                                </div>
+
+                                <a href="{{ url_for('profile') }}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-accent-soft hover:text-accent no-underline">
+                                    <span class="ph-btn-icon mr-3 text-lg">&#xE4C2;</span> Profil
+                                </a>
+                                <a href="{{ url_for('add_recipe_form') }}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-accent-soft hover:text-accent no-underline">
+                                    <span class="ph-btn-icon mr-3 text-lg">&#xE3D6;</span> Neues Rezept
+                                </a>                                
+                                {% if is_admin %}
+                                    <div class="px-4 py-2 mt-2 border-t border-gray-50">
+                                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Verwaltung</p>
+                                    </div>
+                                    <a href="{{ url_for('manage_categories') }}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-accent-soft hover:text-accent no-underline">
+                                        <span class="ph-btn-icon mr-3 text-lg">&#xE8C4;</span> Kategorien
+                                    </a>
+                                    <a href="{{ url_for('manage_paths') }}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-accent-soft hover:text-accent no-underline">
+                                        <span class="ph-btn-icon mr-3 text-lg">&#xE260;</span> Pfade
+                                    </a>
+                                    <a href="{{ url_for('manage_users') }}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-accent-soft hover:text-accent no-underline">
+                                        <span class="ph-btn-icon mr-3 text-lg">&#xE4D6;</span> Benutzer
+                                    </a>
+                                {% endif %}
+                                
+                                <div class="border-t border-gray-100 my-1"></div>
+                                <a href="{{ url_for('logout')}}" class="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 no-underline">
+                                    <span class="ph-btn-icon mr-3 text-lg">&#xE42A;</span> Abmelden
+                                </a>
+                            </div>
+                        </div>
+                    {% else %}
+                        <a href="{{ url_for('login') }}" class="bg-accent hover:bg-accent-hover text-white px-5 py-2 rounded-xl font-bold transition-all shadow-md active:scale-95 no-underline">
+                            Login
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="mt-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {% block content %}{% endblock %}
+    </main>
+
+    <script>
+        // --- User Menu Logic ---
+        const userMenuButton = document.getElementById('user-menu-button');
+        const userMenu = document.getElementById('user-menu');
+
+        if (userMenuButton && userMenu) {
+            userMenuButton.addEventListener('click', (e) => {
+                e.stopPropagation();
+                userMenu.classList.toggle('hidden');
+            });
+        }
+
+        // --- Search Mobile Logic ---
+        const searchToggle = document.getElementById('search-toggle');
+        const searchContainer = document.getElementById('search-container');
+        const navLogo = document.getElementById('nav-logo');
+        const navUser = document.getElementById('nav-user');
+        const searchIcon = document.getElementById('search-icon');
+
+        if (searchToggle) {
+            searchToggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isHidden = searchContainer.classList.contains('hidden');
+                
+                if (isHidden) {
+                    searchContainer.classList.remove('hidden', 'md:block');
+                    navLogo.classList.add('hidden');
+                    navUser.classList.add('hidden');
+                    searchIcon.innerHTML = '&#xE4F6;';  // Close icon
+                    searchContainer.querySelector('input').focus();
+                } else {
+                    searchContainer.classList.add('hidden', 'md:block');
+                    navLogo.classList.remove('hidden');
+                    navUser.classList.remove('hidden');
+                    searchIcon.innerHTML = '&#xE30C;';  // Magnifying glass icon
+                }
+            });
+        }
+
+        // --- Global: Close on outside click ---
+        document.addEventListener('click', (e) => {
+            if (userMenu && !userMenu.contains(e.target) && !userMenuButton?.contains(e.target)) {
+                userMenu.classList.add('hidden');
+            }
+            // Close search only on mobile when clicking outside
+            if (window.innerWidth < 768 && searchContainer && !searchContainer.contains(e.target) && !searchToggle.contains(e.target)) {
+                searchContainer.classList.add('hidden', 'md:block');
+                navLogo?.classList.remove('hidden');
+                navUser?.classList.remove('hidden');
+                if(searchIcon) searchIcon.innerHTML = '&#xE30C;';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,178 @@
+% FIX: 'footsepline' enforces the footer line globally and reliably
+\documentclass[a4paper,12pt]{scrartcl}
+
+% -- LuaLaTeX Setup --
+\usepackage{fontspec}
+\usepackage[ngerman]{babel}
+\usepackage[style=swiss]{csquotes} 
+
+% -- Font Setup (Source Sans 3) --
+% Using \setmainfont changes the body text.
+% Using \setsansfont ensures headers (like "Zubereitung") match.
+\setmainfont{source-sans-3-latin-300-normal.ttf}[
+    Path = << font_path >>,
+    BoldFont = source-sans-3-latin-400-normal.ttf,
+    ItalicFont = source-sans-3-latin-300-italic.ttf,
+    BoldItalicFont = source-sans-3-latin-400-italic.ttf
+]
+
+% Add this to fix \textbf looking like Computer Modern
+\setsansfont{source-sans-3-latin-300-normal.ttf}[
+    Path = << font_path >>,
+    BoldFont = source-sans-3-latin-400-normal.ttf,
+    ItalicFont = source-sans-3-latin-300-italic.ttf,
+    BoldItalicFont = source-sans-3-latin-400-italic.ttf
+]
+
+% Set the entire document to sans-serif to achieve the Frutiger aesthetic
+\renewcommand{\familydefault}{\sfdefault}
+% Ensure KOMA-Script headers also use the new font family
+\addtokomafont{disposition}{\rmfamily}
+
+% -- PHOSPHOR ICONS SETUP (The elegant way) --
+% Load the font directly from the folder.
+% "Ligatures=TeX" ensures that words like "Warning" become icons.
+\newfontfamily\iconFont[
+    Path = << font_path >>,
+    Extension = .ttf,
+    Renderer = HarfBuzz,
+    UprightFont = Phosphor-Light, % Default is Light
+    BoldFont = Phosphor           % Bold switch uses Regular
+]{Phosphor}
+
+\newcommand{\picon}[1]{\raisebox{-1.1pt}{\iconFont\symbol{"#1}}}
+
+% -- Layout & Tables --
+\usepackage[
+    left=2cm,
+    right=2cm,
+    top=1.5cm,
+    bottom=1.8cm,
+    footskip=0.5cm,
+    includehead,
+]{geometry}
+\usepackage{xltabular} % Replacement for tabularx to allow page breaks 
+\usepackage{booktabs}
+\usepackage{parskip} 
+\usepackage{array} 
+\usepackage{xcolor}
+
+% -- Header/Footer Setup --
+\usepackage{scrlayer-scrpage}
+\pagestyle{scrheadings}
+\clearpairofpagestyles 
+
+% Content for page 2 and onwards 
+\ihead[]{\headmark} % Recipe name on the left
+\ohead[]{Seite \thepage} % Page number on the right
+\automark{section}% -- Layout & Tables --
+
+\usepackage{xltabular} % Replacement for tabularx to allow page breaks 
+\usepackage{booktabs}
+\usepackage{parskip} 
+\usepackage{array} 
+\usepackage{xcolor}
+
+% -- Header/Footer Setup --
+\usepackage{scrlayer-scrpage}
+\usepackage{ccicons}
+
+\pagestyle{scrheadings}
+\clearpairofpagestyles 
+
+% Content for page 2 and onwards 
+\ihead[]{\footnotesize \headmark} % Recipe name on the left
+\ohead[]{\footnotesize Seite \thepage} % Page number on the right
+\automark{section}
+
+\atbegindocument{\thispagestyle{plain}}
+
+% Footer content for all pages
+\ifoot[\footnotesize << base_url >>]{\footnotesize << base_url >>}
+\cfoot[\ccbyncsa]{\ccbyncsa}
+\ofoot[\footnotesize Stand: << date_version >>]{\footnotesize Letzte Änderung: << date_version >>}
+
+% -- Science & Units --
+\usepackage{siunitx}
+\sisetup{
+  locale = DE, 
+  detect-all,
+  range-phrase = --,
+  range-units = single,
+  per-mode = symbol
+}
+
+% -- Custom Units from Database --
+<< unit_defs >>
+
+% -- Metadata --
+\title{ << recipe.name >> }
+\author{ << recipe.author >> }
+\date{}
+
+\begin{document}
+
+% -- Header --
+\section*{<< recipe.name >>}
+% This line ensures the recipe name appears in \headmark for page 2+
+\markboth{<< recipe.name >>}{<< recipe.name >>}
+
+\noindent
+Von << recipe.author >>
+<% if source -%>
+    \hfill {\small \textit{Quelle: << source >>}}
+<% endif -%>
+
+% -- Preamble --
+<% if preamble -%>
+    \vspace{0.5em}
+
+    \noindent
+    << preamble >>
+<% endif -%>
+
+% -- Content Table (with page breaks) --
+\noindent
+\begin{xltabular}{\textwidth}{@{} >{\raggedright\arraybackslash}p{3.5cm} X @{}}
+    % Header for the very first page
+    \textbf{Zutaten} & \textbf{Zubereitung} \\
+    \midrule
+    \endfirsthead
+    
+    % Header for all following pages 
+    \textbf{Zutaten} & \textbf{Zubereitung} \\
+    \midrule
+    \endhead
+    <% for step in steps -%>
+        <% if step.is_ingredients == 1 -%>
+            % -- CASE A: Normal ingredient list --
+            <% if step.ingredients -%>
+                <% for ing in step.ingredients -%>
+                    <% if ing.amount_min -%>
+                        % -- Case 1: Quantity exists --
+                        <% if ing.amount_max -%>
+                            \qtyrange{<< ing.amount_min >>}{<< ing.amount_max >>}{<< ing.unit_cmd >>}
+                        <% else -%>
+                            \qty{<< ing.amount_min >>}{<< ing.unit_cmd >>}
+                        <% endif -%>
+                        ~\textbf{<< ing.item >>}
+                    <% else -%>
+                        % -- Case 2: No quantity (e.g. Bittermandelaroma) --
+                        \textbf{<< ing.item >>}
+                    <% endif -%>
+                    <% if ing.note -%> \textit{\small{(<< ing.note >>)}}<% endif -%>
+                    <% if not loop.last -%>\newline<% endif -%> 
+                <% endfor -%>
+            <% endif -%>
+        
+        <% else -%>
+            \hfill \raisebox{-4pt}{\iconFont\large{\symbol{<< step.latex_icon >>}}}
+        <% endif -%>
+        <% if not loop.last -%>\rule[-1em]{0pt}{0pt}<% endif -%>
+        &
+        << step.latex_text >>
+        <% if not loop.last -%>\rule[-1em]{0pt}{0pt}\\<% endif -%>
+    <% endfor -%>
+\end{xltabular}
+
+\end{document}

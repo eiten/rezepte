@@ -1,0 +1,548 @@
+{% extends "base.html" %}
+
+{% block title %}{% if mode == 'add' %}New Recipe{% else %}Edit Recipe{% endif %}{% endblock %}
+
+{% macro render_folder_options(folders, level=0) %}
+    {% for folder in folders %}
+        <option value="{{ folder.id }}" {% if recipe and recipe.folder_id == folder.id %}selected{% endif %}>
+            {# Einrückung und Symbol basierend auf der Ebene #}
+            {% if level > 0 %}
+                {{ ("&nbsp;" * (level * 4)) | safe }} &#x1F4C1; {{ folder.name }}
+            {% else %}
+                &#128230; {{ folder.name }}
+            {% endif %}
+        </option>
+        {% if folder.children %}
+            {{ render_folder_options(folder.children, level + 1) }}
+        {% endif %}
+    {% endfor %}
+{% endmacro %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto pb-12">
+    
+    <!-- ================================= -->
+    <!-- PAGE HEADER WITH ACTION BUTTONS   -->
+    <!-- ================================= -->
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-slate-800 mb-1">
+                {% if mode == 'add' %}Neues Rezept erstellen{% else %}Rezept bearbeiten{% endif %}
+            </h1>
+            {% if mode != 'add' %}
+            <p class="text-slate-500 text-sm">ID: {{ recipe.id }}</p>
+            {% endif %}
+        </div>
+        <div class="flex gap-2">
+            {% if mode == 'add' %}
+                <a href="{{ url_for('index') }}" class="px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors no-underline"><span class="ph-btn-icon text-lg mr-1">&#xE4F6;</span>  Abbrechen</a>
+            {% else %}
+                <a href="{{ url_for('read_recipe', recipe_id=recipe.id) }}" class="px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors no-underline"><span class="ph-btn-icon text-lg mr-1">&#xE4F6;</span>  Abbrechen</a>
+            {% endif %}
+            
+            <button type="submit" form="recipe-edit-form" class="px-6 py-2 bg-accent hover:bg-accent-dark text-white rounded-lg shadow-sm font-medium transition-colors">
+                <span class="ph-btn-icon text-lg mr-1">&#xE248;</span> {% if mode == 'add' %}Erstellen{% else %}Speichern{% endif %}
+            </button> 
+        </div>
+    </div>
+
+    <!-- ================================= -->
+    <!-- MAIN FORM                         -->
+    <!-- ================================= -->
+    <form action="{% if mode == 'add' %}{{ url_for('create_recipe') }}{% else %}{{ url_for('update_recipe', recipe_id=recipe.id) }}{% endif %}" method="post" id="recipe-edit-form" class="space-y-8">
+        
+        <!-- Basic Recipe Metadata -->
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+            <h2 class="text-lg font-semibold text-slate-800 mb-4 border-b pb-2">Basisdaten</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Speicherort (Ordner)</label>
+                    <select name="folder_id" class="w-full rounded-lg border-slate-300 focus:border-accent focus:ring-accent font-medium">
+                        {{ render_folder_options(folder_tree) }}
+                    </select>
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Rezeptname</label>
+                    <input type="text" name="name" value="{{ recipe.name }}" required 
+                           class="px-2 w-full rounded-lg border-slate-300 focus:border-accent focus:ring-accent"
+                           placeholder="Rezeptname...">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Autor</label>
+                    <input type="text" name="author" value="{{ recipe.author }}"
+                           class="px-2 w-full rounded-lg border-slate-300 focus:border-accent focus:ring-accent"
+                           placeholder="Autor...">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Quelle</label>
+                    <input type="text" name="source" value="{{ recipe.source }}"
+                           class="px-2 w-full rounded-lg border-slate-300 focus:border-accent focus:ring-accent"
+                           placeholder="Quelle, zum Beispiel Oma Gertrud...">
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Einführung / Preamble</label>
+                    <textarea name="preamble" rows="3" class="px-2 w-full rounded-lg border-slate-300 focus:border-accent focus:ring-accent" placeholder="Einführung, wenn gewünscht...">{{ recipe.preamble or '' }}</textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================================= -->
+        <!-- STEPS CONTAINER                   -->
+        <!-- ================================= -->
+        <div id="steps-container" class="space-y-6">
+            {% for step in steps %}
+            {% set step_idx = loop.index0 %}
+            <div class="step-card group bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden transition-all hover:border-slate-300" 
+                data-step-id="{{ step.id }}" 
+                data-step-index="{{ step_idx }}">
+
+                <!-- Step Card Header: Position Badge + Type Toggle + Move/Delete Buttons -->
+                <div class="bg-slate-50 px-4 py-3 border-b border-slate-200 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <span class="step-number bg-slate-200 text-slate-600 text-xs font-bold px-2 py-1 rounded">#{{ step.position }}</span>
+                        
+                        <!-- Type Toggle: Preparation (with ingredients) vs Info/Category -->
+                        <div class="flex rounded-lg border border-slate-300 overflow-hidden divide-x divide-slate-300 bg-white shadow-sm">
+                            <label class="group/lbl cursor-pointer relative px-3 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-50 transition-colors has-[:checked]:bg-accent/10 has-[:checked]:text-accent has-[:checked]:font-bold">
+                                <input type="radio" name="steps[{{ step_idx }}][type]" value="ingredients" class="peer hidden" {% if step.is_ingredients %}checked{% endif %} data-toggle-type>
+                                Zubereitung
+                                <span class="absolute bottom-0 left-0 w-full h-0.5 bg-accent scale-x-0 peer-checked:scale-x-100 transition-transform"></span>
+                            </label>
+                            <label class="group/lbl cursor-pointer relative px-3 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-50 transition-colors has-[:checked]:bg-accent/10 has-[:checked]:text-accent has-[:checked]:font-bold">
+                                <input type="radio" name="steps[{{ step_idx }}][type]" value="category" class="peer hidden" {% if not step.is_ingredients %}checked{% endif %} data-toggle-type>
+                                Info / Kategorie
+                                <span class="absolute bottom-0 left-0 w-full h-0.5 bg-accent scale-x-0 peer-checked:scale-x-100 transition-transform"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Move/Delete Buttons -->
+                    <div class="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                        <button type="button" onclick="moveStepUp(this)" class="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200 rounded" title="Move Up">
+                            <span class="ph-btn-icon text-lg">&#xE08E;</span>
+                        </button>
+                        <button type="button" onclick="moveStepDown(this)" class="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200 rounded" title="Move Down">
+                            <span class="ph-btn-icon text-lg">&#xE03E;</span>
+                        </button>
+                        <div class="w-px h-4 bg-slate-300 mx-1"></div>
+                        <button type="button" onclick="removeStep(this)" class="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded" title="Delete">
+                            <span class="ph-btn-icon text-lg">&#xE4A6;</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step Card Body -->
+                <div class="p-4">
+                    <input type="hidden" name="steps[{{ step_idx }}][id]" value="{{ step.id }}">
+                    <input type="hidden" name="steps[{{ step_idx }}][position]" value="{{ step.position }}">
+
+                    <!-- Category Selection Block (shown for "Info/Category" type) -->
+                    <div class="category-block" {% if step.is_ingredients %}style="display:none;"{% endif %}>
+                        <div class="max-w-md">
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Kategorie wählen</label>
+                            <select name="steps[{{ step_idx }}][category_id]" class="w-full rounded-lg border-slate-300">
+                                <option value="">-- Bitte wählen --</option>
+                                {% for cat in categories %}
+                                <option value="{{ cat.id }}" {% if step.category_id == cat.id %}selected{% endif %}>{{ cat.label_de }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Ingredients Block (shown for "Zubereitung" type) -->
+                    <div class="ingredients-block" {% if not step.is_ingredients %}style="display:none;"{% endif %}>
+                        <div class="mb-4">
+                            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Zutaten</label>
+                            <div class="ingredients-list space-y-2">
+                                {% for ing in step.ingredients %}
+                                <div class="ingredient-row flex items-start gap-2 group/ing">
+                                    <input type="hidden" name="steps[{{ step_idx }}][ingredients][{{ loop.index0 }}][id]" value="{{ ing.id }}">
+                                    
+                                    <!-- Amount Field -->
+                                    <div class="w-24 shrink-0">
+                                        <input type="text" 
+                                               name="steps[{{ step_idx }}][ingredients][{{ loop.index0 }}][amount_combined]" 
+                                               value="{{ '%g'|format(ing.amount_min) if ing.amount_min else '' }}{{ '-' ~ '%g'|format(ing.amount_max) if ing.amount_max else '' }}"
+                                               placeholder="Menge"
+                                               class="w-full text-right rounded-md border-slate-300 py-1.5 px-2 text-sm focus:border-accent focus:ring-accent"
+                                               inputmode="decimal"
+                                               pattern="^(\s*-\s*)?[\d]+([.,][\d]+)?(\s*-\s*[\d]+([.,][\d]+)?)?$"
+                                               title="Zahl oder Bereich"
+                                               oninput="this.value = this.value.replace(/[^0-9.,\-\s]/g, '')">
+                                    </div>
+
+                                    <!-- Unit Selector -->
+                                    <div class="w-20 shrink-0">
+                                        <select name="steps[{{ step_idx }}][ingredients][{{ loop.index0 }}][unit_id]" 
+                                                class="w-full rounded-md border-slate-300 py-1.5 px-2 text-sm focus:border-accent focus:ring-accent bg-slate-50">
+                                            <option value="">-</option>
+                                            {% for u in units %}
+                                            <option value="{{ u.id }}" {% if ing.unit_id == u.id %}selected{% endif %}>{{ u.symbol }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+
+                                    <!-- Item Name -->
+                                    <div class="grow">
+                                        <input type="text" 
+                                               name="steps[{{ step_idx }}][ingredients][{{ loop.index0 }}][item]" 
+                                               value="{{ ing.item }}" 
+                                               placeholder="Zutat"
+                                               required
+                                               class="w-full rounded-md border-slate-300 py-1.5 px-2 text-sm font-medium focus:border-accent focus:ring-accent">
+                                    </div>
+
+                                    <!-- Optional Note -->
+                                    <div class="w-1/4 hidden sm:block">
+                                        <input type="text" 
+                                               name="steps[{{ step_idx }}][ingredients][{{ loop.index0 }}][note]" 
+                                               value="{{ ing.note }}" 
+                                               placeholder="Notiz (optional)"
+                                               class="w-full rounded-md border-slate-200 py-1.5 px-2 text-sm text-slate-500 focus:border-accent focus:ring-accent">
+                                    </div>
+
+                                    <!-- Remove Ingredient Button -->
+                                    <button type="button" onclick="removeIngredient(this)" class="shrink-0 p-1.5 text-slate-300 hover:text-red-500 transition-colors">
+                                        <span class="ph-btn-icon text-lg">&#xE4A6;</span>
+                                    </button>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            <button type="button" onclick="addIngredient(this)" class="mt-2 text-sm text-accent hover:text-accent-dark font-medium flex items-center gap-1">
+                                <span class="text-lg">+</span> Zutat hinzufügen
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Instructions Textarea -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Anleitung</label>
+                        <textarea name="steps[{{ step_idx }}][markdown_text]" rows="3" 
+                                    class="px-2 py-1 w-full rounded-lg border-slate-300 bg-slate-50 focus:bg-white focus:border-accent focus:ring-accent transition-colors"
+                                    placeholder="Describe the step...">{{ step.markdown_text or '' }}</textarea>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Add Step Button -->
+        <div class="text-center py-4 border-2 border-dashed border-slate-300 rounded-xl hover:border-accent hover:bg-accent-soft/10 transition-colors cursor-pointer" onclick="addStep()">
+            <span class="text-accent font-medium flex items-center justify-center gap-2">
+                <span class="text-xl font-bold">+</span> Einen weiteren Schritt hinzufügen
+            </span>
+        </div>
+
+    </form>
+
+    <!-- Bottom Action Buttons -->
+    <div class="mt-12 flex justify-center border-t border-slate-200 pt-8">
+        <div class="flex gap-4">
+            {% if mode == 'add' %}
+                <a href="{{ url_for('index') }}" class="px-6 py-2 rounded-lg text-slate-600 border border-slate-300 hover:bg-slate-50 transition-colors no-underline font-medium">
+                   <span class="ph-btn-icon text-lg mr-1">&#xE4F6;</span>  Abbrechen
+                </a>
+            {% else %}
+                <a href="{{ url_for('read_recipe', recipe_id=recipe.id) }}" class="px-6 py-2 rounded-lg text-slate-600 border border-slate-300 hover:bg-slate-50 transition-colors no-underline font-medium">
+                    <span class="ph-btn-icon text-lg mr-1">&#xE4F6;</span> Abbrechen
+                </a>
+            {% endif %}
+            
+            <button type="submit" form="recipe-edit-form" class="px-8 py-2 bg-accent hover:bg-accent-dark text-white rounded-lg shadow-md hover:shadow-lg font-bold transition-all transform hover:-translate-y-0.5">
+                <span class="ph-btn-icon text-lg mr-1">&#xE248;</span> {% if mode == 'add' %}Erstellen{% else %}Speichern{% endif %}
+            </button> 
+        </div>
+    </div>
+</div>
+
+<!-- ================================= -->
+<!-- TEMPLATES FOR DYNAMIC CONTENT     -->
+<!-- ================================= -->
+
+<!-- Template: Ingredient Row -->
+<template id="ingredient-row-template">
+    <div class="ingredient-row flex items-start gap-2 group/ing animate-fade-in">
+        <input type="hidden" name="" value=""> 
+        
+        <div class="w-24 shrink-0">
+            <input type="text" name="" placeholder="Menge" 
+                   class="w-full text-right rounded-md border-slate-300 py-1.5 px-2 text-sm focus:border-accent focus:ring-accent font-mono"
+                   inputmode="decimal"
+                   pattern="^(\s*-\s*)?[\d]+([.,][\d]+)?(\s*-\s*[\d]+([.,][\d]+)?)?$"
+                   oninput="this.value = this.value.replace(/[^0-9.,\-\s]/g, '')">
+        </div>
+
+        <div class="w-20 shrink-0">
+            <select name="" class="w-full rounded-md border-slate-300 py-1.5 px-2 text-sm focus:border-accent focus:ring-accent bg-slate-50">
+                <option value="">-</option>
+                {% for u in units %}
+                <option value="{{ u.id }}">{{ u.symbol }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="grow">
+            <input type="text" name="" placeholder="Zutat" required class="w-full rounded-md border-slate-300 py-1.5 px-2 text-sm font-medium focus:border-accent focus:ring-accent">
+        </div>
+
+        <div class="w-1/4 hidden sm:block">
+            <input type="text" name="" placeholder="Notiz" class="w-full rounded-md border-slate-200 py-1.5 px-2 text-sm text-slate-500 focus:border-accent focus:ring-accent">
+        </div>
+
+        <button type="button" onclick="removeIngredient(this)" class="shrink-0 p-1.5 text-slate-300 hover:text-red-500 transition-colors">
+            <span class="ph-btn-icon text-lg">&#xE4A6;</span>
+        </button>
+    </div>
+</template>
+
+<!-- Template: Step Card -->
+<template id="step-card-template">
+    <div class="step-card group bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden transition-all hover:border-slate-300" 
+        data-step-id="" 
+        data-step-index="__IDX__">   
+
+        <div class="bg-slate-50 px-4 py-3 border-b border-slate-200 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <span class="step-number bg-slate-200 text-slate-600 text-xs font-bold px-2 py-1 rounded">#__POS__</span>
+                
+                <div class="flex rounded-lg border border-slate-300 overflow-hidden divide-x divide-slate-300 bg-white shadow-sm">
+                    <label class="group/lbl cursor-pointer relative px-3 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-50 transition-colors has-[:checked]:bg-accent/10 has-[:checked]:text-accent has-[:checked]:font-bold">
+                        <input type="radio" name="steps[__IDX__][type]" value="ingredients" class="peer hidden" checked data-toggle-type>
+                        Zubereitung
+                        <span class="absolute bottom-0 left-0 w-full h-0.5 bg-accent scale-x-0 peer-checked:scale-x-100 transition-transform"></span>
+                    </label>
+                    <label class="group/lbl cursor-pointer relative px-3 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-50 transition-colors has-[:checked]:bg-accent/10 has-[:checked]:text-accent has-[:checked]:font-bold">
+                        <input type="radio" name="steps[__IDX__][type]" value="category" class="peer hidden" data-toggle-type>
+                        Info / Kategorie
+                        <span class="absolute bottom-0 left-0 w-full h-0.5 bg-accent scale-x-0 peer-checked:scale-x-100 transition-transform"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                <button type="button" onclick="moveStepUp(this)" class="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200 rounded" title="Move Up">
+                    <span class="ph-btn-icon text-lg">&#xE08E;</span>
+                </button>
+                <button type="button" onclick="moveStepDown(this)" class="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200 rounded" title="Move Down">
+                    <span class="ph-btn-icon text-lg">&#xE03E;</span>
+                </button>
+                <div class="w-px h-4 bg-slate-300 mx-1"></div>
+                <button type="button" onclick="removeStep(this)" class="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded" title="Delete">
+                    <span class="ph-btn-icon text-lg">&#xE4A6;</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="p-4">
+            <input type="hidden" name="steps[__IDX__][id]" value="">
+            <input type="hidden" name="steps[__IDX__][position]" value="__POS__">
+
+            <div class="category-block" style="display:none;">
+                <div class="max-w-md">
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Kategorie wählen</label>
+                    <select name="steps[__IDX__][category_id]" class="w-full rounded-lg border-slate-300 focus:border-accent focus:ring-accent">
+                        <option value="">-- Bitte wählen --</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat.id }}">{{ cat.label_de }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="ingredients-block">
+                <div class="mb-4">
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Zutaten</label>
+                    <div class="ingredients-list space-y-2">
+                    </div>
+                    <button type="button" onclick="addIngredient(this)" class="mt-2 text-sm text-accent hover:text-accent-dark font-medium flex items-center gap-1">
+                        <span class="text-lg">+</span> Zutat hinzufügen
+                    </button>
+                </div>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Anleitung</label>
+                <textarea name="steps[__IDX__][markdown_text]" rows="3" 
+                            class="px-2 py-1 w-full rounded-lg border-slate-300 bg-slate-50 focus:bg-white focus:border-accent focus:ring-accent transition-colors"
+                            placeholder="Describe the step..."></textarea>
+            </div>
+        </div>
+    </div>
+</template>
+
+<!-- ================================= -->
+<!-- JAVASCRIPT: DYNAMIC FORM HANDLING -->
+<!-- ================================= -->
+<script>
+/* Update ingredient field names after reordering */
+function updateIngredientIndices(stepCard) {
+    const stepIdx = stepCard.dataset.stepIndex;
+    const rows = stepCard.querySelectorAll('.ingredient-row');
+    
+    rows.forEach((row, ingIdx) => {
+        // Fixed order in template: 5 inputs/selects
+        // 1. ID (hidden), 2. Amount, 3. Unit, 4. Item, 5. Note
+        const inputs = row.querySelectorAll('input, select');
+        
+        if (inputs.length >= 5) {
+            inputs[0].name = `steps[${stepIdx}][ingredients][${ingIdx}][id]`;
+            inputs[1].name = `steps[${stepIdx}][ingredients][${ingIdx}][amount_combined]`;
+            inputs[2].name = `steps[${stepIdx}][ingredients][${ingIdx}][unit_id]`;
+            inputs[3].name = `steps[${stepIdx}][ingredients][${ingIdx}][item]`;
+            inputs[4].name = `steps[${stepIdx}][ingredients][${ingIdx}][note]`;
+        }
+    });
+}
+
+/* Add new ingredient row */
+function addIngredient(btn) {
+    const list = btn.previousElementSibling; 
+    const stepCard = btn.closest('.step-card');
+    const template = document.getElementById('ingredient-row-template');
+    
+    // Clone and append (names not set yet)
+    const clone = template.content.cloneNode(true);
+    list.appendChild(clone);
+    
+    // Now update names and indices correctly
+    updateIngredientIndices(stepCard);
+    
+    // Focus on first visible field (amount)
+    list.lastElementChild.querySelector('input[type="text"]').focus();
+}
+
+/* Remove ingredient row */
+function removeIngredient(btn) {
+    const row = btn.closest('.ingredient-row');
+    const stepCard = row.closest('.step-card');
+    const hasContent = Array.from(row.querySelectorAll('input')).some(i => i.value.trim() !== '');
+    
+    if (!hasContent || confirm('Remove ingredient?')) {
+        row.remove();
+        // Close gaps
+        updateIngredientIndices(stepCard);
+    }
+}
+
+/* Add new step card */
+function addStep() {
+    const container = document.getElementById('steps-container');
+    const template = document.getElementById('step-card-template');
+    
+    const currentSteps = container.querySelectorAll('.step-card');
+    const newIdx = currentSteps.length; 
+    const newPos = newIdx + 1;
+
+    let html = template.innerHTML;
+    // Replace placeholders
+    html = html.replace(/__IDX__/g, newIdx);
+    html = html.replace(/__POS__/g, newPos);
+
+    const div = document.createElement('div');
+    div.innerHTML = html;
+    const newStepCard = div.firstElementChild; 
+
+    container.appendChild(newStepCard);
+    
+    // Initialize
+    newStepCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const firstInput = newStepCard.querySelector('textarea');
+    if(firstInput) firstInput.focus();
+}
+
+/* Renumber all steps and update form field names */
+function updateStepPositions() {
+    const steps = document.querySelectorAll('.step-card');
+    steps.forEach((step, index) => {
+        const arrayIdx = index;
+        const pos = index + 1;
+
+        // Update visual position number
+        const numberBadge = step.querySelector('.step-number');
+        if(numberBadge) numberBadge.textContent = '#' + pos;
+
+        // Update hidden position field
+        const posInput = step.querySelector('input[name*="[position]"]');
+        if(posInput) posInput.value = pos;
+
+        // Update dataset for JavaScript reference
+        step.dataset.stepIndex = arrayIdx;
+
+        // Update all field names: steps[OLD] -> steps[NEW]
+        const inputs = step.querySelectorAll('input, select, textarea');
+        inputs.forEach(input => {
+            if (input.name) {
+                // Only replace the steps[X] part at the front
+                input.name = input.name.replace(/steps\[\d+\]/, `steps[${arrayIdx}]`);
+            }
+        });
+
+        // Recalculate ingredient indices for this step
+        // This ensures steps[NEW][ingredients]... is also correct
+        updateIngredientIndices(step);
+    });
+}
+
+/* Move step up */
+function moveStepUp(btn) {
+    const step = btn.closest('.step-card');
+    if (step && step.previousElementSibling) {
+        step.parentNode.insertBefore(step, step.previousElementSibling);
+        updateStepPositions();
+        step.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+
+/* Move step down */
+function moveStepDown(btn) {
+    const step = btn.closest('.step-card');
+    if (step && step.nextElementSibling) {
+        step.parentNode.insertBefore(step.nextElementSibling, step);
+        updateStepPositions();
+        step.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+
+/* Remove step */
+function removeStep(btn) {
+    if (confirm('Really delete this step?')) {
+        btn.closest('.step-card').remove();
+        updateStepPositions();
+    }
+}
+
+/* Toggle between "Preparation" (ingredients) and "Info/Category" modes */
+document.addEventListener('change', function(e) {
+    if (e.target.matches('[data-toggle-type]')) {
+        const radio = e.target;
+        const card = radio.closest('.step-card');
+        if (!card) return;
+
+        const isIngredients = radio.value === 'ingredients';
+        const ingredientsBlock = card.querySelector('.ingredients-block');
+        const categoryBlock = card.querySelector('.category-block');
+
+        if (ingredientsBlock) ingredientsBlock.style.display = isIngredients ? '' : 'none';
+        if (categoryBlock) categoryBlock.style.display = !isIngredients ? '' : 'none';
+    }
+});
+
+/* Keyboard shortcut: Ctrl+S or Cmd+S to save the form */
+document.addEventListener('keydown', function(e) {
+    // Support for Ctrl+S (Win/Linux) and Cmd+S (Mac)
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        
+        // Find the submit button by its attribute
+        const saveButton = document.querySelector('button[form="recipe-edit-form"]');
+        
+        if (saveButton) {
+            console.log("Saving recipe via shortcut...");
+            saveButton.click(); // This triggers the form with the correct URL
+        } else {
+            // Fallback: if button is not found, try the form directly
+            const form = document.getElementById('recipe-edit-form');
+            if (form) form.submit();
+        }
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,22 @@
+common:
+  app_name: "Rezept Manager"
+  version: "0.1.0"
+
+dev:
+  host: "0.0.0.0"
+  port: 8080
+  debug: true
+  reload: true
+  root_path: "/rezepte"
+  # Relative path for development
+  database_url: "sqlite+aiosqlite:///./data/recipes.db"
+  pdf_cache_dir: "./cache"
+
+prod:
+  host: "0.0.0.0"
+  port: 80
+  debug: false
+  reload: false
+  # Absolute path for deployment
+  database_url: "sqlite+aiosqlite:////opt/rezepteapp/data/recipes.db"
+  pdf_cache_dir: "/opt/rezepteapp/cache"

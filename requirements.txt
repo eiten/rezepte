@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+jinja2
+python-multipart
+aiosqlite
+pyyaml
+markdown
+passlib
+bcrypt==3.2.2

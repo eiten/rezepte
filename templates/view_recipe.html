@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block title %}{{ recipe.name }}{% endblock %}
+
+{% macro render_folder_options(folders, level=0, current_id=None) %}
+    {% for f in folders %}
+        <option value="{{ f.id }}" {% if current_id == f.id %}selected{% endif %}>
+            {{ ("&nbsp;" * (level * 4)) | safe }}{% if level > 0 %}└─ {% endif %}{{ f.name }}
+        </option>
+        {% if f.children %}
+            {{ render_folder_options(f.children, level + 1, current_id) }}
+        {% endif %}
+    {% endfor %}
+{% endmacro %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto pb-16 recipe-view-container text-slate-800">
+    
+    <!-- ================================= -->
+    <!-- NAVIGATION BAR                    -->
+    <!-- ================================= -->
+    <nav class="flex items-center justify-between mb-8 no-print">
+        <a href="{{ url_for('index') }}" class="flex items-center text-slate-500 hover:text-accent transition-colors no-underline group">
+            <span class="ph-btn-icon text-xl mr-2 group-hover:-translate-x-1 transition-transform">&#xE120;</span>
+            <span class="font-medium">Zurück</span>
+        </a>
+
+        <!-- Action Buttons -->
+        <div class="flex gap-2">
+            {% if can_edit %}
+            <a href="{{ url_for('edit_recipe', recipe_id=recipe.id) }}" 
+               class="flex items-center px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-600 hover:bg-slate-50 no-underline transition-colors shadow-sm">
+                <span class="ph-btn-icon text-lg mr-0 sm:mr-1.5">&#xE3B4;</span>
+                <span class="hidden sm:inline font-medium text-sm">Bearbeiten</span>
+            </a>
+            {% endif %}
+
+            {% if is_admin %}
+            <button onclick="removeRecipe(this)" data-delete-url="{{ url_for('delete_recipe', recipe_id=recipe.id) }}"
+                class="flex items-center px-3 py-1.5 rounded-lg border border-slate-300 text-danger bg-danger-soft hover:bg-danger hover:text-white no-underline transition-colors shadow-sm">
+                <span class="ph-btn-icon text-lg mr-1">&#xE4A6;</span>
+                <span class="hidden sm:inline font-medium text-sm"> Löschen</span></button>
+            {% endif %}
+
+            <a href="{{ url_for('get_pdf', recipe_id=recipe.id) }}" target="_blank"
+               class="flex items-center px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-600 hover:bg-slate-50 no-underline transition-colors shadow-sm">
+                <span class="ph-btn-icon text-lg mr-0 sm:mr-1.5">&#xE702;</span>
+                <span class="hidden sm:inline font-medium text-sm">PDF</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- ================================= -->
+    <!-- RECIPE HEADER                     -->
+    <!-- ================================= -->
+    <header class="mb-10 px-4 md:px-0">
+        <nav class="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 no-print">
+            {% for crumb in breadcrumbs %}
+                <a href="#" class="hover:text-accent transition-colors no-underline">{{ crumb.name }}</a>
+                {% if not loop.last %}
+                    <span class="text-slate-500 font-normal">&#x276F;</span>
+                {% endif %}
+            {% endfor %}
+        </nav>
+        <h1 class="text-3xl md:text-4xl font-bold text-slate-900 mb-2 tracking-tight">{{ recipe.name }}</h1>
+        <div class="flex flex-wrap items-center gap-x-4 text-slate-500 text-sm md:text-base">
+            <span>Von {{ recipe.author }}</span>
+            {% if recipe.source %}
+            <span class="text-slate-300">/</span>
+            <span class="italic">{{ recipe.source }}</span>
+            {% endif %}
+        </div>
+    </header>
+
+    <!-- ================================= -->
+    <!-- RECIPE PREAMBLE/INTRODUCTION      -->
+    <!-- ================================= -->
+    {% if preamble_html %}
+    <div class="mb-10 mx-4 md:mx-0 italic text-slate-600 leading-relaxed border-l-4 border-slate-200 pl-5 text-base md:text-lg">
+        {{ preamble_html | safe }}
+    </div>
+    {% endif %}
+
+    <!-- ================================= -->
+    <!-- RECIPE STEPS                      -->
+    <!-- Two-column layout:                -->
+    <!-- Left: Ingredients or Icon         -->
+    <!-- Right: Instructions               -->
+    <!-- ================================= -->
+    <div class="space-y-0">
+        {% for step in steps %}
+        
+        <div class="{% if loop.index is even %}bg-slate-100{% endif %}
+                    {% if step.ingredients %}flex flex-col gap-y-2{% else %}flex flex-row gap-x-4{% endif %} 
+                    md:grid md:grid-cols-12 md:gap-x-10 items-start py-4 px-2">
+            
+            <!-- Left Column: Ingredients or Category Icon -->
+            <div class="{% if step.ingredients %}w-full{% else %}w-12 shrink-0{% endif %} md:w-auto md:col-span-4">
+                {% if step.ingredients %}
+                    <!-- Ingredient List -->
+                    <ul class="space-y-1">
+                        {% for ing in step.ingredients %}
+                        <li class="leading-snug">
+                            <span class="whitespace-nowrap font-bold text-slate-700">
+                                {{ ing.formatted_qty | safe }}
+                            </span>
+                            <span class="">{{ ing.item }}</span>
+                            {% if ing.note and ing.note|string != 'None' and ing.note|trim != '' %}
+                            <span class="text-[0.85em] text-slate-400 italic font-normal ml-1">({{ ing.note }})</span>
+                            {% endif %}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                {% elif step.codepoint %}
+                    <!-- Category Icon -->
+                    <div class="flex md:justify-end">
+                        <span class="ph-icon text-3xl md:text-4xl opacity-70" style="color: {{ step.html_color }};">
+                            &#x{{ step.codepoint }};
+                        </span>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Right Column: Instructions (markdown rendered as HTML) -->
+            <div class="flex-1 md:col-span-8">
+                <div class="prose prose-slate max-w-none prose-p:my-0 prose-strong:font-bold prose-sm md:prose-base leading-relaxed">
+                    {{ step.html_text | safe }}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

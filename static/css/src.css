@@ -1,0 +1,16 @@
+@import "tailwindcss";
+
+@theme {
+  --color-accent: var(--color-amber-500);
+  --color-accent-hover: var(--color-amber-600);
+  --color-accent-soft: var(--color-amber-50);
+  
+  --color-danger: var(--color-red-600);
+  --color-danger-hover: var(--color-white);
+  --color-danger-soft: var(--color-red-100);
+
+  --color-nav-bg: var(--color-gray-800);
+  --color-nav-text: var(--color-gray-300);
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
