@@ -118,10 +118,10 @@ jobs:
           ssh -o StrictHostKeyChecking=no "$USER@$HOST" "
             set -e
             cd \"$PATH_DIR\"
-            systemctl stop \"$SERVICE\"
+            sudo systemctl stop \"$SERVICE\"
             git fetch --tags origin
             git fetch origin main
             git checkout -f \"tags/$TAG\"
             rm -rf cache
-            systemctl start \"$SERVICE\"
+            sudo systemctl start \"$SERVICE\"
           "
