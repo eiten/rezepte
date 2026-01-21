@@ -102,6 +102,8 @@ jobs:
             echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
             chmod 600 ~/.ssh/id_ed25519
             echo "SSH key written to ~/.ssh/id_ed25519"
+            echo "SSH key fingerprint:"
+            ssh-keygen -l -f ~/.ssh/id_ed25519
           else
             echo "ERROR: SSH_PRIVATE_KEY is empty!"
           fi
