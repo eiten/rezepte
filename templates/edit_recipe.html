@@ -19,6 +19,14 @@
 {% endmacro %}
 
 {% block content %}
+<!-- Show help button on edit pages -->
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const helpBtn = document.getElementById('help-button');
+        if (helpBtn) helpBtn.classList.remove('hidden');
+    });
+</script>
+
 <div class="max-w-4xl mx-auto pb-12">
     
     <!-- ================================= -->
