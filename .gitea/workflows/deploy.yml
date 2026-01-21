@@ -96,6 +96,8 @@ jobs:
         run: |
           echo "DEBUG: Checking secrets..."
           echo "SSH_PRIVATE_KEY set: $([ -z "$SSH_PRIVATE_KEY" ] && echo "NO" || echo "YES")"
+          echo "SSH_PRIVATE_KEY length: ${#SSH_PRIVATE_KEY}"
+          echo "SSH_PRIVATE_KEY first 50 chars: ${SSH_PRIVATE_KEY:0:50}"
           echo "KNOWN_HOSTS set: $([ -z "$KNOWN_HOSTS" ] && echo "NO" || echo "YES")"
           mkdir -p ~/.ssh
           if [ -n "$SSH_PRIVATE_KEY" ]; then
@@ -136,7 +138,7 @@ jobs:
           echo "Deploying tag: $TAG"
           echo ""
           echo "SSH command to execute:"
-          echo "ssh -i ~/.ssh/id_ed25519 -v -o StrictHostKeyChecking=no $USER@$HOST"
+          echo "ssh -i ~/.ssh/id_ed25519 -v -o StrictHostKeyChecking=no -o IdentitiesOnly=yes $USER@$HOST"
           echo ""
           echo "Remote commands:"
           echo "  cd $PATH_DIR"
@@ -148,7 +150,7 @@ jobs:
           echo "  sudo systemctl start $SERVICE"
           echo ""
           echo "Executing SSH deploy..."
-          ssh -i ~/.ssh/id_ed25519 -v -o StrictHostKeyChecking=no "$USER@$HOST" "
+          ssh -i ~/.ssh/id_ed25519 -v -o StrictHostKeyChecking=no -o IdentitiesOnly=yes "$USER@$HOST" "
             set -e
             echo 'Connected to server, starting deployment...'
             cd \"$PATH_DIR\" && echo \"Changed to: $(pwd)\"
