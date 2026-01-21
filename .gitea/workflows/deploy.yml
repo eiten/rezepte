@@ -25,8 +25,8 @@ jobs:
 
       - name: Install TeX (latexmk + lualatex)
         run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends latexmk texlive-latex-extra texlive-luatex texlive-fonts-recommended
+          apt-get update
+          apt-get install -y --no-install-recommends latexmk texlive-latex-extra texlive-luatex texlive-fonts-recommended
 
       - name: Setup Python
         uses: actions/setup-python@v5
