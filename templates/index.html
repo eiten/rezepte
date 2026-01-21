@@ -108,7 +108,7 @@
                     {% if is_admin %}
                     <button onclick="removeRecipe(this)" data-delete-url="{{ url_for('delete_recipe', recipe_id=recipe.id) }}" class="px-2 py-1 border-r border-slate-400 color-nav-bg color-nav-text text-danger bg-danger-soft hover:bg-danger hover:text-white no-underline transition-colors"><span class="ph-btn-icon text-lg mr-1">&#xE4A6;</span><span class="hidden lg:inline"> Löschen</span></button>
                     {% endif %}
-                    <a href="{{ url_for('get_pdf', recipe_id=recipe.id) }}" class="px-2 py-1 color-nav-bg color-nav-text hover:bg-accent-soft hover:text-accent no-underline transition-colors"><span class="ph-btn-icon text-lg mr-1">&#xE702;</span><span class="hidden lg:inline"> PDF</span></a>
+                    <a href="{{ url_for('get_pdf', recipe_id=recipe.id) }}" target="_blank" class="px-2 py-1 color-nav-bg color-nav-text hover:bg-accent-soft hover:text-accent no-underline transition-colors"><span class="ph-btn-icon text-lg mr-1">&#xE702;</span><span class="hidden lg:inline"> PDF</span></a>
                 </div>
             </div>
         </article>

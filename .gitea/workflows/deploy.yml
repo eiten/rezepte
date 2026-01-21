@@ -1,0 +1,127 @@
+name: Deploy on tag to main
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  precheck:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify tag points to main
+        run: |
+          git fetch origin main --tags
+          TAG_REF="${GITHUB_REF#refs/tags/}"
+          TAG_SHA="$(git rev-list -n 1 "$TAG_REF")"
+          git merge-base --is-ancestor "$TAG_SHA" origin/main || {
+            echo "Tag $TAG_REF is not reachable from main; aborting deploy."; exit 1;
+          }
+
+      - name: Install TeX (latexmk + lualatex)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends latexmk texlive-latex-extra texlive-luatex texlive-fonts-recommended
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Create venv and install dependencies
+        run: |
+          python -m venv .venv
+          source .venv/bin/activate
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Generate config.yaml for tests (dev, port 8000)
+        run: |
+          cat > config.yaml << 'YML'
+          common:
+            app_name: "Rezept Manager"
+            version: "0.1.0"
+
+          dev:
+            host: "127.0.0.1"
+            port: 8000
+            debug: true
+            reload: false
+            root_path: ""
+            database_url: "sqlite+aiosqlite:///./data/recipes.db"
+            pdf_cache_dir: "./cache"
+
+          prod:
+            host: "0.0.0.0"
+            port: 8081
+            debug: false
+            reload: false
+            database_url: "sqlite+aiosqlite:////opt/rezepteapp/data/recipes.db"
+            pdf_cache_dir: "/opt/rezepteapp/cache"
+          YML
+
+      - name: Initialize and seed database (dev)
+        env:
+          APP_ENV: dev
+        run: |
+          source .venv/bin/activate
+          python tools/setup_db.py
+          python tools/seed_data.py
+
+      - name: Start app and run smoke tests
+        env:
+          APP_ENV: dev
+        run: |
+          source .venv/bin/activate
+          .venv/bin/uvicorn main:app --host 127.0.0.1 --port 8000 --log-level warning & echo $! > uvicorn.pid
+          sleep 5
+          curl -f http://127.0.0.1:8000/ || { echo "Index failed"; exit 1; }
+          curl -f http://127.0.0.1:8000/auth/login || { echo "Login page failed"; exit 1; }
+          curl -f http://127.0.0.1:8000/api/help || { echo "Help API failed"; exit 1; }
+          curl -f http://127.0.0.1:8000/recipe/1 || { echo "Recipe page failed"; exit 1; }
+          curl -f http://127.0.0.1:8000/recipe/1/pdf || { echo "PDF route failed"; exit 1; }
+          kill $(cat uvicorn.pid) || true
+
+      - name: Cleanup venv and data
+        run: |
+          rm -rf .venv data cache uvicorn.pid || true
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: precheck
+    steps:
+      - name: Configure SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
+          KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          if [ -n "$KNOWN_HOSTS" ]; then
+            echo "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          fi
+
+      - name: Deploy to server
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER: ${{ secrets.DEPLOY_USER }}
+          PATH_DIR: ${{ secrets.DEPLOY_PATH }}
+          SERVICE: ${{ secrets.DEPLOY_SERVICE }}
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          ssh -o StrictHostKeyChecking=no "$USER@$HOST" "
+            set -e
+            cd \"$PATH_DIR\"
+            sudo systemctl stop \"$SERVICE\"
+            git fetch --tags origin
+            git fetch origin main
+            git checkout -f \"tags/$TAG\"
+            rm -rf cache
+            sudo systemctl start \"$SERVICE\"
+          "

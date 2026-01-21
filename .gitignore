@@ -16,3 +16,6 @@ cache/
 # OS
 .DS_Store
 node_modules/
+
+# Local environment config
+config.yaml

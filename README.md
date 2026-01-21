@@ -13,8 +13,18 @@ Rezeptverwaltung mit FastAPI, SQLite und FTS5 (Volltextsuche). Login mit servers
 
 ## Setup (Dev)
 1. Abhängigkeiten installieren: `pip install -r requirements.txt`
+2. venv starten: `source venv/bin/activate`
 2. DB erstellen: `APP_ENV=dev python tools/setup_db.py`
-3. Start: `APP_ENV=dev uvicorn main:app --reload`
+3. Start: `APP_ENV=dev python main.py`
+
+## Starten der produktiven APP:
+1. venv sourcen
+2. `APP_ENV=prod python main.py`
+
+Alternativ kann auch direkt die app gestartet werden, zum Beispiel aus einer service unit:
+```bash
+APP_ENV=prod /arbeitsverzeichnis/venv/bin/python /arbeitsverzeichnis/main.py
+```
 
 ### Tailwind CSS im Entwicklermodus
 - Für CSS-Änderungen muss der Watcher laufen, sonst wird `static/css/main.css` nicht neu generiert.
@@ -75,3 +85,130 @@ Die Schritt-Texte unterstützen einen schlanken Satz an Markierungen. Sie gelten
 - IP-Logging ist hinter sslh/Caddy aktuell 127.0.0.1; Sessions funktionieren dennoch.
 - Root-Pfad (prod) ist `/rezepte` (siehe `config.yaml`).
  - API-URLs in Templates respektieren den `root_path`; z.B. der Hilfe-Dialog lädt Daten über `/api/help` mit Präfix in Dev (`/rezepte`).
+
+## Deployment (Gitea Actions)
+
+Automatisches Deployment wird ausgelöst, wenn ein Tag (`v*`) auf `main` gepusht wird. Die Action verifiziert, dass der Tag auf `main` liegt, führt kurze Smoke-Tests aus, und deployed per SSH auf den Server.
+
+### Repository Secrets (Gitea)
+- `DEPLOY_HOST`: Hostname oder IP des Zielservers
+- `DEPLOY_USER`: SSH-User auf dem Zielserver
+- `DEPLOY_PATH`: Projektpfad auf dem Server (z.B. `/opt/rezepteapp`)
+- `DEPLOY_SERVICE`: Systemd-Service-Name (z.B. `rezepte`)
+- `DEPLOY_SSH_PRIVATE_KEY`: Privater SSH-Schlüssel (ed25519) für Deployment
+- `DEPLOY_KNOWN_HOSTS`: Inhalt der `known_hosts`-Zeile für den Server (optional, empfohlen)
+
+### SSH Deploy-Key (nur für Deployment)
+```bash
+# Ed25519 Key erzeugen (passwortlos oder mit Deploy-Passwort)
+ssh-keygen -t ed25519 -C "rezepteapp-deploy" -f ~/.ssh/rezepteapp_deploy
+
+# Public Key auf dem Server hinterlegen
+cat ~/.ssh/rezepteapp_deploy.pub | ssh user@host "mkdir -p ~/.ssh && chmod 700 ~/.ssh && cat >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys"
+
+# Secrets im Repository setzen
+# DEPLOY_SSH_PRIVATE_KEY = Inhalt von ~/.ssh/rezepteapp_deploy
+```
+
+### known_hosts Eintrag ermitteln
+```bash
+# Fingerprint/Host-Key auslesen und als Secret speichern
+ssh-keyscan -H host.example.com
+# Inhalt der Zeile als DEPLOY_KNOWN_HOSTS Secret speichern
+```
+
+### Systemd ohne Passwort (sudoers)
+```bash
+# Mit visudo eine begrenzte Regel anlegen
+sudo visudo -f /etc/sudoers.d/<username>
+
+# Inhalt (nur spezifische Service-Kommandos erlauben)
+<username> ALL=(ALL) NOPASSWD: /bin/systemctl stop rezepte, /bin/systemctl start rezepte, /bin/systemctl restart rezepte
+```
+
+### Update-Skript (optional, tag-basiert)
+Siehe `tools/update.sh`. Dieses Skript kann serverseitig genutzt werden, um einen Tag auszuchecken und den Service neu zu starten:
+```bash
+ssh user@host \'/opt/rezepteapp/tools/update.sh v1.1.1\'
+```
+
+### Pre-Deploy Smoke-Tests
+Die Action führt vor dem Deployment einfache Prüfungen aus:
+- Abhängigkeiten installieren (`pip install -r requirements.txt`)
+- Datenbank initialisieren (`tools/setup_db.py`) und seeden (`tools/seed_data.py`)
+- App lokal mit Uvicorn starten und folgende Seiten abrufen:
+	- `/` (Startseite)
+	- `/auth/login` (Login-Seite)
+	- `/api/help` (Hilfe-API)
+
+Hinweis: Der Seed erzeugt den Nutzer `admin/admin`, sodass ein Login-Test optional möglich wäre. Standardmäßig prüfen wir nur, dass die Seiten fehlerfrei laden.
+
+### Konfiguration
+- `config.yaml` ist lokal und wird ignoriert (siehe `config.yaml.example`).
+- Für neue Umgebungen `config.yaml.example` kopieren und anpassen.
+```
+cp config.yaml.example config.yaml
+```
+
+### Initialer Server-Bootstrap (einmalig erforderlich)
+Damit die Action deployen kann, muss das Zielverzeichnis auf dem Server bereits ein Git-Checkout enthalten und der Systemd-Service existieren.
+
+1. Verzeichnis und Repo vorbereiten
+	```bash
+	sudo mkdir -p /opt/rezepteapp
+	sudo chown $USER:$USER /opt/rezepteapp
+	cd /opt/rezepteapp
+	# Falls das Repository privat ist: initialer Clone manuell nötig
+	git clone https://gitea.iten.pro/edi/rezepte.git .
+	git remote -v
+	```
+	Hinweis: Bei privaten Repos musst du den ersten Clone manuell durchführen (mit persönlichen Token/SSH), damit spätere `git fetch` in der Action funktionieren.
+
+2. Konfiguration anlegen
+	```bash
+	cp config.yaml.example config.yaml
+	# Werte für prod anpassen (Datenbankpfad, root_path, pdf_cache_dir, etc.)
+	```
+
+3. Python-Umgebung und Abhängigkeiten
+	```bash
+	python3 -m venv venv
+	source venv/bin/activate
+	pip install -r requirements.txt
+	```
+
+4. Systemd-Service erstellen (Beispiel)
+	```bash
+	sudo tee /etc/systemd/system/rezepte.service > /dev/null << 'UNIT'
+	[Unit]
+	Description=Rezepte App
+	After=network.target
+
+	[Service]
+	Type=simple
+	WorkingDirectory=/opt/rezepteapp
+	Environment=APP_ENV=prod
+	ExecStart=/opt/rezepteapp/venv/bin/python /opt/rezepteapp/main.py
+	Restart=on-failure
+	User=<username>
+
+	[Install]
+	WantedBy=multi-user.target
+	UNIT
+
+	sudo systemctl daemon-reload
+	sudo systemctl enable rezepte
+	sudo systemctl start rezepte
+	```
+
+5. (Optional) TeX installieren für PDF-Export
+	```bash
+	sudo apt-get update
+	sudo apt-get install -y latexmk texlive-latex-extra texlive-luatex texlive-fonts-recommended
+	```
+
+Nach diesem Bootstrap kann die Gitea-Action bei Tags (z.B. `v1.1.2`) automatisch deployen.
+
+### Cleanup-Verhalten der Action
+- Der Runner räumt nach den Smoke-Tests lokale Artefakte auf (`.venv`, `data/`, `cache/`).
+- Auf dem Server wird NICHT das Projektverzeichnis gelöscht; es wird nur `cache/` geleert und der Service neu gestartet.

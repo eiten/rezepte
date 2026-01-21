@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.2] - 2026-01-21
+
+### Added
+- Gitea deploy workflow triggered on tags (v*) with verification against main
+- Pre-deploy smoke tests using Python venv, local config.yaml (port 8000), DB init + seed
+- PDF endpoint smoke test by installing TeX (latexmk + lualatex)
+- `config.yaml.example` provided; local `config.yaml` now ignored
+
+### Changed
+- Server update script now tag-aware (`tools/update.sh`) and safer fetch/checkout
+- Replaced help question mark.
+
+### Fixed
+- PDF links now open in a new tab (instead of replacing current page)
+
 ## [1.1.1] - 2026-01-21
 
 ### Fixed
