@@ -113,7 +113,7 @@ cat ~/.ssh/rezepteapp_deploy.pub | ssh user@host "mkdir -p ~/.ssh && chmod 700 ~
 ### known_hosts Eintrag ermitteln
 ```bash
 # Fingerprint/Host-Key auslesen und als Secret speichern
-ssh-keyscan -H host.example.com >> known_hosts
+ssh-keyscan -H host.example.com
 # Inhalt der Zeile als DEPLOY_KNOWN_HOSTS Secret speichern
 ```
 
@@ -149,3 +149,66 @@ Hinweis: Der Seed erzeugt den Nutzer `admin/admin`, sodass ein Login-Test option
 ```
 cp config.yaml.example config.yaml
 ```
+
+### Initialer Server-Bootstrap (einmalig erforderlich)
+Damit die Action deployen kann, muss das Zielverzeichnis auf dem Server bereits ein Git-Checkout enthalten und der Systemd-Service existieren.
+
+1. Verzeichnis und Repo vorbereiten
+	```bash
+	sudo mkdir -p /opt/rezepteapp
+	sudo chown $USER:$USER /opt/rezepteapp
+	cd /opt/rezepteapp
+	# Falls das Repository privat ist: initialer Clone manuell nötig
+	git clone https://gitea.iten.pro/edi/rezepte.git .
+	git remote -v
+	```
+	Hinweis: Bei privaten Repos musst du den ersten Clone manuell durchführen (mit persönlichen Token/SSH), damit spätere `git fetch` in der Action funktionieren.
+
+2. Konfiguration anlegen
+	```bash
+	cp config.yaml.example config.yaml
+	# Werte für prod anpassen (Datenbankpfad, root_path, pdf_cache_dir, etc.)
+	```
+
+3. Python-Umgebung und Abhängigkeiten
+	```bash
+	python3 -m venv venv
+	source venv/bin/activate
+	pip install -r requirements.txt
+	```
+
+4. Systemd-Service erstellen (Beispiel)
+	```bash
+	sudo tee /etc/systemd/system/rezepte.service > /dev/null << 'UNIT'
+	[Unit]
+	Description=Rezepte App
+	After=network.target
+
+	[Service]
+	Type=simple
+	WorkingDirectory=/opt/rezepteapp
+	Environment=APP_ENV=prod
+	ExecStart=/opt/rezepteapp/venv/bin/python /opt/rezepteapp/main.py
+	Restart=on-failure
+	User=<username>
+
+	[Install]
+	WantedBy=multi-user.target
+	UNIT
+
+	sudo systemctl daemon-reload
+	sudo systemctl enable rezepte
+	sudo systemctl start rezepte
+	```
+
+5. (Optional) TeX installieren für PDF-Export
+	```bash
+	sudo apt-get update
+	sudo apt-get install -y latexmk texlive-latex-extra texlive-luatex texlive-fonts-recommended
+	```
+
+Nach diesem Bootstrap kann die Gitea-Action bei Tags (z.B. `v1.1.2`) automatisch deployen.
+
+### Cleanup-Verhalten der Action
+- Der Runner räumt nach den Smoke-Tests lokale Artefakte auf (`.venv`, `data/`, `cache/`).
+- Auf dem Server wird NICHT das Projektverzeichnis gelöscht; es wird nur `cache/` geleert und der Service neu gestartet.
