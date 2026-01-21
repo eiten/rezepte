@@ -56,7 +56,7 @@
                                     <p class="text-sm font-medium text-gray-900 truncate">{{ display_name or username }}</p>
                                 </div>
 
-                                <a href="/profile" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-accent-soft hover:text-accent no-underline">
+                                <a href="{{ url_for('profile') }}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-accent-soft hover:text-accent no-underline">
                                     <span class="ph-btn-icon mr-3 text-lg">&#xE4C2;</span> Profil
                                 </a>
                                 <a href="{{ url_for('add_recipe_form') }}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-accent-soft hover:text-accent no-underline">

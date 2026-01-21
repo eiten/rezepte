@@ -5,7 +5,7 @@ from fastapi import APIRouter, Request, Depends, Form, HTTPException, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from passlib.context import CryptContext
 import aiosqlite
-from database import get_db_connection, get_config
+from database import get_db_connection, get_config, get_user_context
 from template_config import templates
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -124,3 +124,103 @@ async def logout(request: Request, db: aiosqlite.Connection = Depends(get_db_con
     response.delete_cookie("session_token")
     response.delete_cookie("session_user")
     return response
+
+
+@router.get("/profile", response_class=HTMLResponse, name="profile")
+async def profile_page(request: Request, db: aiosqlite.Connection = Depends(get_db_connection)):
+    user_ctx = await get_user_context(request, db)
+    if not user_ctx["user_id"]:
+        return RedirectResponse(url=request.url_for("login_page"), status_code=status.HTTP_303_SEE_OTHER)
+
+    async with db.execute("SELECT username, display_name, email, password_hash FROM users WHERE id = ?", (user_ctx["user_id"],)) as cursor:
+        user = await cursor.fetchone()
+
+    if not user:
+        return RedirectResponse(url=request.url_for("logout"), status_code=status.HTTP_303_SEE_OTHER)
+
+    return templates.TemplateResponse(
+        "profile.html",
+        {
+            "request": request,
+            "username": user["username"],
+            "display_name": user["display_name"],
+            "email": user["email"] or "",
+            "errors": [],
+            "message": None,
+            **user_ctx,
+        },
+    )
+
+
+@router.post("/profile", response_class=HTMLResponse)
+async def profile_update(
+    request: Request,
+    display_name: str = Form(...),
+    email: str = Form(""),
+    current_password: str = Form(""),
+    new_password: str = Form(""),
+    new_password_confirm: str = Form(""),
+    db: aiosqlite.Connection = Depends(get_db_connection),
+):
+    user_ctx = await get_user_context(request, db)
+    if not user_ctx["user_id"]:
+        return RedirectResponse(url=request.url_for("login_page"), status_code=status.HTTP_303_SEE_OTHER)
+
+    async with db.execute("SELECT username, display_name, email, password_hash FROM users WHERE id = ?", (user_ctx["user_id"],)) as cursor:
+        user = await cursor.fetchone()
+
+    if not user:
+        return RedirectResponse(url=request.url_for("logout"), status_code=status.HTTP_303_SEE_OTHER)
+
+    errors = []
+    display_name = display_name.strip()
+    email = email.strip() if email else ""
+
+    if not display_name:
+        errors.append("Anzeigename darf nicht leer sein.")
+
+    password_hash = user["password_hash"]
+    if new_password or new_password_confirm:
+        if not current_password:
+            errors.append("Bitte aktuelles Passwort angeben.")
+        elif not pwd_context.verify(current_password, password_hash):
+            errors.append("Aktuelles Passwort ist falsch.")
+        if new_password != new_password_confirm:
+            errors.append("Die neuen Passwörter stimmen nicht überein.")
+        if new_password and len(new_password) < 8:
+            errors.append("Neues Passwort muss mindestens 8 Zeichen haben.")
+        if not errors:
+            password_hash = pwd_context.hash(new_password)
+
+    if errors:
+        return templates.TemplateResponse(
+            "profile.html",
+            {
+                "request": request,
+                "username": user["username"],
+                "display_name": display_name or user["display_name"],
+                "email": email,
+                "errors": errors,
+                "message": None,
+                **user_ctx,
+            },
+        )
+
+    await db.execute(
+        "UPDATE users SET display_name = ?, email = ?, password_hash = ? WHERE id = ?",
+        (display_name, email or None, password_hash, user_ctx["user_id"]),
+    )
+    await db.commit()
+
+    return templates.TemplateResponse(
+        "profile.html",
+        {
+            "request": request,
+            "username": user["username"],
+            "display_name": display_name,
+            "email": email,
+            "errors": [],
+            "message": "Profil aktualisiert.",
+            **user_ctx,
+        },
+    )
