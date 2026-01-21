@@ -1,3 +1,9 @@
+{# Template: admin_paths.html
+    Purpose: Manage folder tree (rename, reparent, add).
+    Notes:
+    - Recursive macro `render_folder` renders nested rows with indentation.
+    - Updates post to `update_path`; add-row posts to `add_path`.
+#}
 {% extends "base.html" %}
 {% block title %}Admin - Ordnerstruktur{% endblock %}
 

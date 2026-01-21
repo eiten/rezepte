@@ -1,3 +1,10 @@
+{# Template: base.html
+    Purpose: Global layout wrapper providing head, fixed navigation, main content block, and footer.
+    Notes:
+    - Exposes `git_version` in footer via Jinja globals
+    - Includes floating help button (hidden by default; shown on edit pages)
+    - App respects FastAPI `root_path` for building URLs
+#}
 <!DOCTYPE html>
 <html lang="de" class="scroll-smooth">
 <head>
@@ -111,126 +118,13 @@
         </div>
     </footer>
 
-    <!-- Help Button (Floating) - Only shown on edit pages -->
+    {# Help Button (Floating) - Only shown on edit pages #}
     <button id="help-button" class="hidden fixed bottom-6 right-6 z-40 bg-accent hover:bg-accent-hover text-white rounded-full w-12 h-12 flex items-center justify-center shadow-lg transition-all hover:scale-110 active:scale-95 group" title="Editor help">
         <span class="ph-btn-icon text-xl">&#xE3E8;</span>
         <span class="absolute bottom-full right-0 mb-2 bg-gray-900 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">Editor Help</span>
     </button>
 
-    <!-- Help Modal -->
-    <div id="help-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-        <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-                <h2 class="text-2xl font-bold text-gray-900">Editor Syntax Guide</h2>
-                <button id="help-close" class="text-gray-500 hover:text-gray-700 focus:outline-none">
-                    <span class="text-2xl">✕</span>
-                </button>
-            </div>
-
-            <div class="p-6 space-y-6">
-                <!-- Quantities Section -->
-                <div>
-                    <h3 class="text-lg font-semibold text-gray-900 mb-3">Quantities & Units</h3>
-                    <div class="grid gap-2 text-sm">
-                        <div class="bg-gray-50 p-3 rounded border border-gray-200">
-                            <code class="font-mono text-accent font-medium">[8g]</code>
-                            <span class="text-gray-600 ml-2">→ 8 g</span>
-                        </div>
-                        <div class="bg-gray-50 p-3 rounded border border-gray-200">
-                            <code class="font-mono text-accent font-medium">[2-8 ml]</code>
-                            <span class="text-gray-600 ml-2">→ 2–8 ml</span>
-                        </div>
-                        <div class="bg-gray-50 p-3 rounded border border-gray-200">
-                            <code class="font-mono text-accent font-medium">[4×6 cm]</code>
-                            <span class="text-gray-600 ml-2">→ 4×6 cm</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Formatting Section -->
-                <div>
-                    <h3 class="text-lg font-semibold text-gray-900 mb-3">Text Formatting</h3>
-                    <div class="grid gap-2 text-sm">
-                        <div class="bg-gray-50 p-3 rounded border border-gray-200">
-                            <code class="font-mono text-accent font-medium">**bold**</code>
-                            <span class="text-gray-600 ml-2">→ <strong>bold</strong></span>
-                        </div>
-                        <div class="bg-gray-50 p-3 rounded border border-gray-200">
-                            <code class="font-mono text-accent font-medium">*italic*</code>
-                            <span class="text-gray-600 ml-2">→ <em>italic</em></span>
-                        </div>
-                        <div class="bg-gray-50 p-3 rounded border border-gray-200">
-                            <code class="font-mono text-accent font-medium">^super^</code>
-                            <span class="text-gray-600 ml-2">→ <sup>super</sup></span>
-                        </div>
-                        <div class="bg-gray-50 p-3 rounded border border-gray-200">
-                            <code class="font-mono text-accent font-medium">_sub_</code>
-                            <span class="text-gray-600 ml-2">→ <sub>sub</sub></span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Emoticons Section -->
-                <div>
-                    <h3 class="text-lg font-semibold text-gray-900 mb-3">Emoticon Shortcuts</h3>
-                    <div id="emoticons-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
-                        <!-- Populated by JavaScript -->
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <script>
-        // --- Help Modal Logic ---
-        const helpButton = document.getElementById('help-button');
-        const helpModal = document.getElementById('help-modal');
-        const helpClose = document.getElementById('help-close');
-        const emoticonsGrid = document.getElementById('emoticons-grid');
-
-        if (helpButton) {
-            helpButton.addEventListener('click', async () => {
-                // Load help data
-                const response = await fetch('{{ url_for("get_help_data") }}');
-                const data = await response.json();
-
-                // Populate emoticons
-                emoticonsGrid.innerHTML = '';
-                data.emoticons.forEach(emo => {
-                    const div = document.createElement('div');
-                    div.className = 'bg-gray-50 p-2 rounded border border-gray-200 flex items-center gap-2';
-                    div.innerHTML = `
-                        <code class="font-mono text-accent font-medium flex-shrink-0">${escapeHtml(emo.shortcut)}</code>
-                        <span class="text-xl" style="font-family: 'Phosphor', sans-serif;">&#x${emo.code};</span>
-                    `;
-                    emoticonsGrid.appendChild(div);
-                });
-
-                helpModal.classList.remove('hidden');
-            });
-        }
-
-        if (helpClose) {
-            helpClose.addEventListener('click', () => {
-                helpModal.classList.add('hidden');
-            });
-        }
-
-        if (helpModal) {
-            helpModal.addEventListener('click', (e) => {
-                if (e.target === helpModal) {
-                    helpModal.classList.add('hidden');
-                }
-            });
-        }
-
-        // Helper function
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
         // --- User Menu Logic ---
         const userMenuButton = document.getElementById('user-menu-button');
         const userMenu = document.getElementById('user-menu');

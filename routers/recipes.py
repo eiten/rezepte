@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Request, HTTPException, Depends
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 import aiosqlite
 import re
 from database import get_db_connection, get_user_context
 from template_config import templates
+from md import EMOTICON_MAP
 
 router = APIRouter()
 
@@ -129,7 +130,42 @@ async def get_folder_tree(db):
             folder_dict[f_data['parent_id']]['children'].append(f_data)
         else:
             folder_tree.append(f_data)
-    return folder_tree  
+    return folder_tree
+
+@router.get("/api/help", response_class=JSONResponse)
+async def get_help_data():
+    """API endpoint for editor help - returns syntax guide and emoticons"""
+    emoticons = []
+    for shortcut in sorted(EMOTICON_MAP.keys(), key=len, reverse=True):
+        # Remove regex escape characters like \ from shortcuts
+        clean_shortcut = shortcut.replace('\\', '')
+        emoticons.append({
+            "shortcut": clean_shortcut,
+            "code": EMOTICON_MAP[shortcut]
+        })
+    
+    return {
+        "quantities": {
+            "title": "Quantities & Units",
+            "examples": [
+                {"format": "[8g]", "result": "8 g"},
+                {"format": "[2-8 ml]", "result": "2–8 ml"},
+                {"format": "[4.5-6,2 cm]", "result": "4,5–6,2 cm"},
+                {"format": "[4×6 cm]", "result": "4×6 cm"}
+            ]
+        },
+        "formatting": {
+            "title": "Text Formatting",
+            "examples": [
+                {"format": "**bold**", "result": "bold"},
+                {"format": "*italic*", "result": "italic"},
+                {"format": "^superscript^", "result": "superscript"},
+                {"format": "_subscript_", "result": "subscript"},
+                {"format": "--", "result": "– (en-dash)"}
+            ]
+        },
+        "emoticons": emoticons
+    }
     
 @router.get("/", response_class=HTMLResponse)
 async def index(

@@ -1,15 +1,46 @@
 # main.py
 import uvicorn
 import os
+import subprocess
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from database import get_config, init_db
 from routers import recipes, pdf, auth, admin
+from template_config import templates
 
 # Load config
 config = get_config()
+
+def get_git_version():
+    """Gibt das aktuelle Git-Tag oder den Git-Hash zurück"""
+    try:
+        # Versuche erst ein Tag zu bekommen
+        tag = subprocess.check_output(
+            ['git', 'describe', '--tags', '--exact-match'],
+            stderr=subprocess.DEVNULL,
+            text=True
+        ).strip()
+        return tag
+    except subprocess.CalledProcessError:
+        try:
+            # Fallback auf kurzen Hash
+            hash_short = subprocess.check_output(
+                ['git', 'rev-parse', '--short', 'HEAD'],
+                stderr=subprocess.DEVNULL,
+                text=True
+            ).strip()
+            return f"#{hash_short}"
+        except subprocess.CalledProcessError:
+            return "dev"
+
+# Git-Version beim Start auslesen
+git_version = get_git_version()
+print(f"📦 Version: {git_version}")
+
+# Context-Processor für Templates
+templates.env.globals['git_version'] = git_version
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

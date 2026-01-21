@@ -1,3 +1,9 @@
+{# Template: view_recipe.html
+    Purpose: Single recipe detail view showing preamble and step-by-step instructions.
+    Notes:
+    - Two-column layout per step: ingredients/icon left, instructions right.
+    - Action buttons: back, edit (if permitted), delete (admin), PDF.
+#}
 {% extends "base.html" %}
 
 {% block title %}{{ recipe.name }}{% endblock %}

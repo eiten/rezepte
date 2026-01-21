@@ -12,10 +12,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Creative Commons BY-NC-SA 4.0 license badge in footer
 - Git version display in footer (shows current tag or commit hash)
 - Footer styling matching navigation header (same background color and shadow)
+- Help modal available on edit pages (floating button opens syntax guide)
+- Development helper script: tools/watch_css.sh (Tailwind CSS watcher for local development)
 
 ### Changed
 - Recipe edit now only updates `updated_at` timestamp if actual changes are detected to the recipe data
 - Prevents false "recently modified" markers when saving without making changes
+- Help modal event listeners now attach on `DOMContentLoaded` to ensure the floating button exists
+- Help API fetch uses FastAPI `root_path` for environment-agnostic URL resolution (works on /rezepte and without prefix)
 
 ## [1.0.0] - 2026-01-21
 
