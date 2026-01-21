@@ -23,19 +23,14 @@ jobs:
             echo "Tag $TAG_REF is not reachable from main; aborting deploy."; exit 1;
           }
 
-      - name: Install TeX (latexmk + lualatex)
+      - name: Install dependencies (Python, TeX)
         run: |
           apt-get update
-          apt-get install -y --no-install-recommends latexmk texlive-latex-extra texlive-luatex texlive-fonts-recommended
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
+          apt-get install -y --no-install-recommends python3 python3-venv latexmk texlive-latex-extra texlive-luatex texlive-fonts-recommended
 
       - name: Create venv and install dependencies
         run: |
-          python -m venv .venv
+          python3 -m venv .venv
           source .venv/bin/activate
           pip install --upgrade pip
           pip install -r requirements.txt
@@ -70,8 +65,8 @@ jobs:
           APP_ENV: dev
         run: |
           source .venv/bin/activate
-          python tools/setup_db.py
-          python tools/seed_data.py
+          python3 tools/setup_db.py
+          python3 tools/seed_data.py
 
       - name: Start app and run smoke tests
         env:
