@@ -42,18 +42,18 @@
                 </div>
 
                 <div id="nav-user" class="flex items-center">
-                    {% if request.cookies.get("session_user") %}
+                    {% if username %}
                         <div class="relative">
                             <button id="user-menu-button" class="flex items-center gap-2 text-nav-text hover:text-white transition-colors py-2 focus:outline-none">
                                 <span class="ph-btn-icon text-xl">&#xE4C2;</span>
-                                <span class="font-medium hidden sm:block">{{ display_name or request.cookies.get("session_user") }}</span>
+                                <span class="font-medium hidden sm:block">{{ display_name or username }}</span>
                                 <span class="text-[0.6rem] opacity-50 ph-btn-icon">&#xE136;</span>
                             </button>
 
                             <div id="user-menu" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-2xl border border-gray-200 py-2 ring-1 ring-black/5">
                                 <div class="px-4 py-2 border-b border-gray-100 mb-1 sm:hidden">
                                     <p class="text-xs text-gray-400 uppercase font-bold tracking-wider">Benutzer</p>
-                                    <p class="text-sm font-medium text-gray-900 truncate">{{ display_name or request.cookies.get("session_user") }}</p>
+                                    <p class="text-sm font-medium text-gray-900 truncate">{{ display_name or username }}</p>
                                 </div>
 
                                 <a href="/profile" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-accent-soft hover:text-accent no-underline">

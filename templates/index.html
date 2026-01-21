@@ -54,6 +54,26 @@
     </div>
 
     <!-- ================================= -->
+    <!-- ERROR MESSAGE (if search failed)  -->
+    <!-- ================================= -->
+    {% if search_error %}
+    <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm">
+        <div class="flex items-start gap-3">
+            <span class="text-xl mt-0.5">⚠️</span>
+            <div>
+                <p class="font-semibold mb-1">Suchanfrage fehlerhaft</p>
+                <p>{{ search_error }}</p>
+                <p class="mt-2 text-xs text-red-700">
+                    <strong>Tipp:</strong> Verwende z.B. <code class="bg-red-100 px-1 rounded">zutat: krisch</code>, 
+                    <code class="bg-red-100 px-1 rounded">rezeptname: pasta</code>, oder 
+                    <code class="bg-red-100 px-1 rounded">autor: meier</code>
+                </p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ================================= -->
     <!-- RECIPE LIST                       -->
     <!-- ================================= -->
     <div class="space-y-2">

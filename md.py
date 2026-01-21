@@ -23,7 +23,7 @@ def load_unit_map(db_units: list = None) -> dict:
     Load unit symbol -> latex code mapping from database units.
     
     Args:
-        db_units: List of dicts from DB with 'symbol' and 'latex_code' keys
+        db_units: List of dicts or sqlite3.Row objects from DB with 'symbol' and 'latex_code' keys
     
     Returns:
         Dictionary mapping unit symbols to LaTeX codes
@@ -33,8 +33,16 @@ def load_unit_map(db_units: list = None) -> dict:
     if db_units:
         # Build map from database
         for unit in db_units:
-            symbol = unit.get('symbol')
-            latex_code = unit.get('latex_code')
+            # Handle both dicts and sqlite3.Row objects
+            if isinstance(unit, dict):
+                symbol = unit.get('symbol')
+                latex_code = unit.get('latex_code')
+            else:
+                # sqlite3.Row object - convert to dict
+                unit_dict = dict(unit)
+                symbol = unit_dict.get('symbol')
+                latex_code = unit_dict.get('latex_code')
+            
             if symbol and latex_code:
                 unit_map[symbol.lower()] = latex_code
                 unit_map[symbol] = latex_code  # Both lowercase and original
@@ -54,54 +62,78 @@ def load_unit_map(db_units: list = None) -> dict:
 
 def format_quantity(text: str, format: str = 'html', unit_map: dict = None) -> str:
     """
-    Parse and format quantities like '[8g]', '[2.5-8.5 g]', '[8,5g]'.
+    Parse and format quantities like '[8g]', '[2.5-8.5 g]', '[8,5g]', '[4x6 cm]'.
     
     Normalizes decimal separators (both . and , accepted internally),
     outputs comma for HTML, comma for LaTeX (siunitx handles it with locale=DE).
     
+    Supports:
+    - Single: '8g' -> 8 g
+    - Range: '2-8.5 g' -> 2–8,5 g
+    - Multiplication: '4x6 cm' -> 4×6 cm
+    
     Args:
-        text: Content inside brackets, e.g. '8g', '2-8.5 g', '8,5ml'
+        text: Content inside brackets, e.g. '8g', '2-8.5 g', '8,5ml', '4x6 cm'
         format: 'html' or 'latex'
         unit_map: Optional dict mapping unit symbols to LaTeX codes
     
     Returns:
         Formatted string for the target format, or original text if no match
     """
-    # Regex: "min[-max] unit" with optional whitespace
-    # Accepts both . and , as decimal separators
-    match = re.match(
-        r'^(\d+[.,]\d+|\d+)\s*(?:-\s*(\d+[.,]\d+|\d+))?\s*([a-z°]+)$',
-        text.strip(),
-        re.IGNORECASE
-    )
-    if not match:
-        return text  # fallback: unprocessed
-    
-    min_val_str, max_val_str, unit_name = match.groups()
-    
-    # Normalize to comma (German/Swiss format)
-    min_val_str = min_val_str.replace('.', ',')
-    if max_val_str:
-        max_val_str = max_val_str.replace('.', ',')
-    
     if unit_map is None:
         unit_map = {}
     
-    unit_lower = unit_name.lower()
-    unit_latex = unit_map.get(unit_lower, unit_name)  # fallback to original if unknown
+    # Regex patterns
+    # Pattern 1: "min[-max] unit" (range or single with optional whitespace)
+    range_pattern = r'^(\d+[.,]\d+|\d+)\s*(?:-\s*(\d+[.,]\d+|\d+))?\s*([a-z°]+)$'
+    # Pattern 2: "val1 x val2 unit" (multiplication)
+    multi_pattern = r'^(\d+[.,]\d+|\d+)\s*[xX×]\s*(\d+[.,]\d+|\d+)\s*([a-z°]+)$'
     
-    if format == 'html':
-        if max_val_str:
-            return f"{min_val_str}&ndash;{max_val_str}&#x202F;{unit_name}"
-        else:
-            return f"{min_val_str}&#x202F;{unit_name}"
-    elif format == 'latex':
-        if max_val_str:
-            return f"\\SIrange{{{min_val_str}}}{{{max_val_str}}}{{{unit_latex}}}"
-        else:
-            return f"\\SI{{{min_val_str}}}{{{unit_latex}}}"
+    text_stripped = text.strip()
     
-    return text  # fallback
+    # Try multiplication first
+    match = re.match(multi_pattern, text_stripped, re.IGNORECASE)
+    if match:
+        val1_str, val2_str, unit_name = match.groups()
+        
+        # Normalize to comma
+        val1_str = val1_str.replace('.', ',')
+        val2_str = val2_str.replace('.', ',')
+        
+        unit_lower = unit_name.lower()
+        unit_latex = unit_map.get(unit_lower, unit_name)
+        
+        if format == 'html':
+            return f"{val1_str}&#x202F;×&#x202F;{val2_str}&#x202F;{unit_name}"
+        elif format == 'latex':
+            return f"{val1_str}\\,×\\,{val2_str}\\,{unit_latex}"
+        return text
+    
+    # Try range/single
+    match = re.match(range_pattern, text_stripped, re.IGNORECASE)
+    if match:
+        min_val_str, max_val_str, unit_name = match.groups()
+        
+        # Normalize to comma (German/Swiss format)
+        min_val_str = min_val_str.replace('.', ',')
+        if max_val_str:
+            max_val_str = max_val_str.replace('.', ',')
+        
+        unit_lower = unit_name.lower()
+        unit_latex = unit_map.get(unit_lower, unit_name)  # fallback to original if unknown
+        
+        if format == 'html':
+            if max_val_str:
+                return f"{min_val_str}&ndash;{max_val_str}&#x202F;{unit_name}"
+            else:
+                return f"{min_val_str}&#x202F;{unit_name}"
+        elif format == 'latex':
+            if max_val_str:
+                return f"\\SIrange{{{min_val_str}}}{{{max_val_str}}}{{{unit_latex}}}"
+            else:
+                return f"\\SI{{{min_val_str}}}{{{unit_latex}}}"
+    
+    return text  # fallback: unprocessed
 
 def format_ingredient_quantity(amount_min: float = None, amount_max: float = None, unit_symbol: str = None, format: str = 'html', unit_map: dict = None) -> str:
     """

@@ -69,12 +69,13 @@
     transform: translateY(0.05em);
     -webkit-font-smoothing: antialiased;
 }
+
+
 /* --- Tiptopf Recipe Styles --- */
 
 .recipe-view-container {
     /* Schriftgröße leicht anheben für bessere Lesbarkeit */
     font-size: 1.125rem; /* Entspricht text-lg (ca. 18px) */
-    line-height: 1.6;
 }
 
 /* In der schlichten Ansicht wollen wir, dass die Markdown-Absätze 

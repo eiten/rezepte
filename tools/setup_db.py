@@ -61,6 +61,23 @@ def init_db():
         email TEXT
     );
     """)
+
+    # Sessions (server-side session store)
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS sessions (
+            id TEXT PRIMARY KEY,
+            user_id INTEGER NOT NULL,
+            created_at TEXT NOT NULL,
+            expires_at TEXT NOT NULL,
+            last_seen TEXT NOT NULL,
+            user_agent TEXT,
+            ip_address TEXT,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+        );
+        """
+    )
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id)")
     
     # Units
     cursor.execute("""
@@ -155,21 +172,7 @@ def init_db():
     """)
 
     # --- Full-Text Search (FTS5) for recipes ---
-    cursor.execute(
-        """
-        CREATE VIRTUAL TABLE IF NOT EXISTS recipe_fts USING fts5(
-            name,
-            author,
-            source,
-            preamble,
-            ingredients,
-            steps,
-            content=''
-        );
-        """
-    )
-
-    # Clean existing triggers to avoid duplicates when rerunning setup
+    # Always rebuild as a non-contentless FTS table to keep triggers simple.
     trigger_names = [
         "recipe_fts_ai", "recipe_fts_au", "recipe_fts_ad",
         "recipe_fts_steps_ai", "recipe_fts_steps_au", "recipe_fts_steps_ad",
@@ -178,88 +181,117 @@ def init_db():
     for t in trigger_names:
         cursor.execute(f"DROP TRIGGER IF EXISTS {t}")
 
-    ingredients_subquery = """
-        (SELECT group_concat(item || ' ' || COALESCE(note,''), ' ')
-         FROM (
-             SELECT i.item, i.note
-             FROM ingredients i
-             JOIN steps s ON i.step_id = s.id
-             WHERE s.recipe_id = R.id
-             ORDER BY s.position, i.position
-         ))
-    """
-
-    steps_subquery = """
-        (SELECT group_concat(markdown_text, ' ')
-         FROM (
-             SELECT markdown_text
-             FROM steps
-             WHERE recipe_id = R.id
-             ORDER BY position
-         ))
-    """
-
-    insert_select_sql = f"""
-        INSERT INTO recipe_fts(rowid, name, author, source, preamble, ingredients, steps)
-        SELECT
-            R.id,
-            COALESCE(R.name, ''),
-            COALESCE(R.author, ''),
-            COALESCE(R.source, ''),
-            COALESCE(R.preamble, ''),
-            COALESCE({ingredients_subquery}, ''),
-            COALESCE({steps_subquery}, '')
-        FROM recipes R
-        WHERE R.id = :recipe_id;
-    """
-
-    cursor.executescript(
-        f"""
-        CREATE TRIGGER recipe_fts_ai AFTER INSERT ON recipes BEGIN
-            INSERT INTO recipe_fts(recipe_fts, rowid) VALUES('delete', NEW.id);
-            {insert_select_sql.replace(':recipe_id', 'NEW.id')}
-        END;
-
-        CREATE TRIGGER recipe_fts_au AFTER UPDATE ON recipes BEGIN
-            INSERT INTO recipe_fts(recipe_fts, rowid) VALUES('delete', NEW.id);
-            {insert_select_sql.replace(':recipe_id', 'NEW.id')}
-        END;
-
-        CREATE TRIGGER recipe_fts_ad AFTER DELETE ON recipes BEGIN
-            INSERT INTO recipe_fts(recipe_fts, rowid) VALUES('delete', OLD.id);
-        END;
-
-        CREATE TRIGGER recipe_fts_steps_ai AFTER INSERT ON steps BEGIN
-            INSERT INTO recipe_fts(recipe_fts, rowid) VALUES('delete', NEW.recipe_id);
-            {insert_select_sql.replace(':recipe_id', 'NEW.recipe_id')}
-        END;
-
-        CREATE TRIGGER recipe_fts_steps_au AFTER UPDATE ON steps BEGIN
-            INSERT INTO recipe_fts(recipe_fts, rowid) VALUES('delete', NEW.recipe_id);
-            {insert_select_sql.replace(':recipe_id', 'NEW.recipe_id')}
-        END;
-
-        CREATE TRIGGER recipe_fts_steps_ad AFTER DELETE ON steps BEGIN
-            INSERT INTO recipe_fts(recipe_fts, rowid) VALUES('delete', OLD.recipe_id);
-            {insert_select_sql.replace(':recipe_id', 'OLD.recipe_id')}
-        END;
-
-        CREATE TRIGGER recipe_fts_ing_ai AFTER INSERT ON ingredients BEGIN
-            INSERT INTO recipe_fts(recipe_fts, rowid) VALUES('delete', (SELECT recipe_id FROM steps WHERE id = NEW.step_id));
-            {insert_select_sql.replace(':recipe_id', '(SELECT recipe_id FROM steps WHERE id = NEW.step_id)')}
-        END;
-
-        CREATE TRIGGER recipe_fts_ing_au AFTER UPDATE ON ingredients BEGIN
-            INSERT INTO recipe_fts(recipe_fts, rowid) VALUES('delete', (SELECT recipe_id FROM steps WHERE id = NEW.step_id));
-            {insert_select_sql.replace(':recipe_id', '(SELECT recipe_id FROM steps WHERE id = NEW.step_id)')}
-        END;
-
-        CREATE TRIGGER recipe_fts_ing_ad AFTER DELETE ON ingredients BEGIN
-            INSERT INTO recipe_fts(recipe_fts, rowid) VALUES('delete', (SELECT recipe_id FROM steps WHERE id = OLD.step_id));
-            {insert_select_sql.replace(':recipe_id', '(SELECT recipe_id FROM steps WHERE id = OLD.step_id)')}
-        END;
+    cursor.execute("DROP TABLE IF EXISTS recipe_fts")
+    cursor.execute(
+        """
+        CREATE VIRTUAL TABLE recipe_fts USING fts5(
+            name,
+            author,
+            source,
+            preamble,
+            ingredients,
+            steps
+        );
         """
     )
+
+    cursor.executescript(
+        """
+                -- Recipes INSERT
+                CREATE TRIGGER recipe_fts_ai AFTER INSERT ON recipes
+                BEGIN
+                    INSERT INTO recipe_fts(rowid, name, author, source, preamble, ingredients, steps)
+                    VALUES(
+                        NEW.id,
+                        COALESCE(NEW.name, ''),
+                        COALESCE(NEW.author, ''),
+                        COALESCE(NEW.source, ''),
+                        COALESCE(NEW.preamble, ''),
+                        '',
+                        ''
+                    );
+                END;
+
+                -- Recipes UPDATE
+                CREATE TRIGGER recipe_fts_au AFTER UPDATE ON recipes
+                BEGIN
+                    UPDATE recipe_fts SET
+                        name = COALESCE(NEW.name, ''),
+                        author = COALESCE(NEW.author, ''),
+                        source = COALESCE(NEW.source, ''),
+                        preamble = COALESCE(NEW.preamble, '')
+                    WHERE rowid = NEW.id;
+                END;
+
+                -- Recipes DELETE
+                CREATE TRIGGER recipe_fts_ad AFTER DELETE ON recipes
+                BEGIN
+                    DELETE FROM recipe_fts WHERE rowid = OLD.id;
+                END;
+
+                -- Steps INSERT/UPDATE/DELETE → refresh steps column
+                CREATE TRIGGER recipe_fts_steps_ai AFTER INSERT ON steps
+                BEGIN
+                    UPDATE recipe_fts SET steps = 
+                        COALESCE((SELECT group_concat(markdown_text, ' ') FROM (
+                            SELECT markdown_text FROM steps WHERE recipe_id = NEW.recipe_id ORDER BY position
+                        )), '')
+                    WHERE rowid = NEW.recipe_id;
+                END;
+
+                CREATE TRIGGER recipe_fts_steps_au AFTER UPDATE ON steps
+                BEGIN
+                    UPDATE recipe_fts SET steps = 
+                        COALESCE((SELECT group_concat(markdown_text, ' ') FROM (
+                            SELECT markdown_text FROM steps WHERE recipe_id = NEW.recipe_id ORDER BY position
+                        )), '')
+                    WHERE rowid = NEW.recipe_id;
+                END;
+
+                CREATE TRIGGER recipe_fts_steps_ad AFTER DELETE ON steps
+                BEGIN
+                    UPDATE recipe_fts SET steps = 
+                        COALESCE((SELECT group_concat(markdown_text, ' ') FROM (
+                            SELECT markdown_text FROM steps WHERE recipe_id = OLD.recipe_id ORDER BY position
+                        )), '')
+                    WHERE rowid = OLD.recipe_id;
+                END;
+
+                -- Ingredients INSERT/UPDATE/DELETE → refresh ingredients column
+                CREATE TRIGGER recipe_fts_ing_ai AFTER INSERT ON ingredients
+                BEGIN
+                    UPDATE recipe_fts SET ingredients = 
+                        COALESCE((SELECT group_concat(item || ' ' || COALESCE(note,''), ' ') FROM (
+                            SELECT i.item, i.note FROM ingredients i JOIN steps s ON i.step_id = s.id
+                            WHERE s.recipe_id = (SELECT recipe_id FROM steps WHERE id = NEW.step_id)
+                            ORDER BY s.position, i.position
+                        )), '')
+                    WHERE rowid = (SELECT recipe_id FROM steps WHERE id = NEW.step_id);
+                END;
+
+                CREATE TRIGGER recipe_fts_ing_au AFTER UPDATE ON ingredients
+                BEGIN
+                    UPDATE recipe_fts SET ingredients = 
+                        COALESCE((SELECT group_concat(item || ' ' || COALESCE(note,''), ' ') FROM (
+                            SELECT i.item, i.note FROM ingredients i JOIN steps s ON i.step_id = s.id
+                            WHERE s.recipe_id = (SELECT recipe_id FROM steps WHERE id = NEW.step_id)
+                            ORDER BY s.position, i.position
+                        )), '')
+                    WHERE rowid = (SELECT recipe_id FROM steps WHERE id = NEW.step_id);
+                END;
+
+                CREATE TRIGGER recipe_fts_ing_ad AFTER DELETE ON ingredients
+                BEGIN
+                    UPDATE recipe_fts SET ingredients = 
+                        COALESCE((SELECT group_concat(item || ' ' || COALESCE(note,''), ' ') FROM (
+                            SELECT i.item, i.note FROM ingredients i JOIN steps s ON i.step_id = s.id
+                            WHERE s.recipe_id = (SELECT recipe_id FROM steps WHERE id = OLD.step_id)
+                            ORDER BY s.position, i.position
+                        )), '')
+                    WHERE rowid = (SELECT recipe_id FROM steps WHERE id = OLD.step_id);
+                END;
+                """
+        )
 
     # --- Seeding Data ---
     # 1. Step Categories (Mit deinen neuen Codes!)
@@ -280,6 +312,7 @@ def init_db():
         ('Gramm', 'g', r'\gram', 'si'),
         ('Kilogramm', 'kg', r'\kilogram', 'si'),
         ('Milliliter', 'ml', r'\milli\liter', 'si'),
+        ('Deziliter', 'dl', r'\deci\liter', 'si'),
         ('Liter', 'l', r'\liter', 'si'),
         ('Grad Celsius', '°C', r'\degreeCelsius', 'si'),
         ('Esslöffel', 'EL', 'EL', 'text'),
@@ -288,7 +321,7 @@ def init_db():
         ('Messerspitze', 'Msp.', 'Msp.', 'text'),
         ('Stück', 'Stk.', 'Stk', 'text'),
         ('Packung', 'Pkg.', 'Pkg.', 'text'),
-        ('Tropfen', 'Tr.', 'Tr.', 'text')
+        ('Tropfen', 'Tr.', 'Tr', 'text')
     ]
     cursor.execute("SELECT count(*) FROM units")
     if cursor.fetchone()[0] == 0:
@@ -312,19 +345,24 @@ def init_db():
         cursor.execute("INSERT INTO folders (name) VALUES ('Hauptverzeichnis')")
 
     # Backfill FTS (covers fresh install)
-    cursor.execute("INSERT INTO recipe_fts(recipe_fts) VALUES('delete-all')")
+    cursor.execute("DELETE FROM recipe_fts")
     cursor.execute(
-        f"""
+        """
         INSERT INTO recipe_fts(rowid, name, author, source, preamble, ingredients, steps)
         SELECT
-            R.id,
-            COALESCE(R.name, ''),
-            COALESCE(R.author, ''),
-            COALESCE(R.source, ''),
-            COALESCE(R.preamble, ''),
-            COALESCE({ingredients_subquery}, ''),
-            COALESCE({steps_subquery}, '')
-        FROM recipes R;
+            r.id,
+            COALESCE(r.name, ''),
+            COALESCE(r.author, ''),
+            COALESCE(r.source, ''),
+            COALESCE(r.preamble, ''),
+            COALESCE((SELECT group_concat(item || ' ' || COALESCE(note,''), ' ') FROM (
+                SELECT i.item, i.note FROM ingredients i JOIN steps s ON i.step_id = s.id
+                WHERE s.recipe_id = r.id ORDER BY s.position, i.position
+            )), ''),
+            COALESCE((SELECT group_concat(markdown_text, ' ') FROM (
+                SELECT markdown_text FROM steps WHERE recipe_id = r.id ORDER BY position
+            )), '')
+        FROM recipes r;
         """
     )
 

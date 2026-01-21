@@ -1,11 +1,64 @@
 from fastapi import APIRouter, Request, HTTPException, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse
 import aiosqlite
-import markdown
+import re
 from database import get_db_connection, get_user_context
 from template_config import templates
 
 router = APIRouter()
+
+# Mapping von deutschen zu englischen Spaltennamen für FTS-Suche
+FTS_COLUMN_MAPPING = {
+    'zutat': 'ingredients',
+    'zutaten': 'ingredients',
+    'ingredient': 'ingredients',
+    'ingredients': 'ingredients',
+    'rezeptname': 'name',
+    'name': 'name',
+    'titel': 'name',
+    'autor': 'author',
+    'author': 'author',
+    'quelle': 'source',
+    'source': 'source',
+    'schritt': 'steps',
+    'steps': 'steps',
+    'anleitung': 'steps',
+    'vortext': 'preamble',
+    'preamble': 'preamble',
+    'einleitung': 'preamble',
+}
+
+def transform_search_query(q: str) -> tuple:
+    """
+    Transform search query with potential column prefixes.
+    Maps German column names to English.
+    
+    Examples:
+        'zutat: krisch' -> 'ingredients: krisch'
+        'rezeptname: pasta' -> 'name: pasta'
+        'krisch' -> 'krisch' (no change)
+    
+    Returns:
+        (transformed_query, error_message)
+        error_message is None if no error, otherwise contains hint
+    """
+    # Check for column prefix pattern (word + colon)
+    match = re.match(r'^(\w+):\s*(.+)$', q.strip())
+    if match:
+        column_name, search_term = match.groups()
+        column_lower = column_name.lower()
+        
+        if column_lower in FTS_COLUMN_MAPPING:
+            # Valid German or English column
+            mapped_column = FTS_COLUMN_MAPPING[column_lower]
+            return f"{mapped_column}: {search_term}", None
+        else:
+            # Invalid column
+            valid_columns = ', '.join(sorted(set(FTS_COLUMN_MAPPING.values())))
+            error = f"Unbekannte Spalte '{column_name}'. Verfügbar: {valid_columns}"
+            return q, error
+    
+    return q, None
 
 def parse_amount(amount_str: str):
     """
@@ -90,30 +143,38 @@ async def index(
 
     # Normalize search term
     q = q.strip() if q else None
-
-    # Folders
-
+    
+    search_error = None
     recipes = []
+    
     if q:
-        # Full-text search via FTS5 with lightweight column weighting (bm25)
-        fts_query = """
-            SELECT r.*, bm25(recipe_fts, 5.0, 3.0, 2.5, 2.0, 1.5, 1.0) AS score
-            FROM recipe_fts
-            JOIN recipes r ON r.id = recipe_fts.rowid
-            WHERE recipe_fts MATCH ?
-        """
-        params = [q]
+        # Transform query with column mapping
+        q_transformed, search_error = transform_search_query(q)
+        
+        try:
+            # Full-text search via FTS5 with lightweight column weighting (bm25)
+            fts_query = """
+                SELECT r.*, bm25(recipe_fts, 5.0, 3.0, 2.5, 2.0, 1.5, 1.0) AS score
+                FROM recipe_fts
+                JOIN recipes r ON r.id = recipe_fts.rowid
+                WHERE recipe_fts MATCH ?
+            """
+            params = [q_transformed]
 
-        if folder:
-            allowed_ids = await get_all_child_folder_ids(db, folder)
-            placeholders = ', '.join(['?'] * len(allowed_ids))
-            fts_query += f" AND r.folder_id IN ({placeholders})"
-            params.extend(allowed_ids)
+            if folder:
+                allowed_ids = await get_all_child_folder_ids(db, folder)
+                placeholders = ', '.join(['?'] * len(allowed_ids))
+                fts_query += f" AND r.folder_id IN ({placeholders})"
+                params.extend(allowed_ids)
 
-        fts_query += " ORDER BY score, r.updated_at DESC"
+            fts_query += " ORDER BY score, r.updated_at DESC"
 
-        async with db.execute(fts_query, params) as cursor:
-            recipes = await cursor.fetchall()
+            async with db.execute(fts_query, params) as cursor:
+                recipes = await cursor.fetchall()
+        except Exception as e:
+            # FTS syntax error (e.g., invalid column in prefix search)
+            search_error = f"Suchanfrage ungültig: {str(e)}"
+            recipes = []
     else:
         # No search term: fallback to latest recipes (optionally filtered by folder)
         list_query = "SELECT * FROM recipes WHERE 1=1"
@@ -141,6 +202,8 @@ async def index(
         "is_admin": user_ctx["is_admin"],
         "current_user_id": user_ctx["user_id"],
         "breadcrumbs": breadcrumbs,
+        "search_error": search_error,
+        "search_query": q,
         **user_ctx
     })
 

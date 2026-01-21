@@ -3,9 +3,11 @@ import os
 import yaml
 import aiosqlite
 import sqlite3
+import secrets
+from datetime import datetime, timezone, timedelta
 from functools import lru_cache
 
-SCHEMA_VERSION = 5
+SCHEMA_VERSION = 6
 
 async def init_db():
     """
@@ -62,22 +64,6 @@ async def init_db():
         if current_version < 5:
             print("Migrating to Schema v5: Adding recipe full-text search (FTS5)...")
 
-            # FTS5 virtual table (contentless; rowid = recipe_id)
-            await db.execute(
-                """
-                CREATE VIRTUAL TABLE IF NOT EXISTS recipe_fts USING fts5(
-                    name,
-                    author,
-                    source,
-                    preamble,
-                    ingredients,
-                    steps,
-                    content=''
-                )
-                """
-            )
-
-            # Drop old triggers to ensure idempotency when rerunning migrations
             trigger_names = [
                 "recipe_fts_ai", "recipe_fts_au", "recipe_fts_ad",
                 "recipe_fts_steps_ai", "recipe_fts_steps_au", "recipe_fts_steps_ad",
@@ -86,121 +72,161 @@ async def init_db():
             for t in trigger_names:
                 await db.execute(f"DROP TRIGGER IF EXISTS {t}")
 
-            # Helper SQL fragments (inline in triggers)
-            ingredients_subquery = """
-                (SELECT group_concat(item || ' ' || COALESCE(note,''), ' ')
-                 FROM (
-                     SELECT i.item, i.note
-                     FROM ingredients i
-                     JOIN steps s ON i.step_id = s.id
-                     WHERE s.recipe_id = R.id
-                     ORDER BY s.position, i.position
-                 ))
-            """
+            await db.execute("DROP TABLE IF EXISTS recipe_fts")
+            await db.execute(
+                """
+                CREATE VIRTUAL TABLE recipe_fts USING fts5(
+                    name,
+                    author,
+                    source,
+                    preamble,
+                    ingredients,
+                    steps
+                );
+                """
+            )
 
-            steps_subquery = """
-                (SELECT group_concat(markdown_text, ' ')
-                 FROM (
-                     SELECT markdown_text
-                     FROM steps
-                     WHERE recipe_id = R.id
-                     ORDER BY position
-                 ))
-            """
+            await db.executescript(
+                """
+                -- Recipes INSERT
+                CREATE TRIGGER recipe_fts_ai AFTER INSERT ON recipes
+                BEGIN
+                    INSERT INTO recipe_fts(rowid, name, author, source, preamble, ingredients, steps)
+                    VALUES(
+                        NEW.id,
+                        COALESCE(NEW.name, ''),
+                        COALESCE(NEW.author, ''),
+                        COALESCE(NEW.source, ''),
+                        COALESCE(NEW.preamble, ''),
+                        '',
+                        ''
+                    );
+                END;
 
-            # Trigger bodies reuse the same INSERT ... SELECT pattern via literal SQL
-            insert_select_sql = f"""
+                -- Recipes UPDATE
+                CREATE TRIGGER recipe_fts_au AFTER UPDATE ON recipes
+                BEGIN
+                    UPDATE recipe_fts SET
+                        name = COALESCE(NEW.name, ''),
+                        author = COALESCE(NEW.author, ''),
+                        source = COALESCE(NEW.source, ''),
+                        preamble = COALESCE(NEW.preamble, '')
+                    WHERE rowid = NEW.id;
+                END;
+
+                -- Recipes DELETE
+                CREATE TRIGGER recipe_fts_ad AFTER DELETE ON recipes
+                BEGIN
+                    DELETE FROM recipe_fts WHERE rowid = OLD.id;
+                END;
+
+                -- Steps INSERT/UPDATE
+                CREATE TRIGGER recipe_fts_steps_ai AFTER INSERT ON steps
+                BEGIN
+                    UPDATE recipe_fts SET steps = 
+                        COALESCE((SELECT group_concat(markdown_text, ' ') FROM (
+                            SELECT markdown_text FROM steps WHERE recipe_id = NEW.recipe_id ORDER BY position
+                        )), '')
+                    WHERE rowid = NEW.recipe_id;
+                END;
+
+                CREATE TRIGGER recipe_fts_steps_au AFTER UPDATE ON steps
+                BEGIN
+                    UPDATE recipe_fts SET steps = 
+                        COALESCE((SELECT group_concat(markdown_text, ' ') FROM (
+                            SELECT markdown_text FROM steps WHERE recipe_id = NEW.recipe_id ORDER BY position
+                        )), '')
+                    WHERE rowid = NEW.recipe_id;
+                END;
+
+                -- Steps DELETE
+                CREATE TRIGGER recipe_fts_steps_ad AFTER DELETE ON steps
+                BEGIN
+                    UPDATE recipe_fts SET steps = 
+                        COALESCE((SELECT group_concat(markdown_text, ' ') FROM (
+                            SELECT markdown_text FROM steps WHERE recipe_id = OLD.recipe_id ORDER BY position
+                        )), '')
+                    WHERE rowid = OLD.recipe_id;
+                END;
+
+                -- Ingredients INSERT/UPDATE/DELETE
+                CREATE TRIGGER recipe_fts_ing_ai AFTER INSERT ON ingredients
+                BEGIN
+                    UPDATE recipe_fts SET ingredients = 
+                        COALESCE((SELECT group_concat(item || ' ' || COALESCE(note,''), ' ') FROM (
+                            SELECT i.item, i.note FROM ingredients i JOIN steps s ON i.step_id = s.id
+                            WHERE s.recipe_id = (SELECT recipe_id FROM steps WHERE id = NEW.step_id)
+                            ORDER BY s.position, i.position
+                        )), '')
+                    WHERE rowid = (SELECT recipe_id FROM steps WHERE id = NEW.step_id);
+                END;
+
+                CREATE TRIGGER recipe_fts_ing_au AFTER UPDATE ON ingredients
+                BEGIN
+                    UPDATE recipe_fts SET ingredients = 
+                        COALESCE((SELECT group_concat(item || ' ' || COALESCE(note,''), ' ') FROM (
+                            SELECT i.item, i.note FROM ingredients i JOIN steps s ON i.step_id = s.id
+                            WHERE s.recipe_id = (SELECT recipe_id FROM steps WHERE id = NEW.step_id)
+                            ORDER BY s.position, i.position
+                        )), '')
+                    WHERE rowid = (SELECT recipe_id FROM steps WHERE id = NEW.step_id);
+                END;
+
+                CREATE TRIGGER recipe_fts_ing_ad AFTER DELETE ON ingredients
+                BEGIN
+                    UPDATE recipe_fts SET ingredients = 
+                        COALESCE((SELECT group_concat(item || ' ' || COALESCE(note,''), ' ') FROM (
+                            SELECT i.item, i.note FROM ingredients i JOIN steps s ON i.step_id = s.id
+                            WHERE s.recipe_id = (SELECT recipe_id FROM steps WHERE id = OLD.step_id)
+                            ORDER BY s.position, i.position
+                        )), '')
+                    WHERE rowid = (SELECT recipe_id FROM steps WHERE id = OLD.step_id);
+                END;
+                """
+            )
+
+            await db.execute(
+                """
                 INSERT INTO recipe_fts(rowid, name, author, source, preamble, ingredients, steps)
                 SELECT
-                    R.id,
-                    COALESCE(R.name, ''),
-                    COALESCE(R.author, ''),
-                    COALESCE(R.source, ''),
-                    COALESCE(R.preamble, ''),
-                    COALESCE({ingredients_subquery}, ''),
-                    COALESCE({steps_subquery}, '')
-                FROM recipes R
-                WHERE R.id = :recipe_id;
-            """
-
-            # Recipes INSERT
-            await db.execute(
-                f"""
-                CREATE TRIGGER recipe_fts_ai AFTER INSERT ON recipes BEGIN
-                    INSERT INTO recipe_fts(recipe_fts, rowid) VALUES('delete', NEW.id);
-                    {insert_select_sql.replace(':recipe_id', 'NEW.id')}
-                END;
-                """
-            )
-
-            # Recipes UPDATE
-            await db.execute(
-                f"""
-                CREATE TRIGGER recipe_fts_au AFTER UPDATE ON recipes BEGIN
-                    INSERT INTO recipe_fts(recipe_fts, rowid) VALUES('delete', NEW.id);
-                    {insert_select_sql.replace(':recipe_id', 'NEW.id')}
-                END;
-                """
-            )
-
-            # Recipes DELETE
-            await db.execute(
-                """
-                CREATE TRIGGER recipe_fts_ad AFTER DELETE ON recipes BEGIN
-                    INSERT INTO recipe_fts(recipe_fts, rowid) VALUES('delete', OLD.id);
-                END;
-                """
-            )
-
-            # Steps INSERT/UPDATE/DELETE → recompute owning recipe
-            for trigger_name, timing, ref in [
-                ("recipe_fts_steps_ai", "INSERT", "NEW.recipe_id"),
-                ("recipe_fts_steps_au", "UPDATE", "NEW.recipe_id"),
-                ("recipe_fts_steps_ad", "DELETE", "OLD.recipe_id")
-            ]:
-                await db.execute(
-                    f"""
-                    CREATE TRIGGER {trigger_name} AFTER {timing} ON steps BEGIN
-                        INSERT INTO recipe_fts(recipe_fts, rowid) VALUES('delete', {ref});
-                        {insert_select_sql.replace(':recipe_id', ref)}
-                    END;
-                    """
-                )
-
-            # Ingredients INSERT/UPDATE/DELETE → recompute owning recipe
-            for trigger_name, timing, ref in [
-                ("recipe_fts_ing_ai", "INSERT", "(SELECT recipe_id FROM steps WHERE id = NEW.step_id)"),
-                ("recipe_fts_ing_au", "UPDATE", "(SELECT recipe_id FROM steps WHERE id = NEW.step_id)"),
-                ("recipe_fts_ing_ad", "DELETE", "(SELECT recipe_id FROM steps WHERE id = OLD.step_id)")
-            ]:
-                await db.execute(
-                    f"""
-                    CREATE TRIGGER {trigger_name} AFTER {timing} ON ingredients BEGIN
-                        INSERT INTO recipe_fts(recipe_fts, rowid) VALUES('delete', {ref});
-                        {insert_select_sql.replace(':recipe_id', ref)}
-                    END;
-                    """
-                )
-
-            # Backfill existing data
-            await db.execute("INSERT INTO recipe_fts(recipe_fts) VALUES('delete-all')")
-            await db.execute(
-                f"""
-                INSERT INTO recipe_fts(rowid, name, author, source, preamble, ingredients, steps)
-                SELECT
-                    R.id,
-                    COALESCE(R.name, ''),
-                    COALESCE(R.author, ''),
-                    COALESCE(R.source, ''),
-                    COALESCE(R.preamble, ''),
-                    COALESCE({ingredients_subquery.replace('R.id', 'R.id')}, ''),
-                    COALESCE({steps_subquery.replace('R.id', 'R.id')}, '')
-                FROM recipes R;
+                    r.id,
+                    COALESCE(r.name, ''),
+                    COALESCE(r.author, ''),
+                    COALESCE(r.source, ''),
+                    COALESCE(r.preamble, ''),
+                    COALESCE((SELECT group_concat(item || ' ' || COALESCE(note,''), ' ') FROM (
+                        SELECT i.item, i.note FROM ingredients i JOIN steps s ON i.step_id = s.id
+                        WHERE s.recipe_id = r.id ORDER BY s.position, i.position
+                    )), ''),
+                    COALESCE((SELECT group_concat(markdown_text, ' ') FROM (
+                        SELECT markdown_text FROM steps WHERE recipe_id = r.id ORDER BY position
+                    )), '')
+                FROM recipes r;
                 """
             )
 
             await db.execute("UPDATE db_metadata SET value = '5' WHERE key = 'schema_version'")
             current_version = 5
+
+        if current_version < 6:
+            print("Migrating to Schema v6: Adding server-side sessions...")
+            await db.execute(
+                """
+                CREATE TABLE IF NOT EXISTS sessions (
+                    id TEXT PRIMARY KEY,
+                    user_id INTEGER NOT NULL,
+                    created_at TEXT NOT NULL,
+                    expires_at TEXT NOT NULL,
+                    last_seen TEXT NOT NULL,
+                    user_agent TEXT,
+                    ip_address TEXT,
+                    FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+                );
+                """
+            )
+            await db.execute("CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id)")
+            await db.execute("UPDATE db_metadata SET value = '6' WHERE key = 'schema_version'")
+            current_version = 6
 
         await db.commit()
         print(f"Database schema is up to date at version {current_version}.")
@@ -240,35 +266,64 @@ async def get_db_connection():
 async def get_user_context(request, db: aiosqlite.Connection):
     """
     Returns user context dict with username, display_name, role, and is_admin.
-    Returns None values if user is not logged in.
+    Returns None values if user is not logged in or session is invalid/expired.
     """
-    username = request.cookies.get("session_user")
-    
-    if not username:
+    def _anon():
         return {
             "username": None,
             "display_name": None,
             "user_id": None,
             "role": None,
-            "is_admin": False
+            "is_admin": False,
         }
-    
-    async with db.execute("SELECT id, username, display_name, role FROM users WHERE username = ?", (username,)) as cursor:
-        user = await cursor.fetchone()
-        
-    if not user:
-        return {
-            "username": None,
-            "display_name": None,
-            "user_id": None,
-            "role": None,
-            "is_admin": False
-        }
-    
+
+    session_id = request.cookies.get("rezepte_session_token")
+    if not session_id:
+        return _anon()
+
+    now = datetime.now(timezone.utc)
+
+    async with db.execute(
+        """
+        SELECT s.id, s.user_id, s.expires_at, s.last_seen, u.username, u.display_name, u.role, u.is_active
+        FROM sessions s
+        JOIN users u ON s.user_id = u.id
+        WHERE s.id = ?
+        """,
+        (session_id,),
+    ) as cursor:
+        row = await cursor.fetchone()
+
+    if not row:
+        return _anon()
+
+    try:
+        expires_at = datetime.fromisoformat(row["expires_at"])
+        last_seen = datetime.fromisoformat(row["last_seen"])
+    except Exception:
+        await db.execute("DELETE FROM sessions WHERE id = ?", (session_id,))
+        await db.commit()
+        return _anon()
+
+    if expires_at <= now or not row["is_active"]:
+        await db.execute("DELETE FROM sessions WHERE id = ?", (session_id,))
+        await db.commit()
+        return _anon()
+
+    # Touch session with a modest cadence to avoid write on every request
+    # Rolling expiry: extend expires_at each time we touch the session
+    if now - last_seen > timedelta(minutes=5):
+        new_expiry = now + timedelta(days=7)
+        await db.execute(
+            "UPDATE sessions SET last_seen = ?, expires_at = ? WHERE id = ?",
+            (now.isoformat(), new_expiry.isoformat(), session_id)
+        )
+        await db.commit()
+
     return {
-        "username": user["username"],
-        "display_name": user["display_name"],
-        "user_id": user["id"],
-        "role": user["role"],
-        "is_admin": user["role"] == "admin"
+        "username": row["username"],
+        "display_name": row["display_name"],
+        "user_id": row["user_id"],
+        "role": row["role"],
+        "is_admin": row["role"] == "admin",
     }
