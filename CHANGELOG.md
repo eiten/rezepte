@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-01-21
+
 ### Added
 - Sticky footer with flexbox layout (stays at bottom on short pages, scrolls with content on long pages)
 - Creative Commons BY-NC-SA 4.0 license badge in footer
@@ -20,6 +22,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Prevents false "recently modified" markers when saving without making changes
 - Help modal event listeners now attach on `DOMContentLoaded` to ensure the floating button exists
 - Help API fetch uses FastAPI `root_path` for environment-agnostic URL resolution (works on /rezepte and without prefix)
+- All HTML templates now use Jinja2 comments instead of HTML comments (cleaner client output)
+- Help modal fully translated to German
+- Footer responsive layout improved (fixed flex-row for better spacing)
 
 ## [1.0.0] - 2026-01-21
 
