@@ -22,15 +22,17 @@
                 </div>
 
                 <div class="flex-1 flex justify-end md:justify-start max-w-md">
-                    <form action="/" method="get" id="search-form" class="w-full relative flex items-center">
+                    <form action="{{ url_for('index') }}" method="get" id="search-form" class="w-full relative flex items-center">
                         
                         <button type="button" id="search-toggle" class="md:hidden p-2 text-nav-text hover:text-white focus:outline-none z-50">
                             <span id="search-icon" class="ph-btn-icon text-2xl m-0 leading-none">&#xE30C;</span>
                         </button>
 
                         <div id="search-container" class="hidden md:block w-full">
-                            <div class="relative flex items-center"> <input type="text" name="q" placeholder="Rezepte suchen..." 
-                                    class="w-full bg-gray-900/40 text-white text-sm rounded-xl py-2 pl-10 pr-4 border border-gray-700 focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-all">
+                            <div class="relative flex items-center"> 
+                                <input type="text" name="q" placeholder="Rezepte suchen..." 
+                                    class="w-full bg-gray-900/40 text-white text-sm rounded-xl py-2 pl-10 pr-4 border border-gray-700 focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-all"
+                                    {% if request.query_params.q %} value="{{ request.query_params.q }}" {% endif %}>
                                 <span class="absolute left-3 top-1/2 -translate-y-1/2 ph-input-icon text-gray-500 text-sm flex items-center justify-center leading-none">
                                     &#xE30C;
                                 </span>

@@ -21,7 +21,7 @@
     <!-- ================================= -->
     <nav class="flex items-center justify-between mb-8 no-print">
         <a href="{{ url_for('index') }}" class="flex items-center text-slate-500 hover:text-accent transition-colors no-underline group">
-            <span class="ph-btn-icon text-xl mr-2 group-hover:-translate-x-1 transition-transform">&#xE124;</span>
+            <span class="ph-btn-icon text-xl mr-2 group-hover:-translate-x-1 transition-transform">&#xE120;</span>
             <span class="font-medium">Zurück</span>
         </a>
 
@@ -102,8 +102,7 @@
                         {% for ing in step.ingredients %}
                         <li class="leading-snug">
                             <span class="whitespace-nowrap font-bold text-slate-700">
-                                {% if ing.amount_min %}{{ "%g" % ing.amount_min }}{% endif %}{% if ing.amount_max %}-{{ "%g" % ing.amount_max }}{% endif %}
-                                {{ ing.unit_symbol }}
+                                {{ ing.formatted_qty | safe }}
                             </span>
                             <span class="">{{ ing.item }}</span>
                             {% if ing.note and ing.note|string != 'None' and ing.note|trim != '' %}

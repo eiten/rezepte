@@ -36,6 +36,16 @@ def init_db():
     
     # 1. Enable foreign keys
     cursor.execute("PRAGMA foreign_keys = ON;")
+
+    # 2. Metadata table for schema versioning
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS db_metadata (
+            key TEXT PRIMARY KEY,
+            value TEXT
+        );
+        """
+    )
     
     # --- Tables ---
 
@@ -46,7 +56,9 @@ def init_db():
         username TEXT UNIQUE NOT NULL,
         password_hash TEXT NOT NULL,
         display_name TEXT NOT NULL,
-        role TEXT DEFAULT 'guest'
+        role TEXT DEFAULT 'guest',
+        is_active INTEGER DEFAULT 1,
+        email TEXT
     );
     """)
     
@@ -142,6 +154,113 @@ def init_db():
     END;
     """)
 
+    # --- Full-Text Search (FTS5) for recipes ---
+    cursor.execute(
+        """
+        CREATE VIRTUAL TABLE IF NOT EXISTS recipe_fts USING fts5(
+            name,
+            author,
+            source,
+            preamble,
+            ingredients,
+            steps,
+            content=''
+        );
+        """
+    )
+
+    # Clean existing triggers to avoid duplicates when rerunning setup
+    trigger_names = [
+        "recipe_fts_ai", "recipe_fts_au", "recipe_fts_ad",
+        "recipe_fts_steps_ai", "recipe_fts_steps_au", "recipe_fts_steps_ad",
+        "recipe_fts_ing_ai", "recipe_fts_ing_au", "recipe_fts_ing_ad"
+    ]
+    for t in trigger_names:
+        cursor.execute(f"DROP TRIGGER IF EXISTS {t}")
+
+    ingredients_subquery = """
+        (SELECT group_concat(item || ' ' || COALESCE(note,''), ' ')
+         FROM (
+             SELECT i.item, i.note
+             FROM ingredients i
+             JOIN steps s ON i.step_id = s.id
+             WHERE s.recipe_id = R.id
+             ORDER BY s.position, i.position
+         ))
+    """
+
+    steps_subquery = """
+        (SELECT group_concat(markdown_text, ' ')
+         FROM (
+             SELECT markdown_text
+             FROM steps
+             WHERE recipe_id = R.id
+             ORDER BY position
+         ))
+    """
+
+    insert_select_sql = f"""
+        INSERT INTO recipe_fts(rowid, name, author, source, preamble, ingredients, steps)
+        SELECT
+            R.id,
+            COALESCE(R.name, ''),
+            COALESCE(R.author, ''),
+            COALESCE(R.source, ''),
+            COALESCE(R.preamble, ''),
+            COALESCE({ingredients_subquery}, ''),
+            COALESCE({steps_subquery}, '')
+        FROM recipes R
+        WHERE R.id = :recipe_id;
+    """
+
+    cursor.executescript(
+        f"""
+        CREATE TRIGGER recipe_fts_ai AFTER INSERT ON recipes BEGIN
+            INSERT INTO recipe_fts(recipe_fts, rowid) VALUES('delete', NEW.id);
+            {insert_select_sql.replace(':recipe_id', 'NEW.id')}
+        END;
+
+        CREATE TRIGGER recipe_fts_au AFTER UPDATE ON recipes BEGIN
+            INSERT INTO recipe_fts(recipe_fts, rowid) VALUES('delete', NEW.id);
+            {insert_select_sql.replace(':recipe_id', 'NEW.id')}
+        END;
+
+        CREATE TRIGGER recipe_fts_ad AFTER DELETE ON recipes BEGIN
+            INSERT INTO recipe_fts(recipe_fts, rowid) VALUES('delete', OLD.id);
+        END;
+
+        CREATE TRIGGER recipe_fts_steps_ai AFTER INSERT ON steps BEGIN
+            INSERT INTO recipe_fts(recipe_fts, rowid) VALUES('delete', NEW.recipe_id);
+            {insert_select_sql.replace(':recipe_id', 'NEW.recipe_id')}
+        END;
+
+        CREATE TRIGGER recipe_fts_steps_au AFTER UPDATE ON steps BEGIN
+            INSERT INTO recipe_fts(recipe_fts, rowid) VALUES('delete', NEW.recipe_id);
+            {insert_select_sql.replace(':recipe_id', 'NEW.recipe_id')}
+        END;
+
+        CREATE TRIGGER recipe_fts_steps_ad AFTER DELETE ON steps BEGIN
+            INSERT INTO recipe_fts(recipe_fts, rowid) VALUES('delete', OLD.recipe_id);
+            {insert_select_sql.replace(':recipe_id', 'OLD.recipe_id')}
+        END;
+
+        CREATE TRIGGER recipe_fts_ing_ai AFTER INSERT ON ingredients BEGIN
+            INSERT INTO recipe_fts(recipe_fts, rowid) VALUES('delete', (SELECT recipe_id FROM steps WHERE id = NEW.step_id));
+            {insert_select_sql.replace(':recipe_id', '(SELECT recipe_id FROM steps WHERE id = NEW.step_id)')}
+        END;
+
+        CREATE TRIGGER recipe_fts_ing_au AFTER UPDATE ON ingredients BEGIN
+            INSERT INTO recipe_fts(recipe_fts, rowid) VALUES('delete', (SELECT recipe_id FROM steps WHERE id = NEW.step_id));
+            {insert_select_sql.replace(':recipe_id', '(SELECT recipe_id FROM steps WHERE id = NEW.step_id)')}
+        END;
+
+        CREATE TRIGGER recipe_fts_ing_ad AFTER DELETE ON ingredients BEGIN
+            INSERT INTO recipe_fts(recipe_fts, rowid) VALUES('delete', (SELECT recipe_id FROM steps WHERE id = OLD.step_id));
+            {insert_select_sql.replace(':recipe_id', '(SELECT recipe_id FROM steps WHERE id = OLD.step_id)')}
+        END;
+        """
+    )
+
     # --- Seeding Data ---
     # 1. Step Categories (Mit deinen neuen Codes!)
     categories_data = [
@@ -185,6 +304,34 @@ def init_db():
             "INSERT INTO users (username, password_hash, display_name, role) VALUES (?, ?, ?, ?)",
             ("admin", admin_pass, "System Admin", "admin")
         )
+
+    # Root folder (v4 behavior)
+    cursor.execute("SELECT COUNT(*) FROM folders")
+    if cursor.fetchone()[0] == 0:
+        print("--> Creating root folder...")
+        cursor.execute("INSERT INTO folders (name) VALUES ('Hauptverzeichnis')")
+
+    # Backfill FTS (covers fresh install)
+    cursor.execute("INSERT INTO recipe_fts(recipe_fts) VALUES('delete-all')")
+    cursor.execute(
+        f"""
+        INSERT INTO recipe_fts(rowid, name, author, source, preamble, ingredients, steps)
+        SELECT
+            R.id,
+            COALESCE(R.name, ''),
+            COALESCE(R.author, ''),
+            COALESCE(R.source, ''),
+            COALESCE(R.preamble, ''),
+            COALESCE({ingredients_subquery}, ''),
+            COALESCE({steps_subquery}, '')
+        FROM recipes R;
+        """
+    )
+
+    # Persist schema version
+    cursor.execute(
+        "INSERT OR REPLACE INTO db_metadata (key, value) VALUES ('schema_version', '5')"
+    )
 
     conn.commit()
     conn.close()

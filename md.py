@@ -12,7 +12,148 @@ EMOTICON_MAP = {
     r'!!':    'E4E2', # Warning
     r'@@':    'E19A', # Clock
     r'!t':    'E5CC', # Thermometer
+    r'PP':    'E4D6', # Users, People
 }
+
+# Global cache for unit_map from DB (loaded on first use)
+_unit_map_cache = None
+
+def load_unit_map(db_units: list = None) -> dict:
+    """
+    Load unit symbol -> latex code mapping from database units.
+    
+    Args:
+        db_units: List of dicts from DB with 'symbol' and 'latex_code' keys
+    
+    Returns:
+        Dictionary mapping unit symbols to LaTeX codes
+    """
+    unit_map = {}
+    
+    if db_units:
+        # Build map from database
+        for unit in db_units:
+            symbol = unit.get('symbol')
+            latex_code = unit.get('latex_code')
+            if symbol and latex_code:
+                unit_map[symbol.lower()] = latex_code
+                unit_map[symbol] = latex_code  # Both lowercase and original
+    
+    # Fallback defaults (in case DB doesn't have these)
+    defaults = {
+        'g': r'\gram',
+        'kg': r'\kilogram',
+        'ml': r'\milli\liter',
+        'l': r'\liter',
+    }
+    for k, v in defaults.items():
+        if k not in unit_map:
+            unit_map[k] = v
+    
+    return unit_map
+
+def format_quantity(text: str, format: str = 'html', unit_map: dict = None) -> str:
+    """
+    Parse and format quantities like '[8g]', '[2.5-8.5 g]', '[8,5g]'.
+    
+    Normalizes decimal separators (both . and , accepted internally),
+    outputs comma for HTML, comma for LaTeX (siunitx handles it with locale=DE).
+    
+    Args:
+        text: Content inside brackets, e.g. '8g', '2-8.5 g', '8,5ml'
+        format: 'html' or 'latex'
+        unit_map: Optional dict mapping unit symbols to LaTeX codes
+    
+    Returns:
+        Formatted string for the target format, or original text if no match
+    """
+    # Regex: "min[-max] unit" with optional whitespace
+    # Accepts both . and , as decimal separators
+    match = re.match(
+        r'^(\d+[.,]\d+|\d+)\s*(?:-\s*(\d+[.,]\d+|\d+))?\s*([a-z°]+)$',
+        text.strip(),
+        re.IGNORECASE
+    )
+    if not match:
+        return text  # fallback: unprocessed
+    
+    min_val_str, max_val_str, unit_name = match.groups()
+    
+    # Normalize to comma (German/Swiss format)
+    min_val_str = min_val_str.replace('.', ',')
+    if max_val_str:
+        max_val_str = max_val_str.replace('.', ',')
+    
+    if unit_map is None:
+        unit_map = {}
+    
+    unit_lower = unit_name.lower()
+    unit_latex = unit_map.get(unit_lower, unit_name)  # fallback to original if unknown
+    
+    if format == 'html':
+        if max_val_str:
+            return f"{min_val_str}&ndash;{max_val_str}&#x202F;{unit_name}"
+        else:
+            return f"{min_val_str}&#x202F;{unit_name}"
+    elif format == 'latex':
+        if max_val_str:
+            return f"\\SIrange{{{min_val_str}}}{{{max_val_str}}}{{{unit_latex}}}"
+        else:
+            return f"\\SI{{{min_val_str}}}{{{unit_latex}}}"
+    
+    return text  # fallback
+
+def format_ingredient_quantity(amount_min: float = None, amount_max: float = None, unit_symbol: str = None, format: str = 'html', unit_map: dict = None) -> str:
+    """
+    Format ingredient quantities from database fields.
+    
+    Converts float amounts to comma-separated strings and formats with unit.
+    
+    Args:
+        amount_min: Minimum amount (float or None)
+        amount_max: Maximum amount (float or None)
+        unit_symbol: Unit symbol from DB (e.g. 'g', 'ml', 'EL')
+        format: 'html' or 'latex'
+        unit_map: Optional dict mapping unit symbols to LaTeX codes
+    
+    Returns:
+        Formatted quantity string
+    """
+    if not unit_symbol:
+        unit_symbol = ''
+    
+    if unit_map is None:
+        unit_map = {}
+    
+    unit_latex = unit_map.get(unit_symbol, unit_symbol)  # fallback to original
+    
+    # Convert floats to comma-separated strings (using %g to remove trailing zeros)
+    if amount_min is not None:
+        min_str = ("%g" % amount_min).replace('.', ',')
+    else:
+        min_str = None
+    
+    if amount_max is not None:
+        max_str = ("%g" % amount_max).replace('.', ',')
+    else:
+        max_str = None
+    
+    if format == 'html':
+        if min_str and max_str:
+            return f"{min_str}&ndash;{max_str}&#x202F;{unit_symbol}"
+        elif min_str:
+            return f"{min_str}&#x202F;{unit_symbol}"
+        else:
+            return unit_symbol
+    elif format == 'latex':
+        if min_str and max_str:
+            return f"\\SIrange{{{min_str}}}{{{max_str}}}{{{unit_latex}}}"
+        elif min_str:
+            return f"\\SI{{{min_str}}}{{{unit_latex}}}"
+        else:
+            return unit_symbol
+    
+    return ""
 
 def replace_quotes(text):
     """Convert standard quotes to Swiss Guillemets (« »)"""
@@ -25,9 +166,15 @@ def replace_quotes(text):
                   r'\\textsubscript{\1}', text)
     return text
 
-def md_to_latex(text):
+def md_to_latex(text, unit_map: dict = None):
     """Convert markdown and emoticons to LaTeX icons and formatting"""
     if not text: return ""
+    
+    if unit_map is None:
+        unit_map = {}
+    
+    # Parse and format quantities (before other replacements)
+    text = re.sub(r'\[([^\]]+)\]', lambda m: format_quantity(m.group(1), 'latex', unit_map), text)
     
     # Swiss Quotes
     text = replace_quotes(text)
@@ -63,9 +210,23 @@ def md_to_latex(text):
     
     return text
 
-def md_to_html(text):
+def md_to_html(text, unit_map: dict = None):
     """Convert markdown and emoticons to HTML icons and en-dashes"""
     if not text: return ""
+    
+    if unit_map is None:
+        unit_map = {}
+    
+    # Parse and format quantities (before other replacements)
+    text = re.sub(r'\[([^\]]+)\]', lambda m: format_quantity(m.group(1), 'html', unit_map), text)
+
+    # Swiss Quotes
+    text = replace_quotes(text)
+
+    # Trim and basic cleanup
+    text = text.strip().replace('\r\n', '\n')
+    # Double dash to en-dash (–)
+    text = re.sub(r'(?<!-)--(?!-)', '&ndash;', text)
 
     # Emoticons to Hex-Entity
     for emo in sorted(EMOTICON_MAP.keys(), key=len, reverse=True):
@@ -73,14 +234,14 @@ def md_to_html(text):
         # re.sub versteht die Escapes wie \) korrekt
         text = re.sub(emo, f'<span class="ph-emo">&#x{code};</span>', text)
 
-    # Swiss Quotes
-    text = replace_quotes(text)
-
-    # Double dash to en-dash (–)
-    text = re.sub(r'(?<!-)--(?!-)', '&ndash;', text)
-    
     # Units
     text = re.sub(r'(\d+)\s+(kg|g|ml|l)', r'\1&#x202F;\2', text)
+
+    # Handle Newlines
+    # Convert multiple newlines to spaced breaks
+    text = re.sub(r'\n\n+', r'<br class="mb-3">', text)
+    # Convert single newlines
+    text = re.sub(r'\n', r'<br>', text)
 
     # Sub-/superscript
     text = re.sub(r'_(.*?)_', r'<sub>\1</sub>', text)

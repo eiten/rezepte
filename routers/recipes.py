@@ -62,6 +62,21 @@ async def get_all_child_folder_ids(db, folder_id):
             child_ids = await get_all_child_folder_ids(db, row['id'])
             ids.extend(child_ids)
     return ids
+
+async def get_folder_tree(db):
+    """Baue den Ordnerbaum für die Navigation"""
+    async with db.execute("SELECT * FROM folders ORDER BY parent_id, name") as cursor:
+        rows = await cursor.fetchall()
+        folders = [dict(r) for r in rows]
+
+    folder_dict = {f['id']: {**f, 'children': []} for f in folders}
+    folder_tree = []
+    for f_id, f_data in folder_dict.items():
+        if f_data['parent_id'] and f_data['parent_id'] in folder_dict:
+            folder_dict[f_data['parent_id']]['children'].append(f_data)
+        else:
+            folder_tree.append(f_data)
+    return folder_tree  
     
 @router.get("/", response_class=HTMLResponse)
 async def index(
@@ -73,39 +88,50 @@ async def index(
     """ Home page: List all recipes """
     user_ctx = await get_user_context(request, db)
 
+    # Normalize search term
+    q = q.strip() if q else None
+
     # Folders
-    async with db.execute("SELECT * FROM folders ORDER BY parent_id, name") as cursor:
-        folder_rows = await cursor.fetchall()
-        all_folders = [dict(r) for r in folder_rows]
-    folder_dict = {f['id']: {**f, 'children': []} for f in all_folders}
-    folder_tree = []
-    for f_id, f_data in folder_dict.items():
-        if f_data['parent_id'] and f_data['parent_id'] in folder_dict:
-            folder_dict[f_data['parent_id']]['children'].append(f_data)
-        else:
-            folder_tree.append(f_data)    
 
-    #filter foilders
-    query = "SELECT * FROM recipes WHERE 1=1"
-    params = []
-
+    recipes = []
     if q:
-        query += " AND (title LIKE ? OR ingredients LIKE ?)"
-        params.extend([f"%{q}%", f"%{q}%"])
+        # Full-text search via FTS5 with lightweight column weighting (bm25)
+        fts_query = """
+            SELECT r.*, bm25(recipe_fts, 5.0, 3.0, 2.5, 2.0, 1.5, 1.0) AS score
+            FROM recipe_fts
+            JOIN recipes r ON r.id = recipe_fts.rowid
+            WHERE recipe_fts MATCH ?
+        """
+        params = [q]
 
-    if folder:
-        # Rekursiv alle Unterordner-IDs holen
-        allowed_ids = await get_all_child_folder_ids(db, folder)
-        placeholders = ', '.join(['?'] * len(allowed_ids))
-        query += f" AND folder_id IN ({placeholders})"
-        params.extend(allowed_ids)
+        if folder:
+            allowed_ids = await get_all_child_folder_ids(db, folder)
+            placeholders = ', '.join(['?'] * len(allowed_ids))
+            fts_query += f" AND r.folder_id IN ({placeholders})"
+            params.extend(allowed_ids)
 
-    query += " ORDER BY created_at DESC"
-    
-    async with db.execute(query, params) as cursor:
-        recipes = await cursor.fetchall()
+        fts_query += " ORDER BY score, r.updated_at DESC"
+
+        async with db.execute(fts_query, params) as cursor:
+            recipes = await cursor.fetchall()
+    else:
+        # No search term: fallback to latest recipes (optionally filtered by folder)
+        list_query = "SELECT * FROM recipes WHERE 1=1"
+        params = []
+
+        if folder:
+            allowed_ids = await get_all_child_folder_ids(db, folder)
+            placeholders = ', '.join(['?'] * len(allowed_ids))
+            list_query += f" AND folder_id IN ({placeholders})"
+            params.extend(allowed_ids)
+
+        list_query += " ORDER BY created_at DESC"
+
+        async with db.execute(list_query, params) as cursor:
+            recipes = await cursor.fetchall()
         
     breadcrumbs = await get_breadcrumbs(db, folder) if folder else []
+    folder_tree = await get_folder_tree(db)
 
     return templates.TemplateResponse("index.html", {
         "request": request,
@@ -154,13 +180,18 @@ async def read_recipe(request: Request, recipe_id: int, db: aiosqlite.Connection
         steps = await cursor.fetchall()
         
     # Fetch ingredients and render markdown
-    from md import md_to_html
+    from md import md_to_html, format_ingredient_quantity, load_unit_map
+    
+    # Load units from DB
+    async with db.execute("SELECT symbol, latex_code FROM units ORDER BY name") as cursor:
+        db_units = await cursor.fetchall()
+    unit_map = load_unit_map(db_units)
 
     steps_data = []
     for step in steps:
         s_dict = dict(step)
         # s_dict["html_text"] = markdown.markdown(s_dict.get("markdown_text") or "", extensions=["extra"]) 
-        s_dict["html_text"] = md_to_html(s_dict.get("markdown_text") or "")
+        s_dict["html_text"] = md_to_html(s_dict.get("markdown_text") or "", unit_map)
         query = """
             SELECT i.*, u.symbol as unit_symbol 
             FROM ingredients i 
@@ -169,11 +200,24 @@ async def read_recipe(request: Request, recipe_id: int, db: aiosqlite.Connection
             ORDER BY i.position
         """
         async with db.execute(query, (step["id"],)) as i_cursor:
-            s_dict["ingredients"] = await i_cursor.fetchall()
+            ingredients = await i_cursor.fetchall()
+            # Format quantities for display
+            formatted_ingredients = []
+            for ing in ingredients:
+                ing_dict = dict(ing)
+                ing_dict["formatted_qty"] = format_ingredient_quantity(
+                    ing["amount_min"],
+                    ing["amount_max"],
+                    ing["unit_symbol"],
+                    format='html',
+                    unit_map=unit_map
+                )
+                formatted_ingredients.append(ing_dict)
+            s_dict["ingredients"] = formatted_ingredients
         steps_data.append(s_dict)
 
     # Render markdown in preamble
-    preamble_html = md_to_html(recipe.get("preamble") or "")
+    preamble_html = md_to_html(recipe.get("preamble") or "", unit_map)
 
     # Get breadcrumbs
     breadcrumbs = await get_breadcrumbs(db, recipe["folder_id"])
@@ -240,16 +284,7 @@ async def edit_recipe(request: Request, recipe_id: int, db: aiosqlite.Connection
         units = await cursor.fetchall()
     
     # Get folders for dropdown
-    async with db.execute("SELECT * FROM folders ORDER BY parent_id, name") as cursor:
-        rows = await cursor.fetchall()
-        folders = [dict(r) for r in rows]
-    folder_dict = {f['id']: {**f, 'children': []} for f in folders}
-    folder_tree = []
-    for f_id, f_data in folder_dict.items():
-        if f_data['parent_id'] and f_data['parent_id'] in folder_dict:
-            folder_dict[f_data['parent_id']]['children'].append(f_data)
-        else:
-            folder_tree.append(f_data)
+    folder_tree = await get_folder_tree(db)
 
     return templates.TemplateResponse("edit_recipe.html", {
         "request": request,
@@ -438,11 +473,14 @@ async def add_recipe_form(request: Request, db: aiosqlite.Connection = Depends(g
     async with db.execute("SELECT * FROM units ORDER BY name") as cursor:
         units = await cursor.fetchall()
 
+    folder_tree = await get_folder_tree(db)
+
     return templates.TemplateResponse("edit_recipe.html", {
         "request": request,
         "recipe": empty_recipe,
         "steps": [],     
         "categories": categories,
+        "folder_tree": folder_tree,
         "units": units,
         "mode": "add",   # WICHTIG: Modus "add" steuert das Template
         **user_ctx

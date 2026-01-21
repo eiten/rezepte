@@ -66,7 +66,7 @@
     font-style: normal;
     line-height: 1;
     display: inline-block;
-    vertical-align: -0.15em; /* Fine-tuning vertical alignment like \raisebox */
+    transform: translateY(0.05em);
     -webkit-font-smoothing: antialiased;
 }
 /* --- Tiptopf Recipe Styles --- */

@@ -29,7 +29,10 @@
                 {% endfor %}
             </nav>
             <h1 class="text-2xl font-bold text-slate-800">
+                {% if request.query_params.q %}Suche: "{{ request.query_params.q }}"
+                {% else %}
                 {% if breadcrumbs %}{{ breadcrumbs[-1].name }}{% else %}Alle Rezepte{% endif %}
+                {% endif %}
             </h1>
             <span class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1 inline-block">
                 {{ recipes|length }} Einträge
@@ -37,7 +40,7 @@
         </div>
 
         <div class="w-full md:w-64">
-            <form action="{{ url_for('index') }}" method="get" id="folder-filter-form">
+            <form action="{{ url_for('index') }}" method="get" id="folder-filter-form" class="w-full">
                 <select name="folder" 
                         onchange="this.form.submit()"
                         class="w-full rounded-lg border-slate-200 text-sm focus:border-accent focus:ring-accent">

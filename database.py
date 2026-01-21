@@ -127,7 +127,7 @@ async def init_db():
             await db.execute(
                 f"""
                 CREATE TRIGGER recipe_fts_ai AFTER INSERT ON recipes BEGIN
-                    DELETE FROM recipe_fts WHERE rowid = NEW.id;
+                    INSERT INTO recipe_fts(recipe_fts, rowid) VALUES('delete', NEW.id);
                     {insert_select_sql.replace(':recipe_id', 'NEW.id')}
                 END;
                 """
@@ -137,7 +137,7 @@ async def init_db():
             await db.execute(
                 f"""
                 CREATE TRIGGER recipe_fts_au AFTER UPDATE ON recipes BEGIN
-                    DELETE FROM recipe_fts WHERE rowid = NEW.id;
+                    INSERT INTO recipe_fts(recipe_fts, rowid) VALUES('delete', NEW.id);
                     {insert_select_sql.replace(':recipe_id', 'NEW.id')}
                 END;
                 """
@@ -147,7 +147,7 @@ async def init_db():
             await db.execute(
                 """
                 CREATE TRIGGER recipe_fts_ad AFTER DELETE ON recipes BEGIN
-                    DELETE FROM recipe_fts WHERE rowid = OLD.id;
+                    INSERT INTO recipe_fts(recipe_fts, rowid) VALUES('delete', OLD.id);
                 END;
                 """
             )
@@ -161,7 +161,7 @@ async def init_db():
                 await db.execute(
                     f"""
                     CREATE TRIGGER {trigger_name} AFTER {timing} ON steps BEGIN
-                        DELETE FROM recipe_fts WHERE rowid = {ref};
+                        INSERT INTO recipe_fts(recipe_fts, rowid) VALUES('delete', {ref});
                         {insert_select_sql.replace(':recipe_id', ref)}
                     END;
                     """
@@ -176,14 +176,14 @@ async def init_db():
                 await db.execute(
                     f"""
                     CREATE TRIGGER {trigger_name} AFTER {timing} ON ingredients BEGIN
-                        DELETE FROM recipe_fts WHERE rowid = {ref};
+                        INSERT INTO recipe_fts(recipe_fts, rowid) VALUES('delete', {ref});
                         {insert_select_sql.replace(':recipe_id', ref)}
                     END;
                     """
                 )
 
             # Backfill existing data
-            await db.execute("DELETE FROM recipe_fts")
+            await db.execute("INSERT INTO recipe_fts(recipe_fts) VALUES('delete-all')")
             await db.execute(
                 f"""
                 INSERT INTO recipe_fts(rowid, name, author, source, preamble, ingredients, steps)
