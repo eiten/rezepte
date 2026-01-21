@@ -23,20 +23,53 @@ jobs:
             echo "Tag $TAG_REF is not reachable from main; aborting deploy."; exit 1;
           }
 
+      - name: Install TeX (latexmk + lualatex)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends latexmk texlive-latex-extra texlive-luatex texlive-fonts-recommended
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      - name: Install dependencies
+      - name: Create venv and install dependencies
         run: |
-          python -m pip install --upgrade pip
+          python -m venv .venv
+          source .venv/bin/activate
+          pip install --upgrade pip
           pip install -r requirements.txt
+
+      - name: Generate config.yaml for tests (dev, port 8000)
+        run: |
+          cat > config.yaml << 'YML'
+          common:
+            app_name: "Rezept Manager"
+            version: "0.1.0"
+
+          dev:
+            host: "127.0.0.1"
+            port: 8000
+            debug: true
+            reload: false
+            root_path: ""
+            database_url: "sqlite+aiosqlite:///./data/recipes.db"
+            pdf_cache_dir: "./cache"
+
+          prod:
+            host: "0.0.0.0"
+            port: 8081
+            debug: false
+            reload: false
+            database_url: "sqlite+aiosqlite:////opt/rezepteapp/data/recipes.db"
+            pdf_cache_dir: "/opt/rezepteapp/cache"
+          YML
 
       - name: Initialize and seed database (dev)
         env:
           APP_ENV: dev
         run: |
+          source .venv/bin/activate
           python tools/setup_db.py
           python tools/seed_data.py
 
@@ -44,12 +77,19 @@ jobs:
         env:
           APP_ENV: dev
         run: |
-          uvicorn main:app --host 127.0.0.1 --port 8000 --log-level warning & echo $! > uvicorn.pid
-          sleep 3
+          source .venv/bin/activate
+          .venv/bin/uvicorn main:app --host 127.0.0.1 --port 8000 --log-level warning & echo $! > uvicorn.pid
+          sleep 5
           curl -f http://127.0.0.1:8000/ || { echo "Index failed"; exit 1; }
           curl -f http://127.0.0.1:8000/auth/login || { echo "Login page failed"; exit 1; }
           curl -f http://127.0.0.1:8000/api/help || { echo "Help API failed"; exit 1; }
+          curl -f http://127.0.0.1:8000/recipe/1 || { echo "Recipe page failed"; exit 1; }
+          curl -f http://127.0.0.1:8000/recipe/1/pdf || { echo "PDF route failed"; exit 1; }
           kill $(cat uvicorn.pid) || true
+
+      - name: Cleanup venv and data
+        run: |
+          rm -rf .venv data cache uvicorn.pid || true
 
   deploy:
     runs-on: ubuntu-latest
