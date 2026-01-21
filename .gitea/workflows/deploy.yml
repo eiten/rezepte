@@ -23,10 +23,10 @@ jobs:
             echo "Tag $TAG_REF is not reachable from main; aborting deploy."; exit 1;
           }
 
-      - name: Install dependencies (Python, TeX)
+      - name: Install dependencies (Python)
         run: |
           apt-get update
-          apt-get install -y --no-install-recommends python3 python3-venv latexmk texlive-latex-extra texlive-luatex texlive-fonts-recommended
+          apt-get install -y --no-install-recommends python3 python3-venv
 
       - name: Create venv and install dependencies
         run: |
@@ -79,7 +79,6 @@ jobs:
           curl -f http://127.0.0.1:8000/auth/login || { echo "Login page failed"; exit 1; }
           curl -f http://127.0.0.1:8000/api/help || { echo "Help API failed"; exit 1; }
           curl -f http://127.0.0.1:8000/recipe/1 || { echo "Recipe page failed"; exit 1; }
-          curl -f http://127.0.0.1:8000/recipe/1/pdf || { echo "PDF route failed"; exit 1; }
           kill $(cat uvicorn.pid) || true
 
       - name: Cleanup venv and data
