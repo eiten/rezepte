@@ -134,7 +134,7 @@ jobs:
           echo "Deploying tag: $TAG"
           echo ""
           echo "SSH command to execute:"
-          echo "ssh -v -o StrictHostKeyChecking=no $USER@$HOST"
+          echo "ssh -i ~/.ssh/id_ed25519 -v -o StrictHostKeyChecking=no $USER@$HOST"
           echo ""
           echo "Remote commands:"
           echo "  cd $PATH_DIR"
@@ -146,7 +146,7 @@ jobs:
           echo "  sudo systemctl start $SERVICE"
           echo ""
           echo "Executing SSH deploy..."
-          ssh -v -o StrictHostKeyChecking=no "$USER@$HOST" "
+          ssh -i ~/.ssh/id_ed25519 -v -o StrictHostKeyChecking=no "$USER@$HOST" "
             set -e
             echo 'Connected to server, starting deployment...'
             cd \"$PATH_DIR\" && echo \"Changed to: $(pwd)\"
