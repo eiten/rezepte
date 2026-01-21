@@ -62,7 +62,7 @@
     <header class="mb-10 px-4 md:px-0">
         <nav class="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 no-print">
             {% for crumb in breadcrumbs %}
-                <a href="#" class="hover:text-accent transition-colors no-underline">{{ crumb.name }}</a>
+                <a href="{{ url_for('index') }}?folder={{ crumb.id }}" class="hover:text-accent transition-colors no-underline">{{ crumb.name }}</a>
                 {% if not loop.last %}
                     <span class="text-slate-500 font-normal">&#x276F;</span>
                 {% endif %}
