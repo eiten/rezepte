@@ -25,8 +25,8 @@ jobs:
 
       - name: Install TeX (latexmk + lualatex)
         run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends latexmk texlive-latex-extra texlive-luatex texlive-fonts-recommended
+          apt-get update
+          apt-get install -y --no-install-recommends latexmk texlive-latex-extra texlive-luatex texlive-fonts-recommended
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -118,10 +118,10 @@ jobs:
           ssh -o StrictHostKeyChecking=no "$USER@$HOST" "
             set -e
             cd \"$PATH_DIR\"
-            sudo systemctl stop \"$SERVICE\"
+            systemctl stop \"$SERVICE\"
             git fetch --tags origin
             git fetch origin main
             git checkout -f \"tags/$TAG\"
             rm -rf cache
-            sudo systemctl start \"$SERVICE\"
+            systemctl start \"$SERVICE\"
           "
