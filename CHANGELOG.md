@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.5] - 2026-01-21
+
+### Added
+- Debug diagnostics in deploy workflow (shows which secrets are set, SSH config)
+
 ## [1.1.4] - 2026-01-21
 
 ### Changed

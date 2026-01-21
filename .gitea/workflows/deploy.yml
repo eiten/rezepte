@@ -94,11 +94,24 @@ jobs:
           SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
           KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
         run: |
+          echo "DEBUG: Checking secrets..."
+          echo "SSH_PRIVATE_KEY set: $([ -z "$SSH_PRIVATE_KEY" ] && echo "NO" || echo "YES")"
+          echo "KNOWN_HOSTS set: $([ -z "$KNOWN_HOSTS" ] && echo "NO" || echo "YES")"
           mkdir -p ~/.ssh
-          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
+          if [ -n "$SSH_PRIVATE_KEY" ]; then
+            echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+            chmod 600 ~/.ssh/id_ed25519
+            echo "SSH key written to ~/.ssh/id_ed25519"
+          else
+            echo "ERROR: SSH_PRIVATE_KEY is empty!"
+          fi
           if [ -n "$KNOWN_HOSTS" ]; then
             echo "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+            echo "Known hosts written to ~/.ssh/known_hosts"
+            echo "Content:"
+            cat ~/.ssh/known_hosts
+          else
+            echo "WARNING: KNOWN_HOSTS is empty!"
           fi
 
       - name: Deploy to server
@@ -108,7 +121,17 @@ jobs:
           PATH_DIR: ${{ secrets.DEPLOY_PATH }}
           SERVICE: ${{ secrets.DEPLOY_SERVICE }}
         run: |
+          echo "DEBUG: Checking deploy secrets..."
+          echo "DEPLOY_HOST set: $([ -z "$HOST" ] && echo "NO" || echo "YES")"
+          echo "DEPLOY_USER set: $([ -z "$USER" ] && echo "NO" || echo "YES")"
+          echo "DEPLOY_PATH set: $([ -z "$PATH_DIR" ] && echo "NO" || echo "YES")"
+          echo "DEPLOY_SERVICE set: $([ -z "$SERVICE" ] && echo "NO" || echo "YES")"
+          echo ""
+          echo "SSH config:"
+          ls -la ~/.ssh/
+          echo ""
           TAG="${GITHUB_REF#refs/tags/}"
+          echo "Deploying tag: $TAG"
           ssh -o StrictHostKeyChecking=no "$USER@$HOST" "
             set -e
             cd \"$PATH_DIR\"
