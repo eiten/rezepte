@@ -85,3 +85,67 @@ Die Schritt-Texte unterstützen einen schlanken Satz an Markierungen. Sie gelten
 - IP-Logging ist hinter sslh/Caddy aktuell 127.0.0.1; Sessions funktionieren dennoch.
 - Root-Pfad (prod) ist `/rezepte` (siehe `config.yaml`).
  - API-URLs in Templates respektieren den `root_path`; z.B. der Hilfe-Dialog lädt Daten über `/api/help` mit Präfix in Dev (`/rezepte`).
+
+## Deployment (Gitea Actions)
+
+Automatisches Deployment wird ausgelöst, wenn ein Tag (`v*`) auf `main` gepusht wird. Die Action verifiziert, dass der Tag auf `main` liegt, führt kurze Smoke-Tests aus, und deployed per SSH auf den Server.
+
+### Repository Secrets (Gitea)
+- `DEPLOY_HOST`: Hostname oder IP des Zielservers
+- `DEPLOY_USER`: SSH-User auf dem Zielserver
+- `DEPLOY_PATH`: Projektpfad auf dem Server (z.B. `/opt/rezepteapp`)
+- `DEPLOY_SERVICE`: Systemd-Service-Name (z.B. `rezepte`)
+- `DEPLOY_SSH_PRIVATE_KEY`: Privater SSH-Schlüssel (ed25519) für Deployment
+- `DEPLOY_KNOWN_HOSTS`: Inhalt der `known_hosts`-Zeile für den Server (optional, empfohlen)
+
+### SSH Deploy-Key (nur für Deployment)
+```bash
+# Ed25519 Key erzeugen (passwortlos oder mit Deploy-Passwort)
+ssh-keygen -t ed25519 -C "rezepteapp-deploy" -f ~/.ssh/rezepteapp_deploy
+
+# Public Key auf dem Server hinterlegen
+cat ~/.ssh/rezepteapp_deploy.pub | ssh user@host "mkdir -p ~/.ssh && chmod 700 ~/.ssh && cat >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys"
+
+# Secrets im Repository setzen
+# DEPLOY_SSH_PRIVATE_KEY = Inhalt von ~/.ssh/rezepteapp_deploy
+```
+
+### known_hosts Eintrag ermitteln
+```bash
+# Fingerprint/Host-Key auslesen und als Secret speichern
+ssh-keyscan -H host.example.com >> known_hosts
+# Inhalt der Zeile als DEPLOY_KNOWN_HOSTS Secret speichern
+```
+
+### Systemd ohne Passwort (sudoers)
+```bash
+# Mit visudo eine begrenzte Regel anlegen
+sudo visudo -f /etc/sudoers.d/<username>
+
+# Inhalt (nur spezifische Service-Kommandos erlauben)
+<username> ALL=(ALL) NOPASSWD: /bin/systemctl stop rezepte, /bin/systemctl start rezepte, /bin/systemctl restart rezepte
+```
+
+### Update-Skript (optional, tag-basiert)
+Siehe `tools/update.sh`. Dieses Skript kann serverseitig genutzt werden, um einen Tag auszuchecken und den Service neu zu starten:
+```bash
+ssh user@host \'/opt/rezepteapp/tools/update.sh v1.1.1\'
+```
+
+### Pre-Deploy Smoke-Tests
+Die Action führt vor dem Deployment einfache Prüfungen aus:
+- Abhängigkeiten installieren (`pip install -r requirements.txt`)
+- Datenbank initialisieren (`tools/setup_db.py`) und seeden (`tools/seed_data.py`)
+- App lokal mit Uvicorn starten und folgende Seiten abrufen:
+	- `/` (Startseite)
+	- `/auth/login` (Login-Seite)
+	- `/api/help` (Hilfe-API)
+
+Hinweis: Der Seed erzeugt den Nutzer `admin/admin`, sodass ein Login-Test optional möglich wäre. Standardmäßig prüfen wir nur, dass die Seiten fehlerfrei laden.
+
+### Konfiguration
+- `config.yaml` ist lokal und wird ignoriert (siehe `config.yaml.example`).
+- Für neue Umgebungen `config.yaml.example` kopieren und anpassen.
+```
+cp config.yaml.example config.yaml
+```
