@@ -7,3 +7,6 @@ pyyaml
 markdown
 passlib
 bcrypt==3.2.2
+authlib
+httpx
+itsdangerous

@@ -7,8 +7,9 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from database import get_config, init_db
-from routers import recipes, pdf, auth, admin
+from routers import recipes, pdf, auth, admin, oauth
 from template_config import templates
+from starlette.middleware.sessions import SessionMiddleware
 
 # Load config
 config = get_config()
@@ -58,6 +59,13 @@ app = FastAPI(
 )
 print(f"App root path: {app.root_path}")
 
+# Add session middleware for OAuth state management
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=os.environ.get('SESSION_SECRET', 'dev-secret-change-in-production'),
+    same_site='lax',
+    https_only=True
+)
 
 # Static files
 @app.get("/favicon.ico", include_in_schema=False)
@@ -72,6 +80,7 @@ app.include_router(recipes.router)
 app.include_router(admin.router)
 app.include_router(pdf.router)
 app.include_router(auth.router)
+app.include_router(oauth.router)
 
 if __name__ == "__main__":
     print(f"🚀 Starting on port {config['port']}...")

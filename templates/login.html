@@ -51,6 +51,22 @@
             </button>
         </form>
 
+        {% if oauth_enabled %}
+        <div class="px-8 pb-8">
+            <div class="relative flex items-center justify-center my-6">
+                <div class="border-t border-gray-200 flex-grow"></div>
+                <span class="px-4 text-xs text-gray-400 uppercase tracking-wide">Oder</span>
+                <div class="border-t border-gray-200 flex-grow"></div>
+            </div>
+            
+            <a href="{{ url_for('oauth_login') }}" 
+                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3.5 rounded-xl shadow-lg transition-all active:scale-[0.98] flex justify-center items-center gap-2">
+                <span class="ph-icon">&#xE40C;</span>
+                <span>{{ oauth_button_text }}</span>
+            </a>
+        </div>
+        {% endif %}
+
         <div class="bg-gray-50 px-8 py-4 text-center border-t border-gray-100">
             <p class="text-xs text-gray-400">
                 Nur für registrierte Mitglieder der Rezept-App. Möchtest Du auch Rezepre erstellen und bearbeiten, dann melde Dich bei Edi.

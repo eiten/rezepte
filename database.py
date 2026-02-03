@@ -7,7 +7,7 @@ import secrets
 from datetime import datetime, timezone, timedelta
 from functools import lru_cache
 
-SCHEMA_VERSION = 6
+SCHEMA_VERSION = 7
 
 async def init_db():
     """
@@ -227,6 +227,26 @@ async def init_db():
             await db.execute("CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id)")
             await db.execute("UPDATE db_metadata SET value = '6' WHERE key = 'schema_version'")
             current_version = 6
+
+        if current_version < 7:
+            print("Migrating to Schema v7: Adding OAuth links...")
+            await db.execute(
+                """
+                CREATE TABLE IF NOT EXISTS oauth_links (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER NOT NULL,
+                    provider TEXT NOT NULL DEFAULT 'authelia',
+                    subject TEXT NOT NULL,
+                    email TEXT,
+                    created_at TEXT NOT NULL,
+                    FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+                    UNIQUE(provider, subject)
+                );
+                """
+            )
+            await db.execute("CREATE INDEX IF NOT EXISTS idx_oauth_links_user_id ON oauth_links(user_id)")
+            await db.execute("UPDATE db_metadata SET value = '7' WHERE key = 'schema_version'")
+            current_version = 7
 
         await db.commit()
         print(f"Database schema is up to date at version {current_version}.")

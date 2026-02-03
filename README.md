@@ -1,66 +1,104 @@
-# Rezepte-App
+# Recipe App
 
-Rezeptverwaltung mit FastAPI, SQLite und FTS5 (Volltextsuche). Login mit serverseitigen Sessions, PDF-Export via LaTeX, und einem Markdown-ähnlichen Editor für Schritte.
+🇩🇪 [Deutsch](README.de.md) | 🇬🇧 [English](README.md)
+
+Recipe management system with FastAPI, SQLite and FTS5 (full-text search). Login with server-side sessions, OAuth/OIDC integration (e.g. Authelia), PDF export via LaTeX, and a Markdown-like editor for recipe steps.
 
 📋 **[Changelog](CHANGELOG.md)** – View version history and release notes
 
-## Kurzfeatures
-- Serverseitige Sessions (SQLite `sessions`-Tabelle), Cookie `rezepte_session_token`, Rolling Expiry (7 Tage, wird bei Nutzung verlängert)
-- Volltextsuche über Rezepte/Schritte/Zutaten (SQLite FTS5)
-- Admin-Bereich für Kategorien, Pfade, Nutzer
-- Profilseite zum Ändern von Anzeigename, E-Mail und Passwort
-- HTML-Rendering und PDF-Export aus demselben Markdown-ähnlichen Text
+## Key Features
+- Server-side sessions (SQLite `sessions` table), cookie `rezepte_session_token`, rolling expiry (7 days, extended on use)
+- **OAuth/OIDC login** (e.g. Authelia): Optional parallel login with OAuth and local password, account linking with email matching and auto-link
+- Full-text search across recipes/steps/ingredients (SQLite FTS5)
+- Admin area for categories, paths, users
+- Profile page for changing display name, email, password, and OAuth linking
+- HTML rendering and PDF export from the same Markdown-like text
 
 ## Setup (Dev)
-1. Abhängigkeiten installieren: `pip install -r requirements.txt`
-2. venv starten: `source venv/bin/activate`
-2. DB erstellen: `APP_ENV=dev python tools/setup_db.py`
-3. Start: `APP_ENV=dev python main.py`
+1. Install dependencies: `pip install -r requirements.txt`
+2. Start venv: `source venv/bin/activate`
+3. Create DB: `APP_ENV=dev python tools/setup_db.py`
+4. Start: `APP_ENV=dev python main.py`
 
-## Starten der produktiven APP:
-1. venv sourcen
+## Starting the Production App:
+1. Source venv
 2. `APP_ENV=prod python main.py`
 
-Alternativ kann auch direkt die app gestartet werden, zum Beispiel aus einer service unit:
+Alternatively, the app can be started directly, for example from a service unit:
 ```bash
-APP_ENV=prod /arbeitsverzeichnis/venv/bin/python /arbeitsverzeichnis/main.py
+APP_ENV=prod /working-directory/venv/bin/python /working-directory/main.py
 ```
 
-### Tailwind CSS im Entwicklermodus
-- Für CSS-Änderungen muss der Watcher laufen, sonst wird `static/css/main.css` nicht neu generiert.
-- Watcher starten:
+### Tailwind CSS in Development Mode
+- For CSS changes, the watcher must be running, otherwise `static/css/main.css` won't be regenerated.
+- Start watcher:
 
 ```bash
 ./tools/watch_css.sh
 ```
 
-- Der Watcher lauscht auf `static/css/src.css` und schreibt nach `static/css/main.css`.
-- In Produktion wird die CSS-Datei nicht automatisch gebaut; der Watcher ist nur für lokale Entwicklung gedacht. 
+- The watcher listens to `static/css/src.css` and writes to `static/css/main.css`.
+- In production, the CSS file is not built automatically; the watcher is only for local development.
 
 ## Login / Sessions
-- Login unter `/auth/login`, Logout unter `/auth/logout`
+- Login at `/auth/login`, logout at `/auth/logout`
 - Cookie: `rezepte_session_token` (HttpOnly, SameSite=Lax; Secure in prod)
-- Sessions liegen in SQLite (`sessions`), können gezielt invalidiert werden
+- Sessions are stored in SQLite (`sessions`), can be invalidated individually
 
-## Markdown/Editor-Syntax
-Die Schritt-Texte unterstützen einen schlanken Satz an Markierungen. Sie gelten für HTML und LaTeX (PDF). Spezialfälle werden zuerst verarbeitet (Mengen/Einheiten), dann Markdown/Emoticons.
+## OAuth/OIDC (Optional)
 
-### Mengen & Einheiten
-- `[8g]` → 8 g
-- `[2-8 g]` → 2–8 g
-- `[4x6 cm]` → 4×6 cm
-- Dezimaltrennzeichen `,` oder `.` sind erlaubt; Ausgabe nutzt `,`
-- Unterstützte Einheiten kommen aus der `units`-Tabelle (z.B. g, kg, ml, l, dl, °C, EL, TL, Prise, Msp., Stk., Pkg., Tr.)
+### Configuration
+OAuth is configured via `config.yaml`. Example for Authelia:
 
-### Markdown-Basics
-- Fett: `**Text**`
-- Kursiv: `*Text*`
-- Hoch-/Tiefgestellt: `^hoch^`, `_tief_`
-- Zeilenumbruch: einzelne Zeile → `<br>` / `\newline`; doppelte Leerzeile → größerer Abstand
-- Doppeltminus `--` → En-dash (–) im HTML
-- Anführungen werden zu Schweizer Guillemets (« ») konvertiert
+```yaml
+oauth:
+  enabled: true
+  provider_name: "Authelia"              # Display name in UI
+  button_text: "Sign in with Authelia"   # Button text
+  client_id: "rezepte-dev"               # OIDC Client ID
+  client_secret: "..."                   # OIDC Client Secret
+  authorization_url: "https://auth.example.com/api/oidc/authorization"
+  token_url: "https://auth.example.com/api/oidc/token"
+  userinfo_url: "https://auth.example.com/api/oidc/userinfo"
+  redirect_uri: "https://rezepte.example.com/auth/oauth/callback"
+  scopes: ["openid", "profile", "email"]
+```
 
-### Emoticon-Shortcuts (Phosphor-Icons)
+The app uses OIDC Discovery (`/.well-known/openid-configuration`) for automatic configuration of OIDC endpoints.
+
+### How it Works
+1. **Login Button**: An OAuth button appears on the login page (when `enabled: true`)
+2. **OAuth Flow**: User is redirected to the OIDC provider and authenticates there
+3. **Account Linking**: 
+   - If the email address matches a local account, a "Link directly" button is displayed
+   - Alternatively, the user can specify a different local account and link with password
+4. **Profile Management**: On the profile page, the OAuth link can be viewed and removed with password confirmation
+
+### Notes
+- Local accounts (with password) work in parallel with OAuth - both login methods can be used simultaneously
+- The email address must be provided by the OIDC provider in the `/userinfo` endpoint (for Authelia: LDAP backend recommended)
+- Each user can optionally have both a local AND an OAuth account
+- Fallback in case OIDC provider fails
+
+## Markdown/Editor Syntax
+The step texts support a lean set of markings. They apply to both HTML and LaTeX (PDF). Special cases are processed first (quantities/units), then Markdown/emoticons.
+
+### Quantities & Units
+- `[8g]` → 8 g
+- `[2-8 g]` → 2–8 g
+- `[4x6 cm]` → 4×6 cm
+- Decimal separators `,` or `.` are allowed; output uses `,`
+- Supported units come from the `units` table (e.g. g, kg, ml, l, dl, °C, EL, TL, Prise, Msp., Stk., Pkg., Tr.)
+
+### Markdown Basics
+- Bold: `**Text**`
+- Italic: `*Text*`
+- Superscript/subscript: `^super^`, `_sub_`
+- Line break: single line → `<br>` / `\newline`; double blank line → larger spacing
+- Double minus `--` → En-dash (–) in HTML
+- Quotes are converted to Swiss guillemets (« »)
+
+### Emoticon Shortcuts (Phosphor Icons)
 - `:)` → Smiley
 - `:(` → Sad
 - `;)` → Wink
@@ -71,113 +109,113 @@ Die Schritt-Texte unterstützen einen schlanken Satz an Markierungen. Sie gelten
 - `!t` → Thermometer
 - `PP` → Users/People
 
-### Zutaten-Mengen im Text
-- Im Schritt-Text kann eine Menge direkt in eckigen Klammern stehen, wird automatisch formatiert und im PDF korrekt mit siunitx ausgegeben.
+### Ingredient Quantities in Text
+- Quantities can be placed directly in square brackets in the step text, are automatically formatted and correctly output in PDF with siunitx.
 
 ## PDF
-- PDF-Export nutzt LaTeX; dieselben Markdown/Emoticon-Regeln werden zu LaTeX umgesetzt (Bold/Italic, Superscript/Subscript, Mengen/Einheiten, Icons als `\picon{...}`)
+- PDF export uses LaTeX; the same Markdown/emoticon rules are converted to LaTeX (Bold/Italic, Superscript/Subscript, Quantities/Units, Icons as `\picon{...}`)
 
-## Admin/Profil
-- Profil: Anzeigename, E-Mail, Passwort ändern unter `/auth/profile`
-- Admin: Kategorien, Pfade, Nutzer verwalten
+## Admin/Profile
+- Profile: Change display name, email, password at `/auth/profile`
+- Admin: Manage categories, paths, users
 
-## Hinweise
-- IP-Logging ist hinter sslh/Caddy aktuell 127.0.0.1; Sessions funktionieren dennoch.
-- Root-Pfad (prod) ist `/rezepte` (siehe `config.yaml`).
- - API-URLs in Templates respektieren den `root_path`; z.B. der Hilfe-Dialog lädt Daten über `/api/help` mit Präfix in Dev (`/rezepte`).
+## Notes
+- IP logging behind sslh/Caddy currently shows 127.0.0.1; sessions work nonetheless.
+- Root path (prod) is `/rezepte` (see `config.yaml`).
+- API URLs in templates respect the `root_path`; e.g., the help dialog loads data via `/api/help` with prefix in Dev (`/rezepte`).
 
 ## Deployment (Gitea Actions)
 
-Automatisches Deployment wird ausgelöst, wenn ein Tag (`v*`) auf `main` gepusht wird. Die Action verifiziert, dass der Tag auf `main` liegt, führt kurze Smoke-Tests aus, und deployed per SSH auf den Server.
+Automatic deployment is triggered when a tag (`v*`) is pushed to `main`. The action verifies that the tag is on `main`, runs quick smoke tests, and deploys via SSH to the server.
 
 ### Repository Secrets (Gitea)
-- `DEPLOY_HOST`: Hostname oder IP des Zielservers
-- `DEPLOY_USER`: SSH-User auf dem Zielserver
-- `DEPLOY_PATH`: Projektpfad auf dem Server (z.B. `/opt/rezepteapp`)
-- `DEPLOY_SERVICE`: Systemd-Service-Name (z.B. `rezepte`)
-- `DEPLOY_SSH_PRIVATE_KEY`: Privater SSH-Schlüssel (ed25519) für Deployment
-- `DEPLOY_KNOWN_HOSTS`: Inhalt der `known_hosts`-Zeile für den Server (optional, empfohlen)
+- `DEPLOY_HOST`: Hostname or IP of the target server
+- `DEPLOY_USER`: SSH user on the target server
+- `DEPLOY_PATH`: Project path on the server (e.g. `/opt/rezepteapp`)
+- `DEPLOY_SERVICE`: Systemd service name (e.g. `rezepte`)
+- `DEPLOY_SSH_PRIVATE_KEY`: Private SSH key (ed25519) for deployment
+- `DEPLOY_KNOWN_HOSTS`: Content of the `known_hosts` line for the server (optional, recommended)
 
-### SSH Deploy-Key (nur für Deployment)
+### SSH Deploy Key (for deployment only)
 ```bash
-# Ed25519 Key erzeugen (passwortlos oder mit Deploy-Passwort)
+# Generate Ed25519 key (passwordless or with deploy password)
 ssh-keygen -t ed25519 -C "rezepteapp-deploy" -f ~/.ssh/rezepteapp_deploy
 
-# Public Key auf dem Server hinterlegen
+# Add public key to server
 cat ~/.ssh/rezepteapp_deploy.pub | ssh user@host "mkdir -p ~/.ssh && chmod 700 ~/.ssh && cat >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys"
 
-# Secrets im Repository setzen
-# DEPLOY_SSH_PRIVATE_KEY = Inhalt von ~/.ssh/rezepteapp_deploy
+# Set secrets in repository
+# DEPLOY_SSH_PRIVATE_KEY = Content of ~/.ssh/rezepteapp_deploy
 ```
 
-### known_hosts Eintrag ermitteln
+### Get known_hosts Entry
 ```bash
-# Fingerprint/Host-Key auslesen und als Secret speichern
+# Read fingerprint/host key and save as secret
 ssh-keyscan -H host.example.com
-# Inhalt der Zeile als DEPLOY_KNOWN_HOSTS Secret speichern
+# Save line content as DEPLOY_KNOWN_HOSTS secret
 ```
 
-### Systemd ohne Passwort (sudoers)
+### Systemd without Password (sudoers)
 ```bash
-# Mit visudo eine begrenzte Regel anlegen
+# Create limited rule with visudo
 sudo visudo -f /etc/sudoers.d/<username>
 
-# Inhalt (nur spezifische Service-Kommandos erlauben)
+# Content (only allow specific service commands)
 <username> ALL=(ALL) NOPASSWD: /bin/systemctl stop rezepte, /bin/systemctl start rezepte, /bin/systemctl restart rezepte
 ```
 
-### Update-Skript (optional, tag-basiert)
-Siehe `tools/update.sh`. Dieses Skript kann serverseitig genutzt werden, um einen Tag auszuchecken und den Service neu zu starten:
+### Update Script (optional, tag-based)
+See `tools/update.sh`. This script can be used server-side to check out a tag and restart the service:
 ```bash
-ssh user@host \'/opt/rezepteapp/tools/update.sh v1.1.1\'
+ssh user@host '/opt/rezepteapp/tools/update.sh v1.1.1'
 ```
 
-### Pre-Deploy Smoke-Tests
-Die Action führt vor dem Deployment einfache Prüfungen aus:
-- Abhängigkeiten installieren (`pip install -r requirements.txt`)
-- Datenbank initialisieren (`tools/setup_db.py`) und seeden (`tools/seed_data.py`)
-- App lokal mit Uvicorn starten und folgende Seiten abrufen:
-	- `/` (Startseite)
-	- `/auth/login` (Login-Seite)
-	- `/api/help` (Hilfe-API)
+### Pre-Deploy Smoke Tests
+The action runs simple checks before deployment:
+- Install dependencies (`pip install -r requirements.txt`)
+- Initialize database (`tools/setup_db.py`) and seed (`tools/seed_data.py`)
+- Start app locally with Uvicorn and fetch the following pages:
+	- `/` (Home page)
+	- `/auth/login` (Login page)
+	- `/api/help` (Help API)
 
-Hinweis: Der Seed erzeugt den Nutzer `admin/admin`, sodass ein Login-Test optional möglich wäre. Standardmäßig prüfen wir nur, dass die Seiten fehlerfrei laden.
+Note: The seed creates user `admin/admin`, so a login test would be optionally possible. By default we only check that pages load without errors.
 
-### Konfiguration
-- `config.yaml` ist lokal und wird ignoriert (siehe `config.yaml.example`).
-- Für neue Umgebungen `config.yaml.example` kopieren und anpassen.
+### Configuration
+- `config.yaml` is local and ignored (see `config.yaml.example`).
+- For new environments copy `config.yaml.example` and adapt.
 ```
 cp config.yaml.example config.yaml
 ```
 
-### Initialer Server-Bootstrap (einmalig erforderlich)
-Damit die Action deployen kann, muss das Zielverzeichnis auf dem Server bereits ein Git-Checkout enthalten und der Systemd-Service existieren.
+### Initial Server Bootstrap (required once)
+For the action to deploy, the target directory on the server must already contain a Git checkout and the systemd service must exist.
 
-1. Verzeichnis und Repo vorbereiten
+1. Prepare directory and repo
 	```bash
 	sudo mkdir -p /opt/rezepteapp
 	sudo chown $USER:$USER /opt/rezepteapp
 	cd /opt/rezepteapp
-	# Falls das Repository privat ist: initialer Clone manuell nötig
+	# If repository is private: manual initial clone required
 	git clone https://gitea.iten.pro/edi/rezepte.git .
 	git remote -v
 	```
-	Hinweis: Bei privaten Repos musst du den ersten Clone manuell durchführen (mit persönlichen Token/SSH), damit spätere `git fetch` in der Action funktionieren.
+	Note: For private repos you must perform the first clone manually (with personal token/SSH) so later `git fetch` in the action works.
 
-2. Konfiguration anlegen
+2. Create configuration
 	```bash
 	cp config.yaml.example config.yaml
-	# Werte für prod anpassen (Datenbankpfad, root_path, pdf_cache_dir, etc.)
+	# Adapt values for prod (database path, root_path, pdf_cache_dir, etc.)
 	```
 
-3. Python-Umgebung und Abhängigkeiten
+3. Python environment and dependencies
 	```bash
 	python3 -m venv venv
 	source venv/bin/activate
 	pip install -r requirements.txt
 	```
 
-4. Systemd-Service erstellen (Beispiel)
+4. Create systemd service (example)
 	```bash
 	sudo tee /etc/systemd/system/rezepte.service > /dev/null << 'UNIT'
 	[Unit]
@@ -201,14 +239,31 @@ Damit die Action deployen kann, muss das Zielverzeichnis auf dem Server bereits 
 	sudo systemctl start rezepte
 	```
 
-5. (Optional) TeX installieren für PDF-Export
+5. (Optional) Install TeX for PDF export
 	```bash
 	sudo apt-get update
 	sudo apt-get install -y latexmk texlive-latex-extra texlive-luatex texlive-fonts-recommended
 	```
 
-Nach diesem Bootstrap kann die Gitea-Action bei Tags (z.B. `v1.1.2`) automatisch deployen.
+After this bootstrap, the Gitea action can automatically deploy on tags (e.g. `v1.1.2`).
 
-### Cleanup-Verhalten der Action
-- Der Runner räumt nach den Smoke-Tests lokale Artefakte auf (`.venv`, `data/`, `cache/`).
-- Auf dem Server wird NICHT das Projektverzeichnis gelöscht; es wird nur `cache/` geleert und der Service neu gestartet.
+### Cleanup Behavior of Action
+- The runner cleans up local artifacts after smoke tests (`.venv`, `data/`, `cache/`).
+- On the server, the project directory is NOT deleted; only `cache/` is cleared and the service restarted.
+
+## License
+
+This project is licensed under the **Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License** (CC BY-NC-SA 4.0).
+
+[![CC BY-NC-SA 4.0](https://licensebuttons.net/l/by-nc-sa/4.0/88x31.png)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+
+### You are free to:
+- **Share** — copy and redistribute the material in any medium or format
+- **Adapt** — remix, transform, and build upon the material
+
+### Under the following terms:
+- **Attribution** — You must give appropriate credit, provide a link to the license, and indicate if changes were made
+- **NonCommercial** — You may not use the material for commercial purposes
+- **ShareAlike** — If you remix, transform, or build upon the material, you must distribute your contributions under the same license as the original
+
+See the [LICENSE](LICENSE) file for the full license text.

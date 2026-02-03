@@ -35,8 +35,8 @@
 </script>
 
 {# Help Modal (only on edit pages) #}
-<div id="help-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-    <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+<div id="help-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-4 transition-all duration-300 opacity-0">
+    <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto transform transition-all duration-300 scale-95">
         <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
             <h2 class="text-2xl font-bold text-gray-900">Editor Syntax Hilfe</h2>
             <button id="help-close" class="text-gray-500 hover:text-gray-700 focus:outline-none">
@@ -125,20 +125,33 @@
                     emoticonsGrid.appendChild(div);
                 });
 
+                // Show modal with transition
                 helpModal.classList.remove('hidden');
+                setTimeout(() => {
+                    helpModal.classList.remove('opacity-0');
+                    helpModal.querySelector('.bg-white')?.classList.remove('scale-95');
+                    helpModal.querySelector('.bg-white')?.classList.add('scale-100');
+                }, 10);
             });
         }
 
-        if (helpClose) {
-            helpClose.addEventListener('click', () => {
+        const closeHelpModal = () => {
+            helpModal.classList.add('opacity-0');
+            helpModal.querySelector('.bg-white')?.classList.remove('scale-100');
+            helpModal.querySelector('.bg-white')?.classList.add('scale-95');
+            setTimeout(() => {
                 helpModal.classList.add('hidden');
-            });
+            }, 300);
+        };
+
+        if (helpClose) {
+            helpClose.addEventListener('click', closeHelpModal);
         }
 
         if (helpModal) {
             helpModal.addEventListener('click', (e) => {
                 if (e.target === helpModal) {
-                    helpModal.classList.add('hidden');
+                    closeHelpModal();
                 }
             });
         }
