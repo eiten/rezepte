@@ -28,7 +28,7 @@
     <nav class="flex items-center justify-between mb-8 no-print">
         <a href="{{ url_for('index') }}" class="flex items-center text-slate-500 hover:text-accent transition-colors no-underline group">
             <span class="ph-btn-icon text-xl mr-2 group-hover:-translate-x-1 transition-transform">&#xE120;</span>
-            <span class="font-medium">Zurück</span>
+            <span class="font-medium">{{ _("Zurück") }}</span>
         </a>
 
         <!-- Action Buttons -->
@@ -37,7 +37,7 @@
             <a href="{{ url_for('edit_recipe', recipe_id=recipe.id) }}" 
                class="flex items-center px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-600 hover:bg-slate-50 no-underline transition-colors shadow-sm">
                 <span class="ph-btn-icon text-lg mr-0 sm:mr-1.5">&#xE3B4;</span>
-                <span class="hidden sm:inline font-medium text-sm">Bearbeiten</span>
+                <span class="hidden sm:inline font-medium text-sm">{{ _("Bearbeiten") }}</span>
             </a>
             {% endif %}
 
@@ -45,13 +45,13 @@
             <button onclick="removeRecipe(this)" data-delete-url="{{ url_for('delete_recipe', recipe_id=recipe.id) }}"
                 class="flex items-center px-3 py-1.5 rounded-lg border border-slate-300 text-danger bg-danger-soft hover:bg-danger hover:text-white no-underline transition-colors shadow-sm">
                 <span class="ph-btn-icon text-lg mr-1">&#xE4A6;</span>
-                <span class="hidden sm:inline font-medium text-sm"> Löschen</span></button>
+                <span class="hidden sm:inline font-medium text-sm"> {{ _("Löschen") }}</span></button>
             {% endif %}
 
             <a href="{{ url_for('get_pdf', recipe_id=recipe.id) }}" target="_blank"
                class="flex items-center px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-600 hover:bg-slate-50 no-underline transition-colors shadow-sm">
                 <span class="ph-btn-icon text-lg mr-0 sm:mr-1.5">&#xE702;</span>
-                <span class="hidden sm:inline font-medium text-sm">PDF</span>
+                <span class="hidden sm:inline font-medium text-sm">{{ _("PDF") }}</span>
             </a>
         </div>
     </nav>
@@ -70,7 +70,7 @@
         </nav>
         <h1 class="text-3xl md:text-4xl font-bold text-slate-900 mb-2 tracking-tight">{{ recipe.name }}</h1>
         <div class="flex flex-wrap items-center gap-x-4 text-slate-500 text-sm md:text-base">
-            <span>Von {{ recipe.author }}</span>
+            <span>{{ _("Von") }} {{ recipe.author }}</span>
             {% if recipe.source %}
             <span class="text-slate-300">/</span>
             <span class="italic">{{ recipe.source }}</span>

@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Multilingual PDF support**: French and Spanish locales with proper typography
+  - French PDFs use guillemets with spacing (« text »)
+  - Spanish PDFs use guillemets without spacing («text»)
+  - German PDFs use Swiss-style guillemets without spacing («text»)
+  - English PDFs use standard quotation marks
+  - Automatic quote conversion: Markdown `"text"` converts to `\enquote{text}` for language-aware rendering
+
+### Changed
+- PDF labels (Page, Date, Ingredients, etc.) now use i18n system with gettext from .po files
+- csquotes package configuration made language-specific with autostyle enabled
+- Removed babel shorthand disabling as quotes are now handled via enquote command
+
+### Fixed
+- Missing texlive-lang-french and texlive-lang-spanish packages causing babel errors
+
 ## [1.2.1] - 2026-02-03
 
 ### Fixed

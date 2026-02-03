@@ -3,8 +3,16 @@
 
 % -- LuaLaTeX Setup --
 \usepackage{fontspec}
-\usepackage[ngerman]{babel}
-\usepackage[style=swiss]{csquotes} 
+\usepackage[<< babel_lang >>]{babel}
+<% if babel_lang == 'ngerman' -%>
+\usepackage[autostyle=true,german=swiss]{csquotes}
+<% elif babel_lang == 'french' -%>
+\usepackage[autostyle=true,french=guillemets]{csquotes}
+<% elif babel_lang == 'spanish' -%>
+\usepackage[autostyle=true,spanish=spanish]{csquotes}
+<% else -%>
+\usepackage[autostyle=true]{csquotes}
+<% endif -%>
 
 % -- Font Setup (Source Sans 3) --
 % Using \setmainfont changes the body text.
@@ -56,33 +64,16 @@
 \usepackage{parskip} 
 \usepackage{array} 
 \usepackage{xcolor}
-
-% -- Header/Footer Setup --
-\usepackage{scrlayer-scrpage}
-\pagestyle{scrheadings}
-\clearpairofpagestyles 
-
-% Content for page 2 and onwards 
-\ihead[]{\headmark} % Recipe name on the left
-\ohead[]{Seite \thepage} % Page number on the right
-\automark{section}% -- Layout & Tables --
-
-\usepackage{xltabular} % Replacement for tabularx to allow page breaks 
-\usepackage{booktabs}
-\usepackage{parskip} 
-\usepackage{array} 
-\usepackage{xcolor}
-
-% -- Header/Footer Setup --
-\usepackage{scrlayer-scrpage}
 \usepackage{ccicons}
 
+% -- Header/Footer Setup --
+\usepackage{scrlayer-scrpage}
 \pagestyle{scrheadings}
 \clearpairofpagestyles 
 
 % Content for page 2 and onwards 
 \ihead[]{\footnotesize \headmark} % Recipe name on the left
-\ohead[]{\footnotesize Seite \thepage} % Page number on the right
+\ohead[]{\footnotesize << page_label >> \thepage} % Page number on the right
 \automark{section}
 
 \atbegindocument{\thispagestyle{plain}}
@@ -90,16 +81,18 @@
 % Footer content for all pages
 \ifoot[\footnotesize << base_url >>]{\footnotesize << base_url >>}
 \cfoot[\ccbyncsa]{\ccbyncsa}
-\ofoot[\footnotesize Stand: << date_version >>]{\footnotesize Letzte Änderung: << date_version >>}
+\ofoot[\footnotesize << date_label >>: << date_version >>]{\footnotesize << last_change_label >>: << date_version >>}
 
 % -- Science & Units --
 \usepackage{siunitx}
+% Dynamically set locale based on template parameter
 \sisetup{
-  locale = DE, 
-  detect-all,
-  range-phrase = --,
-  range-units = single,
-  per-mode = symbol
+    locale = << siunitx_locale >>, 
+    detect-all,
+    range-phrase = << siunitx_range_phrase >>,
+    range-units = single,
+    per-mode = symbol,
+    mode = text  % Ensure text mode for better spacing
 }
 
 % -- Custom Units from Database --
@@ -118,9 +111,9 @@
 \markboth{<< recipe.name >>}{<< recipe.name >>}
 
 \noindent
-Von << recipe.author >>
+<< by_label >> << recipe.author >>
 <% if source -%>
-    \hfill {\small \textit{Quelle: << source >>}}
+    \hfill {\small \textit{<< source_label >>: << source >>}}
 <% endif -%>
 
 % -- Preamble --
@@ -135,12 +128,12 @@ Von << recipe.author >>
 \noindent
 \begin{xltabular}{\textwidth}{@{} >{\raggedright\arraybackslash}p{3.5cm} X @{}}
     % Header for the very first page
-    \textbf{Zutaten} & \textbf{Zubereitung} \\
+    \textbf{<< ingredients_label >>} & \textbf{<< preparation_label >>} \\
     \midrule
     \endfirsthead
     
     % Header for all following pages 
-    \textbf{Zutaten} & \textbf{Zubereitung} \\
+    \textbf{<< ingredients_label >>} & \textbf{<< preparation_label >>} \\
     \midrule
     \endhead
     <% for step in steps -%>
@@ -151,7 +144,7 @@ Von << recipe.author >>
                     <% if ing.amount_min -%>
                         % -- Case 1: Quantity exists --
                         <% if ing.amount_max -%>
-                            \qtyrange{<< ing.amount_min >>}{<< ing.amount_max >>}{<< ing.unit_cmd >>}
+                            \SIrange{<< ing.amount_min >>}{<< ing.amount_max >>}{<< ing.unit_cmd >>}
                         <% else -%>
                             \qty{<< ing.amount_min >>}{<< ing.unit_cmd >>}
                         <% endif -%>

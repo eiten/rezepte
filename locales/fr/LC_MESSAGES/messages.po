@@ -1,0 +1,840 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: rezepteapp\n"
+"POT-Creation-Date: 2026-02-03 00:00+0000\n"
+"PO-Revision-Date: 2026-02-03 00:00+0000\n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Benutzer"
+msgstr "Utilisateur"
+
+msgid "Profil"
+msgstr "Profil"
+
+msgid "Neues Rezept"
+msgstr "Nouvelle recette"
+
+msgid "Verwaltung"
+msgstr "Administration"
+
+msgid "Kategorien"
+msgstr "Catégories"
+
+msgid "Pfade"
+msgstr "Chemins"
+
+msgid "Abmelden"
+msgstr "Se déconnecter"
+
+msgid "Login"
+msgstr "Connexion"
+
+msgid "Rezepte suchen..."
+msgstr "Rechercher des recettes..."
+
+msgid "Editor help"
+msgstr "Aide de l'éditeur"
+
+msgid "Editor Help"
+msgstr "Aide de l'éditeur"
+
+msgid "Anmelden"
+msgstr "Se connecter"
+
+msgid "Bitte gib deine Zugangsdaten ein"
+msgstr "Veuillez entrer vos identifiants"
+
+msgid "Benutzername"
+msgstr "Nom d'utilisateur"
+
+msgid "Dein Name"
+msgstr "Votre nom"
+
+msgid "Passwort"
+msgstr "Mot de passe"
+
+msgid "Einloggen"
+msgstr "Se connecter"
+
+msgid "Oder"
+msgstr "Ou"
+
+msgid "Nur für registrierte Mitglieder der Rezept-App. Möchtest Du auch Rezepre erstellen und bearbeiten, dann melde Dich bei Edi."
+msgstr "Réservé aux membres enregistrés de l'application recettes. Si vous souhaitez créer et modifier des recettes, veuillez contacter Edi."
+
+msgid "Hast du noch keinen Account? Wende dich an einen Administrator."
+msgstr "Vous n'avez pas encore de compte ? Veuillez contacter un administrateur."
+
+msgid "OAuth Verknüpfung"
+msgstr "Liaison OAuth"
+
+msgid "Account verknüpfen"
+msgstr "Lier le compte"
+
+msgid "Verknüpfe dein %(provider)s-Konto"
+msgstr "Liez votre compte %(provider)s"
+
+msgid "%(provider)s E-Mail:"
+msgstr "E-mail %(provider)s:"
+
+msgid "Wir haben einen passenden Account gefunden!"
+msgstr "Nous avons trouvé un compte correspondant !"
+
+msgid "Die E-Mail-Adresse stimmt überein. Du kannst direkt verknüpfen oder zur Sicherheit dein Passwort eingeben."
+msgstr "L'adresse e-mail correspond. Vous pouvez la lier directement ou entrer votre mot de passe pour plus de sécurité."
+
+msgid "Direkt verknüpfen"
+msgstr "Lier directement"
+
+msgid "Oder mit anderem Account"
+msgstr "Ou avec un autre compte"
+
+msgid "Dein Benutzername"
+msgstr "Votre nom d'utilisateur"
+
+msgid "Rezepte-App Passwort"
+msgstr "Mot de passe de l'application recettes"
+
+msgid "Gib dein <strong>lokales Rezepte-App Passwort</strong> ein, um die Verknüpfung zu bestätigen."
+msgstr "Entrez votre <strong>mot de passe local de l'application recettes</strong> pour confirmer la liaison."
+
+msgid "Verknüpfen und einloggen"
+msgstr "Lier et se connecter"
+
+msgid "Anzeigename"
+msgstr "Nom d'affichage"
+
+msgid "E-Mail"
+msgstr "E-mail"
+
+msgid "%(provider)s-Verknüpfung"
+msgstr "Liaison %(provider)s"
+
+msgid "Mit %(provider)s verknüpft"
+msgstr "Lié avec %(provider)s"
+
+msgid "Seit"
+msgstr "Depuis"
+
+msgid "Verknüpfung aufheben"
+msgstr "Supprimer la liaison"
+
+msgid "Du kannst deinen Account mit %(provider)s verknüpfen, um dich in Zukunft einfacher anzumelden."
+msgstr "Vous pouvez lier votre compte avec %(provider)s pour vous connecter plus facilement à l'avenir."
+
+msgid "Mit %(provider)s verknüpfen"
+msgstr "Lier avec %(provider)s"
+
+msgid "Passwort ändern (optional)"
+msgstr "Changer le mot de passe (optionnel)"
+
+msgid "Aktuelles Passwort"
+msgstr "Mot de passe actuel"
+
+msgid "Neues Passwort"
+msgstr "Nouveau mot de passe"
+
+msgid "Neues Passwort (wiederholen)"
+msgstr "Nouveau mot de passe (répéter)"
+
+msgid "Die neuen Passwörter stimmen nicht überein."
+msgstr "Les nouveaux mots de passe ne correspondent pas."
+
+msgid "Abbrechen"
+msgstr "Annuler"
+
+msgid "Speichern"
+msgstr "Enregistrer"
+
+msgid "Bitte gib dein Passwort ein, um sicherzustellen, dass du dich nach dem Aufheben der Verknüpfung noch anmelden kannst."
+msgstr "Veuillez entrer votre mot de passe pour vous assurer que vous pourrez toujours vous connecter après la suppression de la liaison."
+
+msgid "Zurück"
+msgstr "Retour"
+
+msgid "Bearbeiten"
+msgstr "Modifier"
+
+msgid "Löschen"
+msgstr "Supprimer"
+
+msgid "Von"
+msgstr "Par"
+
+msgid "Rezept bearbeiten"
+msgstr "Modifier la recette"
+
+msgid "Editor Syntax Hilfe"
+msgstr "Aide sur la syntaxe de l'éditeur"
+
+msgid "Mengen & Einheiten"
+msgstr "Quantités et unités"
+
+msgid "Textformatierung"
+msgstr "Formatage du texte"
+
+msgid "Emoticon Kurzbefehle"
+msgstr "Raccourcis émoticônes"
+
+msgid "Neues Rezept erstellen"
+msgstr "Créer une nouvelle recette"
+
+msgid "ID"
+msgstr "ID"
+
+msgid "Erstellen"
+msgstr "Créer"
+
+msgid "Basisdaten"
+msgstr "Données de base"
+
+msgid "Speicherort (Ordner)"
+msgstr "Emplacement de stockage (dossier)"
+
+msgid "Rezeptname"
+msgstr "Nom de la recette"
+
+msgid "Rezeptname..."
+msgstr "Nom de la recette..."
+
+msgid "Autor"
+msgstr "Auteur"
+
+msgid "Autor..."
+msgstr "Auteur..."
+
+msgid "Quelle"
+msgstr "Source"
+
+msgid "Quelle, zum Beispiel Oma Gertrud..."
+msgstr "Source, par exemple Grand-mère Gertrud..."
+
+msgid "Einführung / Preamble"
+msgstr "Introduction / préambule"
+
+msgid "Einführung, wenn gewünscht..."
+msgstr "Introduction, si désiré..."
+
+msgid "Nach oben"
+msgstr "Monter"
+
+msgid "Nach unten"
+msgstr "Descendre"
+
+msgid "Kategorie wählen"
+msgstr "Choisir une catégorie"
+
+msgid "-- Bitte wählen --"
+msgstr "-- Veuillez choisir --"
+
+msgid "Zutaten"
+msgstr "Ingrédients"
+
+msgid "Menge"
+msgstr "Quantité"
+
+msgid "Zahl oder Bereich"
+msgstr "Nombre ou plage"
+
+msgid "Zutat"
+msgstr "Ingrédient"
+
+msgid "Notiz (optional)"
+msgstr "Note (optionnel)"
+
+msgid "Zutat hinzufügen"
+msgstr "Ajouter un ingrédient"
+
+msgid "Anleitung"
+msgstr "Instructions"
+
+msgid "Beschreibe den Schritt..."
+msgstr "Décrivez l'étape..."
+
+msgid "Einen weiteren Schritt hinzufügen"
+msgstr "Ajouter une autre étape"
+
+msgid "Notiz"
+msgstr "Note"
+
+msgid "Zubereitung"
+msgstr "Préparation"
+
+msgid "Info / Kategorie"
+msgstr "Info / Catégorie"
+
+msgid "Zutat entfernen?"
+msgstr "Supprimer l'ingrédient ?"
+
+msgid "Diesen Schritt wirklich löschen?"
+msgstr "Vraiment supprimer cette étape ?"
+
+msgid "Admin - Benutzerverwaltung"
+msgstr "Admin - Gestion des utilisateurs"
+
+msgid "Benutzer verwalten"
+msgstr "Gérer les utilisateurs"
+
+msgid "Anzeigename / E-Mail"
+msgstr "Nom d'affichage / E-mail"
+
+msgid "Neues Passwort"
+msgstr "Nouveau mot de passe"
+
+msgid "Admin"
+msgstr "Admin"
+
+msgid "Aktiv"
+msgstr "Actif"
+
+msgid "Aktion"
+msgstr "Action"
+
+msgid "Leer lassen = keine Änderung"
+msgstr "Laisser vide = pas de changement"
+
+msgid "Neuer Benutzer..."
+msgstr "Nouvel utilisateur..."
+
+msgid "Vollständiger Name"
+msgstr "Nom complet"
+
+msgid "Passwort vergeben"
+msgstr "Définir le mot de passe"
+
+msgid "AUTO-AKTIV"
+msgstr "AUTO-ACTIF"
+
+msgid "Hinzufügen"
+msgstr "Ajouter"
+
+msgid "Admin - Kategorien"
+msgstr "Admin - Catégories"
+
+msgid "Kategorien verwalten"
+msgstr "Gérer les catégories"
+
+msgid "Icon"
+msgstr "Icône"
+
+msgid "Name"
+msgstr "Nom"
+
+msgid "Farbe"
+msgstr "Couleur"
+
+msgid "Hex-Code"
+msgstr "Code hexadécimal"
+
+msgid "Name..."
+msgstr "Nom..."
+
+msgid "E2AA"
+msgstr "E2AA"
+
+msgid "Admin - Ordnerstruktur"
+msgstr "Admin - Structure des dossiers"
+
+msgid "(Kein Elternordner)"
+msgstr "(Pas de dossier parent)"
+
+msgid "Ordnerstruktur verwalten"
+msgstr "Gérer la structure des dossiers"
+
+msgid "Ordnername (Hierarchie)"
+msgstr "Nom du dossier (hiérarchie)"
+
+msgid "Übergeordnet"
+msgstr "Parent"
+
+msgid "Neuer Ordner..."
+msgstr "Nouveau dossier..."
+
+msgid "Rezepte"
+msgstr "Recettes"
+
+msgid "Suche:"
+msgstr "Recherche:"
+
+msgid "Alle Rezepte"
+msgstr "Toutes les recettes"
+
+msgid "Einträge"
+msgstr "Entrées"
+
+msgid "Suchanfrage fehlerhaft"
+msgstr "Requête de recherche invalide"
+
+msgid "Tipp:"
+msgstr "Conseil:"
+
+msgid "Verwende z.B."
+msgstr "Utilisez par exemple"
+
+msgid "oder"
+msgstr "ou"
+
+msgid "von"
+msgstr "par"
+
+msgid "Rezept wirklich unwiderruflich löschen?"
+msgstr "Vraiment supprimer cette recette définitivement ?"
+
+msgid "PDF"
+msgstr "PDF"
+
+msgid "fett"
+msgstr "gras"
+
+msgid "kursiv"
+msgstr "italique"
+
+msgid "hochgestellt"
+msgstr "exposant"
+
+msgid "tiefgestellt"
+msgstr "indice"
+
+msgid "Seite"
+msgstr "Page"
+
+msgid "Stand"
+msgstr "Date"
+
+msgid "Letzte Änderung"
+msgstr "Dernière modification"
+
+msgid "Von"
+msgstr "Par"
+
+msgid "Quelle"
+msgstr "Source"
+
+msgid "Zutaten"
+msgstr "Ingrédients"
+
+msgid "Zubereitung"
+msgstr "Préparation"
+msgid ""
+msgstr ""
+"Project-Id-Version: rezepteapp\n"
+"POT-Creation-Date: 2026-02-03 00:00+0000\n"
+"PO-Revision-Date: 2026-02-03 00:00+0000\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Benutzer"
+msgstr "User"
+
+msgid "Profil"
+msgstr "Profile"
+
+msgid "Neues Rezept"
+msgstr "New Recipe"
+
+msgid "Verwaltung"
+msgstr "Administration"
+
+msgid "Kategorien"
+msgstr "Categories"
+
+msgid "Pfade"
+msgstr "Paths"
+
+msgid "Abmelden"
+msgstr "Sign out"
+
+msgid "Login"
+msgstr "Login"
+
+msgid "Rezepte suchen..."
+msgstr "Search recipes..."
+
+msgid "Editor help"
+msgstr "Editor help"
+
+msgid "Editor Help"
+msgstr "Editor Help"
+
+msgid "Anmelden"
+msgstr "Sign in"
+
+msgid "Bitte gib deine Zugangsdaten ein"
+msgstr "Please enter your credentials"
+
+msgid "Benutzername"
+msgstr "Username"
+
+msgid "Dein Name"
+msgstr "Your name"
+
+msgid "Passwort"
+msgstr "Password"
+
+msgid "Einloggen"
+msgstr "Sign in"
+
+msgid "Oder"
+msgstr "Or"
+
+msgid "Nur für registrierte Mitglieder der Rezept-App. Möchtest Du auch Rezepre erstellen und bearbeiten, dann melde Dich bei Edi."
+msgstr "For registered members of the recipe app only. If you want to create and edit recipes, please contact Edi."
+
+msgid "Hast du noch keinen Account? Wende dich an einen Administrator."
+msgstr "Don't have an account yet? Please contact an administrator."
+
+msgid "OAuth Verknüpfung"
+msgstr "OAuth linking"
+
+msgid "Account verknüpfen"
+msgstr "Link account"
+
+msgid "Verknüpfe dein %(provider)s-Konto"
+msgstr "Link your %(provider)s account"
+
+msgid "%(provider)s E-Mail:"
+msgstr "%(provider)s email:"
+
+msgid "Wir haben einen passenden Account gefunden!"
+msgstr "We found a matching account!"
+
+msgid "Die E-Mail-Adresse stimmt überein. Du kannst direkt verknüpfen oder zur Sicherheit dein Passwort eingeben."
+msgstr "The email address matches. You can link directly or enter your password for safety."
+
+msgid "Direkt verknüpfen"
+msgstr "Link directly"
+
+msgid "Oder mit anderem Account"
+msgstr "Or with another account"
+
+msgid "Dein Benutzername"
+msgstr "Your username"
+
+msgid "Rezepte-App Passwort"
+msgstr "Recipe app password"
+
+msgid "Gib dein <strong>lokales Rezepte-App Passwort</strong> ein, um die Verknüpfung zu bestätigen."
+msgstr "Enter your <strong>local recipe app password</strong> to confirm the link."
+
+msgid "Verknüpfen und einloggen"
+msgstr "Link and sign in"
+
+msgid "Anzeigename"
+msgstr "Display name"
+
+msgid "E-Mail"
+msgstr "Email"
+
+msgid "%(provider)s-Verknüpfung"
+msgstr "%(provider)s link"
+
+msgid "Mit %(provider)s verknüpft"
+msgstr "Linked with %(provider)s"
+
+msgid "Seit"
+msgstr "Since"
+
+msgid "Verknüpfung aufheben"
+msgstr "Unlink"
+
+msgid "Du kannst deinen Account mit %(provider)s verknüpfen, um dich in Zukunft einfacher anzumelden."
+msgstr "You can link your account with %(provider)s to sign in more easily in the future."
+
+msgid "Mit %(provider)s verknüpfen"
+msgstr "Link with %(provider)s"
+
+msgid "Passwort ändern (optional)"
+msgstr "Change password (optional)"
+
+msgid "Aktuelles Passwort"
+msgstr "Current password"
+
+msgid "Neues Passwort"
+msgstr "New password"
+
+msgid "Neues Passwort (wiederholen)"
+msgstr "New password (repeat)"
+
+msgid "Die neuen Passwörter stimmen nicht überein."
+msgstr "The new passwords do not match."
+
+msgid "Abbrechen"
+msgstr "Cancel"
+
+msgid "Speichern"
+msgstr "Save"
+
+msgid "Bitte gib dein Passwort ein, um sicherzustellen, dass du dich nach dem Aufheben der Verknüpfung noch anmelden kannst."
+msgstr "Please enter your password to ensure you can still sign in after unlinking."
+
+msgid "Zurück"
+msgstr "Back"
+
+msgid "Bearbeiten"
+msgstr "Edit"
+
+msgid "Löschen"
+msgstr "Delete"
+
+msgid "Von"
+msgstr "By"
+
+msgid "Rezept bearbeiten"
+msgstr "Edit recipe"
+
+msgid "Editor Syntax Hilfe"
+msgstr "Editor syntax help"
+
+msgid "Mengen & Einheiten"
+msgstr "Quantities & units"
+
+msgid "Textformatierung"
+msgstr "Text formatting"
+
+msgid "Emoticon Kurzbefehle"
+msgstr "Emoticon shortcuts"
+
+msgid "Neues Rezept erstellen"
+msgstr "Create new recipe"
+
+msgid "ID"
+msgstr "ID"
+
+msgid "Erstellen"
+msgstr "Create"
+
+msgid "Basisdaten"
+msgstr "Basic data"
+
+msgid "Speicherort (Ordner)"
+msgstr "Storage location (folder)"
+
+msgid "Rezeptname"
+msgstr "Recipe name"
+
+msgid "Rezeptname..."
+msgstr "Recipe name..."
+
+msgid "Autor"
+msgstr "Author"
+
+msgid "Autor..."
+msgstr "Author..."
+
+msgid "Quelle"
+msgstr "Source"
+
+msgid "Quelle, zum Beispiel Oma Gertrud..."
+msgstr "Source, e.g. Grandma Gertrud..."
+
+msgid "Einführung / Preamble"
+msgstr "Introduction / preamble"
+
+msgid "Einführung, wenn gewünscht..."
+msgstr "Introduction, if desired..."
+
+msgid "Nach oben"
+msgstr "Move up"
+
+msgid "Nach unten"
+msgstr "Move down"
+
+msgid "Kategorie wählen"
+msgstr "Choose category"
+
+msgid "-- Bitte wählen --"
+msgstr "-- Please choose --"
+
+msgid "Zutaten"
+msgstr "Ingredients"
+
+msgid "Menge"
+msgstr "Amount"
+
+msgid "Zahl oder Bereich"
+msgstr "Number or range"
+
+msgid "Zutat"
+msgstr "Ingredient"
+
+msgid "Notiz (optional)"
+msgstr "Note (optional)"
+
+msgid "Zutat hinzufügen"
+msgstr "Add ingredient"
+
+msgid "Anleitung"
+msgstr "Instructions"
+
+msgid "Beschreibe den Schritt..."
+msgstr "Describe the step..."
+
+msgid "Einen weiteren Schritt hinzufügen"
+msgstr "Add another step"
+
+msgid "Notiz"
+msgstr "Note"
+
+msgid "Zubereitung"
+msgstr "Preparation"
+
+msgid "Info / Kategorie"
+msgstr "Info / category"
+
+msgid "Zutat entfernen?"
+msgstr "Remove ingredient?"
+
+msgid "Diesen Schritt wirklich löschen?"
+msgstr "Really delete this step?"
+
+msgid "Admin - Benutzerverwaltung"
+msgstr "Admin - User management"
+
+msgid "Benutzer verwalten"
+msgstr "Manage users"
+
+msgid "Anzeigename / E-Mail"
+msgstr "Display name / email"
+
+msgid "Neues Passwort"
+msgstr "New password"
+
+msgid "Admin"
+msgstr "Admin"
+
+msgid "Aktiv"
+msgstr "Active"
+
+msgid "Aktion"
+msgstr "Action"
+
+msgid "Leer lassen = keine Änderung"
+msgstr "Leave empty = no change"
+
+msgid "Neuer Benutzer..."
+msgstr "New user..."
+
+msgid "Vollständiger Name"
+msgstr "Full name"
+
+msgid "Passwort vergeben"
+msgstr "Set password"
+
+msgid "AUTO-AKTIV"
+msgstr "AUTO-ACTIVE"
+
+msgid "Hinzufügen"
+msgstr "Add"
+
+msgid "Admin - Kategorien"
+msgstr "Admin - Categories"
+
+msgid "Kategorien verwalten"
+msgstr "Manage categories"
+
+msgid "Icon"
+msgstr "Icon"
+
+msgid "Name"
+msgstr "Name"
+
+msgid "Farbe"
+msgstr "Color"
+
+msgid "Hex-Code"
+msgstr "Hex code"
+
+msgid "Name..."
+msgstr "Name..."
+
+msgid "E2AA"
+msgstr "E2AA"
+
+msgid "Admin - Ordnerstruktur"
+msgstr "Admin - Folder structure"
+
+msgid "(Kein Elternordner)"
+msgstr "(No parent folder)"
+
+msgid "Ordnerstruktur verwalten"
+msgstr "Manage folder structure"
+
+msgid "Ordnername (Hierarchie)"
+msgstr "Folder name (hierarchy)"
+
+msgid "Übergeordnet"
+msgstr "Parent"
+
+msgid "Neuer Ordner..."
+msgstr "New folder..."
+
+msgid "Rezepte"
+msgstr "Recipes"
+
+msgid "Suche:"
+msgstr "Search:"
+
+msgid "Alle Rezepte"
+msgstr "All recipes"
+
+msgid "Einträge"
+msgstr "Entries"
+
+msgid "Suchanfrage fehlerhaft"
+msgstr "Invalid search query"
+
+msgid "Tipp:"
+msgstr "Tip:"
+
+msgid "Verwende z.B."
+msgstr "Use e.g."
+
+msgid "oder"
+msgstr "or"
+
+msgid "von"
+msgstr "by"
+
+msgid "Rezept wirklich unwiderruflich löschen?"
+msgstr "Really delete this recipe permanently?"
+
+msgid "PDF"
+msgstr "PDF"
+
+msgid "fett"
+msgstr "bold"
+
+msgid "kursiv"
+msgstr "italic"
+
+msgid "hochgestellt"
+msgstr "superscript"
+
+msgid "tiefgestellt"
+msgstr "subscript"
+
+msgid "Seite"
+msgstr "Page"
+
+msgid "Stand"
+msgstr "Date"
+
+msgid "Letzte Änderung"
+msgstr "Last change"
+
+msgid "Von"
+msgstr "By"
+
+msgid "Quelle"
+msgstr "Source"
+
+msgid "Zutaten"
+msgstr "Ingredients"
+
+msgid "Zubereitung"
+msgstr "Preparation"

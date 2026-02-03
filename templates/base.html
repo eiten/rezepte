@@ -6,7 +6,7 @@
     - App respects FastAPI `root_path` for building URLs
 #}
 <!DOCTYPE html>
-<html lang="de" class="scroll-smooth">
+<html lang="{{ current_lang }}" class="scroll-smooth">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -37,7 +37,7 @@
 
                         <div id="search-container" class="hidden md:block w-full">
                             <div class="relative flex items-center"> 
-                                <input type="text" name="q" placeholder="Rezepte suchen..." 
+                                <input type="text" name="q" placeholder="{{ _("Rezepte suchen...") }}" 
                                     class="w-full bg-gray-900/40 text-white text-sm rounded-xl py-2 pl-10 pr-4 border border-gray-700 focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-all"
                                     {% if request.query_params.q %} value="{{ request.query_params.q }}" {% endif %}>
                                 <span class="absolute left-3 top-1/2 -translate-y-1/2 ph-input-icon text-gray-500 text-sm flex items-center justify-center leading-none">
@@ -59,40 +59,40 @@
 
                             <div id="user-menu" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-2xl border border-gray-200 py-2 ring-1 ring-black/5">
                                 <div class="px-4 py-2 border-b border-gray-100 mb-1 sm:hidden">
-                                    <p class="text-xs text-gray-400 uppercase font-bold tracking-wider">Benutzer</p>
+                                    <p class="text-xs text-gray-400 uppercase font-bold tracking-wider">{{ _("Benutzer") }}</p>
                                     <p class="text-sm font-medium text-gray-900 truncate">{{ display_name or username }}</p>
                                 </div>
 
-                                <a href="{{ url_for('profile') }}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-accent-soft hover:text-accent no-underline">
-                                    <span class="ph-btn-icon mr-3 text-lg">&#xE4C2;</span> Profil
-                                </a>
                                 <a href="{{ url_for('add_recipe_form') }}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-accent-soft hover:text-accent no-underline">
-                                    <span class="ph-btn-icon mr-3 text-lg">&#xE3D6;</span> Neues Rezept
+                                    <span class="ph-btn-icon mr-3 text-lg">&#xE3D6;</span> {{ _("Neues Rezept") }}
                                 </a>                                
+                                <div class="px-4 py-2 mt-2 border-t border-gray-50">
+                                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{{ _("Verwaltung") }}</p>
+                                </div>
+                                <a href="{{ url_for('profile') }}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-accent-soft hover:text-accent no-underline">
+                                    <span class="ph-btn-icon mr-3 text-lg">&#xE4C2;</span> {{ _("Profil") }}
+                                </a>
                                 {% if is_admin %}
-                                    <div class="px-4 py-2 mt-2 border-t border-gray-50">
-                                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Verwaltung</p>
-                                    </div>
                                     <a href="{{ url_for('manage_categories') }}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-accent-soft hover:text-accent no-underline">
-                                        <span class="ph-btn-icon mr-3 text-lg">&#xE8C4;</span> Kategorien
+                                        <span class="ph-btn-icon mr-3 text-lg">&#xE8C4;</span> {{ _("Kategorien") }}
                                     </a>
                                     <a href="{{ url_for('manage_paths') }}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-accent-soft hover:text-accent no-underline">
-                                        <span class="ph-btn-icon mr-3 text-lg">&#xE260;</span> Pfade
+                                        <span class="ph-btn-icon mr-3 text-lg">&#xE260;</span> {{ _("Pfade") }}
                                     </a>
                                     <a href="{{ url_for('manage_users') }}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-accent-soft hover:text-accent no-underline">
-                                        <span class="ph-btn-icon mr-3 text-lg">&#xE4D6;</span> Benutzer
+                                        <span class="ph-btn-icon mr-3 text-lg">&#xE4D6;</span> {{ _("Benutzer") }}
                                     </a>
                                 {% endif %}
                                 
                                 <div class="border-t border-gray-100 my-1"></div>
                                 <a href="{{ url_for('logout')}}" class="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 no-underline">
-                                    <span class="ph-btn-icon mr-3 text-lg">&#xE42A;</span> Abmelden
+                                    <span class="ph-btn-icon mr-3 text-lg">&#xE42A;</span> {{ _("Abmelden") }}
                                 </a>
                             </div>
                         </div>
                     {% else %}
                         <a href="{{ url_for('login') }}" class="bg-accent hover:bg-accent-hover text-white px-5 py-2 rounded-xl font-bold transition-all shadow-md active:scale-95 no-underline">
-                            Login
+                            {{ _("Login") }}
                         </a>
                     {% endif %}
                 </div>
@@ -112,16 +112,16 @@
                     </a>
                 </div>
                 <div class="text-xs text-nav-text">
-                    <a href="https://gitea.iten.pro/edi/rezepte/" target="_blank" rel="noopener noreferrer"><span class="font-medium">rezepteapp</span> <span class="text-gray-500">{{ git_version }}</span></a>
+                    <a href="https://github.com/eiten/rezepte/" target="_blank" rel="noopener noreferrer"><span class="font-medium">rezepteapp</span> <span class="text-gray-500">{{ git_version }}</span></a>
                 </div>
             </div>
         </div>
     </footer>
 
     {# Help Button (Floating) - Only shown on edit pages #}
-    <button id="help-button" class="hidden fixed bottom-6 right-6 z-40 bg-accent hover:bg-accent-hover text-white rounded-full w-12 h-12 flex items-center justify-center shadow-lg transition-all hover:scale-110 active:scale-95 group" title="Editor help">
+    <button id="help-button" class="hidden fixed bottom-6 right-6 z-40 bg-accent hover:bg-accent-hover text-white rounded-full w-12 h-12 flex items-center justify-center shadow-lg transition-all hover:scale-110 active:scale-95 group" title="{{ _("Editor help") }}">
         <span class="ph-btn-icon text-xl">&#xE3E9;</span>
-        <span class="absolute bottom-full right-0 mb-2 bg-gray-900 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">Editor Help</span>
+        <span class="absolute bottom-full right-0 mb-2 bg-gray-900 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">{{ _("Editor Help") }}</span>
     </button>
 
     <script>
