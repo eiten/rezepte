@@ -1,14 +1,15 @@
 # Rezepte-App
 
-Rezeptverwaltung mit FastAPI, SQLite und FTS5 (Volltextsuche). Login mit serverseitigen Sessions, PDF-Export via LaTeX, und einem Markdown-ähnlichen Editor für Schritte.
+Rezeptverwaltung mit FastAPI, SQLite und FTS5 (Volltextsuche). Login mit serverseitigen Sessions, OAuth/OIDC-Integration (z.B. Authelia), PDF-Export via LaTeX, und einem Markdown-ähnlichen Editor für Schritte.
 
 📋 **[Changelog](CHANGELOG.md)** – View version history and release notes
 
 ## Kurzfeatures
 - Serverseitige Sessions (SQLite `sessions`-Tabelle), Cookie `rezepte_session_token`, Rolling Expiry (7 Tage, wird bei Nutzung verlängert)
+- **OAuth/OIDC-Login** (z.B. Authelia): Optional paralleles Login mit OAuth und lokalem Passwort, Account-Verknüpfung mit Email-Matching und Auto-Link
 - Volltextsuche über Rezepte/Schritte/Zutaten (SQLite FTS5)
 - Admin-Bereich für Kategorien, Pfade, Nutzer
-- Profilseite zum Ändern von Anzeigename, E-Mail und Passwort
+- Profilseite zum Ändern von Anzeigename, E-Mail, Passwort und OAuth-Verknüpfung
 - HTML-Rendering und PDF-Export aus demselben Markdown-ähnlichen Text
 
 ## Setup (Dev)
@@ -36,6 +37,46 @@ APP_ENV=prod /arbeitsverzeichnis/venv/bin/python /arbeitsverzeichnis/main.py
 
 - Der Watcher lauscht auf `static/css/src.css` und schreibt nach `static/css/main.css`.
 - In Produktion wird die CSS-Datei nicht automatisch gebaut; der Watcher ist nur für lokale Entwicklung gedacht. 
+
+## Login / Sessions
+- Login unter `/auth/login`, Logout unter `/auth/logout`
+- Cookie: `rezepte_session_token` (HttpOnly, SameSite=Lax; Secure in prod)
+- Sessions liegen in SQLite (`sessions`), können gezielt invalidiert werden
+
+## OAuth/OIDC (Optional)
+
+### Konfiguration
+OAuth wird über `config.yaml` konfiguriert. Beispiel für Authelia:
+
+```yaml
+oauth:
+  enabled: true
+  provider_name: "Authelia"              # Anzeigename im UI
+  button_text: "Mit Authelia anmelden"   # Button-Text
+  client_id: "rezepte-dev"               # OIDC Client ID
+  client_secret: "..."                   # OIDC Client Secret
+  authorization_url: "https://auth.example.com/api/oidc/authorization"
+  token_url: "https://auth.example.com/api/oidc/token"
+  userinfo_url: "https://auth.example.com/api/oidc/userinfo"
+  redirect_uri: "https://rezepte.example.com/auth/oauth/callback"
+  scopes: ["openid", "profile", "email"]
+```
+
+Die App nutzt OIDC Discovery (`/.well-known/openid-configuration`) für automatische Konfiguration der OIDC-Endpoints.
+
+### Funktionsweise
+1. **Login-Button**: Auf der Login-Seite erscheint ein OAuth-Button (wenn `enabled: true`)
+2. **OAuth-Flow**: User wird zum OIDC-Provider weitergeleitet und authentifiziert sich dort
+3. **Account-Verknüpfung**: 
+   - Wenn die Email-Adresse mit einem lokalen Account übereinstimmt, wird ein "Direkt verknüpfen"-Button angezeigt
+   - Alternativ kann der User einen anderen lokalen Account angeben und mit Passwort verknüpfen
+4. **Profil-Management**: Auf der Profilseite kann die OAuth-Verknüpfung eingesehen und mit Passwortbestätigung entfernt werden
+
+### Hinweise
+- Lokale Accounts (mit Passwort) funktionieren parallel zu OAuth - beide Login-Methoden sind gleichzeitig nutzbar
+- Die Email-Adresse muss vom OIDC-Provider im `/userinfo`-Endpoint bereitgestellt werden (bei Authelia: LDAP-Backend empfohlen)
+- Jeder User kann optional einen lokalen UND einen OAuth-Account haben
+- Fallback, falls OIDC-Provider ausfällt
 
 ## Login / Sessions
 - Login unter `/auth/login`, Logout unter `/auth/logout`

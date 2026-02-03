@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **OAuth/OIDC integration**: Support for external authentication providers (e.g., Authelia)
+  - Login button on login page for OAuth authentication (configurable via `config.yaml`)
+  - Account linking with email-matching: "Direct link" button when email addresses match
+  - Manual account linking with username and password confirmation
+  - OAuth link management on profile page (view link status, unlink with password confirmation)
+  - OIDC Discovery support for automatic endpoint configuration
+- Session middleware (Starlette SessionMiddleware) for OAuth state management
+- Database schema v7: `oauth_links` table to track OAuth account associations (provider, subject, email)
+- Improved modal styling with backdrop blur and smooth fade/scale transitions across the app
+- Auto-formatted dates for OAuth link creation using browser locale settings
+- Dependencies: `authlib`, `httpx`, `itsdangerous`
+
+### Changed
+- Modals now use consistent styling with `backdrop-blur-sm` and opacity/scale transitions
+- Login page template structure enhanced for OAuth button integration
+- OAuth userinfo fetching optimized to directly use Authelia's userinfo endpoint
+
+### Documentation
+- README updated with OAuth/OIDC configuration guide and usage documentation
+- CHANGELOG updated with detailed OAuth feature list
+
 ## [1.1.10] - 2026-01-21
 
 ### Changed

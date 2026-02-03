@@ -11,6 +11,17 @@ dev:
   root_path: "/rezepte"
   database_url: "sqlite+aiosqlite:///./data/recipes.db"
   pdf_cache_dir: "./cache"
+  oauth:
+    enabled: true
+    provider_name: "Authelia"
+    button_text: "Mit Authelia anmelden"
+    client_id: "your-client-id"
+    client_secret: "your-client-secret"
+    authorization_url: "https://auth.example.com/api/oidc/authorization"
+    token_url: "https://auth.example.com/api/oidc/token"
+    userinfo_url: "https://auth.example.com/api/oidc/userinfo"
+    redirect_uri: "https://dev.example.com/rezepte/auth/oauth/callback"
+    scopes: ["openid", "profile", "email"]
 
 # Production configuration
 prod:
@@ -20,3 +31,14 @@ prod:
   reload: false
   database_url: "sqlite+aiosqlite:////opt/rezepteapp/data/recipes.db"
   pdf_cache_dir: "/opt/rezepteapp/cache"
+  oauth:
+    enabled: true
+    provider_name: "Authelia"
+    button_text: "Mit Authelia anmelden"
+    client_id: "your-client-id"
+    client_secret: "your-client-secret"
+    authorization_url: "https://auth.example.com/api/oidc/authorization"
+    token_url: "https://auth.example.com/api/oidc/token"
+    userinfo_url: "https://auth.example.com/api/oidc/userinfo"
+    redirect_uri: "https://prod.example.com/auth/oauth/callback"
+    scopes: ["openid", "profile", "email"]

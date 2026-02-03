@@ -35,7 +35,14 @@ def get_client_ip(request: Request) -> str:
 
 @router.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request):
-    return templates.TemplateResponse("login.html", {"request": request})
+    config = get_config()
+    oauth_config = config.get('oauth', {})
+    return templates.TemplateResponse("login.html", {
+        "request": request,
+        "oauth_enabled": oauth_config.get('enabled', False),
+        "oauth_button_text": oauth_config.get('button_text', 'Mit OAuth anmelden'),
+        "provider_name": oauth_config.get('provider_name', 'OAuth')
+    })
 
 @router.post("/login")
 async def login(
@@ -138,6 +145,24 @@ async def profile_page(request: Request, db: aiosqlite.Connection = Depends(get_
     if not user:
         return RedirectResponse(url=request.url_for("logout"), status_code=status.HTTP_303_SEE_OTHER)
 
+    # Check for OAuth link
+    oauth_link = None
+    async with db.execute(
+        "SELECT provider, email, created_at FROM oauth_links WHERE user_id = ?",
+        (user_ctx["user_id"],)
+    ) as cursor:
+        link_row = await cursor.fetchone()
+        if link_row:
+            oauth_link = {
+                "provider": link_row["provider"],
+                "email": link_row["email"],
+                "created_at": link_row["created_at"]
+            }
+    
+    # Get OAuth config for provider name
+    config = get_config()
+    oauth_config = config.get('oauth', {})
+
     return templates.TemplateResponse(
         "profile.html",
         {
@@ -145,6 +170,9 @@ async def profile_page(request: Request, db: aiosqlite.Connection = Depends(get_
             "username": user["username"],
             "display_name": user["display_name"],
             "email": user["email"] or "",
+            "oauth_link": oauth_link,
+            "oauth_enabled": oauth_config.get('enabled', False),
+            "provider_name": oauth_config.get('provider_name', 'OAuth'),
             "errors": [],
             "message": None,
             **user_ctx,
