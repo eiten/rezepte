@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-02-03
+
 ### Added
 - **OAuth/OIDC integration**: Support for external authentication providers (e.g., Authelia)
   - Login button on login page for OAuth authentication (configurable via `config.yaml`)
@@ -19,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved modal styling with backdrop blur and smooth fade/scale transitions across the app
 - Auto-formatted dates for OAuth link creation using browser locale settings
 - Dependencies: `authlib`, `httpx`, `itsdangerous`
+- **License**: Project now licensed under CC BY-NC-SA 4.0
 
 ### Changed
 - Modals now use consistent styling with `backdrop-blur-sm` and opacity/scale transitions
@@ -29,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - README updated with OAuth/OIDC configuration guide and usage documentation
 - CHANGELOG updated with detailed OAuth feature list
 - **Multilingual documentation**: README available in German (README.de.md) and English (README.md) with language switcher flags
+- License section added to both README files with CC BY-NC-SA 4.0 badge
 
 ## [1.1.10] - 2026-01-21
 
