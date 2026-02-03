@@ -7,8 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.1] - 2026-02-03
+
 ### Fixed
 - Deployment workflow now updates Python dependencies during deployment (source venv and pip install -r requirements.txt)
+
+### Changed
+- Repository link in footer changed from Gitea to GitHub
+- Recipe step layout: hide empty left column on mobile for full-width instructions
 
 ## [1.2.0] - 2026-02-03
 
