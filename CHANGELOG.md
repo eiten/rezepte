@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Deployment workflow now updates Python dependencies during deployment (source venv and pip install -r requirements.txt)
+
 ## [1.2.0] - 2026-02-03
 
 ### Added
