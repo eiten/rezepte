@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **OAuth/OIDC integration**: Support for external authentication providers (e.g., Authelia)
+  - Optional OAuth login button on login page (configurable via `config.yaml`)
+  - Auto-linking accounts when email addresses match
+  - Manual account linking with password confirmation
+  - OAuth link management on profile page (view/unlink with password confirmation)
+- Session middleware for OAuth state management
+- `oauth_links` database table (schema v7 migration) to track OAuth account associations
+- Improved modal styling with backdrop blur and smooth fade/scale transitions
+- Auto-formatted OAuth link dates using browser locale settings
+- Dependencies: `authlib`, `httpx`, `itsdangerous`
+
+### Changed
+- Modals now use consistent styling across the app (backdrop blur, smooth transitions)
+- Login page template structure improved for OAuth button integration
+
+### Documentation
+- README updated with OAuth/OIDC configuration examples and usage documentation
+
 ## [1.1.10] - 2026-01-21
 
 ### Changed
