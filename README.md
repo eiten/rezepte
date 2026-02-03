@@ -62,17 +62,19 @@ oauth:
   scopes: ["openid", "profile", "email"]
 ```
 
-Die App nutzt OIDC Discovery (`/.well-known/openid-configuration`) für automatisches Setup von `jwks_uri` etc.
+Die App nutzt OIDC Discovery (`/.well-known/openid-configuration`) für automatische Konfiguration der OIDC-Endpoints.
 
 ### Funktionsweise
-1. **Login-Button**: Auf der Login-Seite erscheint ein OAuth-Button (wenn enabled)
-2. **OAuth-Flow**: User wird zum OIDC-Provider weitergeleitet, autorisiert die App
-3. **Auto-Verknüpfung**: Wenn Email übereinstimmt, wird der Account automatisch verknüpft (mit Bestätigung)
-4. **Manuelle Verknüpfung**: User kann einen anderen lokalen Account mit OAuth verknüpfen (mit Passwort-Bestätigung)
-5. **Profil-Management**: Auf der Profilseite kann die OAuth-Verknüpfung angesehen und entfernt werden (mit Passwort-Bestätigung)
+1. **Login-Button**: Auf der Login-Seite erscheint ein OAuth-Button (wenn `enabled: true`)
+2. **OAuth-Flow**: User wird zum OIDC-Provider weitergeleitet und authentifiziert sich dort
+3. **Account-Verknüpfung**: 
+   - Wenn die Email-Adresse mit einem lokalen Account übereinstimmt, wird ein "Direkt verknüpfen"-Button angezeigt
+   - Alternativ kann der User einen anderen lokalen Account angeben und mit Passwort verknüpfen
+4. **Profil-Management**: Auf der Profilseite kann die OAuth-Verknüpfung eingesehen und mit Passwortbestätigung entfernt werden
 
-### Lokale Accounts und Fallback
-- Lokale Accounts (mit Passwort) funktionieren parallel zu OAuth
+### Hinweise
+- Lokale Accounts (mit Passwort) funktionieren parallel zu OAuth - beide Login-Methoden sind gleichzeitig nutzbar
+- Die Email-Adresse muss vom OIDC-Provider im `/userinfo`-Endpoint bereitgestellt werden (bei Authelia: LDAP-Backend empfohlen)
 - Jeder User kann optional einen lokalen UND einen OAuth-Account haben
 - Fallback, falls OIDC-Provider ausfällt
 

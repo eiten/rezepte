@@ -92,12 +92,10 @@ async def oauth_callback(
         client = oauth.create_client('authelia')
         token = await client.authorize_access_token(request)
         
-        # Get user info
-        userinfo = token.get('userinfo')
-        if not userinfo:
-            # Fetch userinfo if not included in token
-            resp = await client.get(OAUTH_CONFIG['userinfo_url'], token=token)
-            userinfo = resp.json()
+        # Get user info from Authelia's userinfo endpoint
+        # Note: Authelia returns minimal claims in the ID token, but full user info at the userinfo endpoint
+        userinfo_resp = await client.get('https://auth.iten.pro/api/oidc/userinfo', token=token)
+        userinfo = userinfo_resp.json()
         
         oauth_sub = userinfo.get('sub')
         oauth_email = userinfo.get('email')
@@ -184,7 +182,6 @@ async def oauth_callback(
             })
     
     except OAuthError as e:
-        print(f"OAuth error: {e}")
         raise HTTPException(status_code=400, detail=f"OAuth error: {str(e)}")
 
 @router.post("/link", response_model=None)
