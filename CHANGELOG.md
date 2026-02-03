@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-02-03
+
 ### Added
 - **Multilingual PDF support**: French and Spanish locales with proper typography
   - French PDFs use guillemets with spacing (« text »)
@@ -25,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - csquotes package configuration made language-specific with autostyle enabled
 - Removed babel shorthand disabling as quotes are now handled via enquote command
 - Admin navigation menu now includes Units management link
+- config.yaml removed from Git tracking (remains in .gitignore for local configuration)
 
 ### Fixed
 - Missing texlive-lang-french and texlive-lang-spanish packages causing babel errors
