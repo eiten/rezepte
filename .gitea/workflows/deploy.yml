@@ -8,6 +8,8 @@ on:
 jobs:
   precheck:
     runs-on: ubuntu-latest
+    outputs:
+      should_deploy: ${{ steps.verify.outputs.should_deploy }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -15,15 +17,21 @@ jobs:
           fetch-depth: 0
 
       - name: Verify tag points to main
+        id: verify
         run: |
           git fetch origin main --tags
           TAG_REF="${GITHUB_REF#refs/tags/}"
           TAG_SHA="$(git rev-list -n 1 "$TAG_REF")"
-          git merge-base --is-ancestor "$TAG_SHA" origin/main || {
-            echo "Tag $TAG_REF is not reachable from main; aborting deploy."; exit 1;
-          }
+          if git merge-base --is-ancestor "$TAG_SHA" origin/main; then
+            echo "Tag $TAG_REF is on main branch, proceeding with deployment"
+            echo "should_deploy=true" >> $GITHUB_OUTPUT
+          else
+            echo "Tag $TAG_REF is not on main branch, skipping deployment"
+            echo "should_deploy=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Install dependencies (Python)
+        if: steps.verify.outputs.should_deploy == 'true'
         run: |
           apt-get update
           apt-get install -y --no-install-recommends python3 python3-venv
