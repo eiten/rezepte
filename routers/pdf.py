@@ -9,6 +9,7 @@ import aiosqlite
 from database import get_db_connection, get_config
 from datetime import datetime
 from md import md_to_latex
+from i18n import get_locale, get_translations
 
 
 router = APIRouter()
@@ -137,7 +138,11 @@ async def get_pdf(
                     if i['amount_max'] is not None: i['amount_max'] = f"{i['amount_max']:g}"
                     
                     i['item'] = escape_latex(i['item'])
-                    if i['note']: i['note'] = escape_latex(i['note'])
+                    # Filter out None/empty notes
+                    if i['note'] and i['note'] != 'None' and i['note'].strip():
+                        i['note'] = escape_latex(i['note'])
+                    else:
+                        i['note'] = None
                     
                     # Determine unit command for LaTeX
                     if i['latex_code']:
@@ -173,19 +178,60 @@ async def get_pdf(
 
         # get base URL
         base_url = str(request.base_url).rstrip('/')
+        
+        # Get locale and setup language-specific labels
+        locale = get_locale()
+        t = get_translations()
+        labels = {
+            'page_label': t.gettext('Seite'),
+            'date_label': t.gettext('Stand'),
+            'last_change_label': t.gettext('Letzte Änderung'),
+            'by_label': t.gettext('Von'),
+            'source_label': t.gettext('Quelle'),
+            'ingredients_label': t.gettext('Zutaten'),
+            'preparation_label': t.gettext('Zubereitung')
+        }
+
+        if locale == 'en':
+            locale_settings = {
+                'siunitx_locale': 'US',
+                'babel_lang': 'english',
+                'siunitx_range_phrase': 'to'
+            }
+        elif locale == 'fr':
+            locale_settings = {
+                'siunitx_locale': 'FR',
+                'babel_lang': 'french',
+                'siunitx_range_phrase': '--'
+            }
+        elif locale == 'es':
+            locale_settings = {
+                'siunitx_locale': 'ES',
+                'babel_lang': 'spanish',
+                'siunitx_range_phrase': '--'
+            }
+        else:  # default German
+            locale_settings = {
+                'siunitx_locale': 'DE',
+                'babel_lang': 'ngerman',
+                'siunitx_range_phrase': '--'
+            }
+
+        labels.update(locale_settings)
 
         # Render LaTeX template
         template = latex_jinja_env.get_template('master.tex')
         tex_content = template.render(
             recipe=recipe,
-            preamble=preamble_text, # NEW
+            preamble=preamble_text,
             steps=steps_data,
             unit_defs=unit_defs,
             date_version=fmt_version_date,
             date_print=fmt_print_date,
             font_path=FONT_PATH,
             base_url=escape_latex(base_url),
-            source=src_text
+            source=src_text,
+            **labels  # Unpack language labels
         )
 
         # Build PDF in temporary directory

@@ -1,0 +1,459 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: rezepteapp\n"
+"POT-Creation-Date: 2026-02-03 00:00+0000\n"
+"PO-Revision-Date: 2026-02-03 00:00+0000\n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Benutzer"
+msgstr "Benutzer"
+
+msgid "Profil"
+msgstr "Profil"
+
+msgid "Neues Rezept"
+msgstr "Neues Rezept"
+
+msgid "Verwaltung"
+msgstr "Verwaltung"
+
+msgid "Kategorien"
+msgstr "Kategorien"
+
+msgid "Einheiten"
+msgstr "Einheiten"
+
+msgid "Pfade"
+msgstr "Pfade"
+
+msgid "Abmelden"
+msgstr "Abmelden"
+
+msgid "Login"
+msgstr "Login"
+
+msgid "Rezepte suchen..."
+msgstr "Rezepte suchen..."
+
+msgid "Editor help"
+msgstr "Editor-Hilfe"
+
+msgid "Editor Help"
+msgstr "Editor-Hilfe"
+
+msgid "Anmelden"
+msgstr "Anmelden"
+
+msgid "Bitte gib deine Zugangsdaten ein"
+msgstr "Bitte gib deine Zugangsdaten ein"
+
+msgid "Benutzername"
+msgstr "Benutzername"
+
+msgid "Dein Name"
+msgstr "Dein Name"
+
+msgid "Passwort"
+msgstr "Passwort"
+
+msgid "Einloggen"
+msgstr "Einloggen"
+
+msgid "Oder"
+msgstr "Oder"
+
+msgid "Nur für registrierte Mitglieder der Rezept-App. Möchtest Du auch Rezepre erstellen und bearbeiten, dann melde Dich bei Edi."
+msgstr "Nur für registrierte Mitglieder der Rezept-App. Möchtest Du auch Rezepre erstellen und bearbeiten, dann melde Dich bei Edi."
+
+msgid "Hast du noch keinen Account? Wende dich an einen Administrator."
+msgstr "Hast du noch keinen Account? Wende dich an einen Administrator."
+
+msgid "OAuth Verknüpfung"
+msgstr "OAuth Verknüpfung"
+
+msgid "Account verknüpfen"
+msgstr "Account verknüpfen"
+
+msgid "Verknüpfe dein %(provider)s-Konto"
+msgstr "Verknüpfe dein %(provider)s-Konto"
+
+msgid "%(provider)s E-Mail:"
+msgstr "%(provider)s E-Mail:"
+
+msgid "Wir haben einen passenden Account gefunden!"
+msgstr "Wir haben einen passenden Account gefunden!"
+
+msgid "Die E-Mail-Adresse stimmt überein. Du kannst direkt verknüpfen oder zur Sicherheit dein Passwort eingeben."
+msgstr "Die E-Mail-Adresse stimmt überein. Du kannst direkt verknüpfen oder zur Sicherheit dein Passwort eingeben."
+
+msgid "Direkt verknüpfen"
+msgstr "Direkt verknüpfen"
+
+msgid "Oder mit anderem Account"
+msgstr "Oder mit anderem Account"
+
+msgid "Dein Benutzername"
+msgstr "Dein Benutzername"
+
+msgid "Rezepte-App Passwort"
+msgstr "Rezepte-App Passwort"
+
+msgid "Gib dein <strong>lokales Rezepte-App Passwort</strong> ein, um die Verknüpfung zu bestätigen."
+msgstr "Gib dein <strong>lokales Rezepte-App Passwort</strong> ein, um die Verknüpfung zu bestätigen."
+
+msgid "Verknüpfen und einloggen"
+msgstr "Verknüpfen und einloggen"
+
+msgid "Anzeigename"
+msgstr "Anzeigename"
+
+msgid "E-Mail"
+msgstr "E-Mail"
+
+msgid "%(provider)s-Verknüpfung"
+msgstr "%(provider)s-Verknüpfung"
+
+msgid "Mit %(provider)s verknüpft"
+msgstr "Mit %(provider)s verknüpft"
+
+msgid "Seit"
+msgstr "Seit"
+
+msgid "Verknüpfung aufheben"
+msgstr "Verknüpfung aufheben"
+
+msgid "Du kannst deinen Account mit %(provider)s verknüpfen, um dich in Zukunft einfacher anzumelden."
+msgstr "Du kannst deinen Account mit %(provider)s verknüpfen, um dich in Zukunft einfacher anzumelden."
+
+msgid "Mit %(provider)s verknüpfen"
+msgstr "Mit %(provider)s verknüpfen"
+
+msgid "Passwort ändern (optional)"
+msgstr "Passwort ändern (optional)"
+
+msgid "Aktuelles Passwort"
+msgstr "Aktuelles Passwort"
+
+msgid "Neues Passwort"
+msgstr "Neues Passwort"
+
+msgid "Neues Passwort (wiederholen)"
+msgstr "Neues Passwort (wiederholen)"
+
+msgid "Die neuen Passwörter stimmen nicht überein."
+msgstr "Die neuen Passwörter stimmen nicht überein."
+
+msgid "Abbrechen"
+msgstr "Abbrechen"
+
+msgid "Speichern"
+msgstr "Speichern"
+
+msgid "Bitte gib dein Passwort ein, um sicherzustellen, dass du dich nach dem Aufheben der Verknüpfung noch anmelden kannst."
+msgstr "Bitte gib dein Passwort ein, um sicherzustellen, dass du dich nach dem Aufheben der Verknüpfung noch anmelden kannst."
+
+msgid "Zurück"
+msgstr "Zurück"
+
+msgid "Bearbeiten"
+msgstr "Bearbeiten"
+
+msgid "Löschen"
+msgstr "Löschen"
+
+msgid "Von"
+msgstr "Von"
+
+msgid "Rezept bearbeiten"
+msgstr "Rezept bearbeiten"
+
+msgid "Editor Syntax Hilfe"
+msgstr "Editor Syntax Hilfe"
+
+msgid "Mengen & Einheiten"
+msgstr "Mengen & Einheiten"
+
+msgid "Textformatierung"
+msgstr "Textformatierung"
+
+msgid "Emoticon Kurzbefehle"
+msgstr "Emoticon Kurzbefehle"
+
+msgid "Neues Rezept erstellen"
+msgstr "Neues Rezept erstellen"
+
+msgid "ID"
+msgstr "ID"
+
+msgid "Erstellen"
+msgstr "Erstellen"
+
+msgid "Basisdaten"
+msgstr "Basisdaten"
+
+msgid "Speicherort (Ordner)"
+msgstr "Speicherort (Ordner)"
+
+msgid "Rezeptname"
+msgstr "Rezeptname"
+
+msgid "Rezeptname..."
+msgstr "Rezeptname..."
+
+msgid "Autor"
+msgstr "Autor"
+
+msgid "Autor..."
+msgstr "Autor..."
+
+msgid "Quelle"
+msgstr "Quelle"
+
+msgid "Quelle, zum Beispiel Oma Gertrud..."
+msgstr "Quelle, zum Beispiel Oma Gertrud..."
+
+msgid "Einführung / Preamble"
+msgstr "Einführung / Preamble"
+
+msgid "Einführung, wenn gewünscht..."
+msgstr "Einführung, wenn gewünscht..."
+
+msgid "Nach oben"
+msgstr "Nach oben"
+
+msgid "Nach unten"
+msgstr "Nach unten"
+
+msgid "Kategorie wählen"
+msgstr "Kategorie wählen"
+
+msgid "-- Bitte wählen --"
+msgstr "-- Bitte wählen --"
+
+msgid "Zutaten"
+msgstr "Zutaten"
+
+msgid "Menge"
+msgstr "Menge"
+
+msgid "Zahl oder Bereich"
+msgstr "Zahl oder Bereich"
+
+msgid "Zutat"
+msgstr "Zutat"
+
+msgid "Notiz (optional)"
+msgstr "Notiz (optional)"
+
+msgid "Zutat hinzufügen"
+msgstr "Zutat hinzufügen"
+
+msgid "Anleitung"
+msgstr "Anleitung"
+
+msgid "Beschreibe den Schritt..."
+msgstr "Beschreibe den Schritt..."
+
+msgid "Einen weiteren Schritt hinzufügen"
+msgstr "Einen weiteren Schritt hinzufügen"
+
+msgid "Notiz"
+msgstr "Notiz"
+
+msgid "Zubereitung"
+msgstr "Zubereitung"
+
+msgid "Info / Kategorie"
+msgstr "Info / Kategorie"
+
+msgid "Zutat entfernen?"
+msgstr "Zutat entfernen?"
+
+msgid "Diesen Schritt wirklich löschen?"
+msgstr "Diesen Schritt wirklich löschen?"
+
+msgid "Admin - Benutzerverwaltung"
+msgstr "Admin - Benutzerverwaltung"
+
+msgid "Benutzer verwalten"
+msgstr "Benutzer verwalten"
+
+msgid "Anzeigename / E-Mail"
+msgstr "Anzeigename / E-Mail"
+
+msgid "Neues Passwort"
+msgstr "Neues Passwort"
+
+msgid "Admin"
+msgstr "Admin"
+
+msgid "Aktiv"
+msgstr "Aktiv"
+
+msgid "Aktion"
+msgstr "Aktion"
+
+msgid "Leer lassen = keine Änderung"
+msgstr "Leer lassen = keine Änderung"
+
+msgid "Neuer Benutzer..."
+msgstr "Neuer Benutzer..."
+
+msgid "Vollständiger Name"
+msgstr "Vollständiger Name"
+
+msgid "Passwort vergeben"
+msgstr "Passwort vergeben"
+
+msgid "AUTO-AKTIV"
+msgstr "AUTO-AKTIV"
+
+msgid "Hinzufügen"
+msgstr "Hinzufügen"
+
+msgid "Admin - Kategorien"
+msgstr "Admin - Kategorien"
+
+msgid "Kategorien verwalten"
+msgstr "Kategorien verwalten"
+
+msgid "Icon"
+msgstr "Icon"
+
+msgid "Name"
+msgstr "Name"
+
+msgid "Farbe"
+msgstr "Farbe"
+
+msgid "Hex-Code"
+msgstr "Hex-Code"
+
+msgid "Name..."
+msgstr "Name..."
+
+msgid "E2AA"
+msgstr "E2AA"
+
+msgid "Admin - Ordnerstruktur"
+msgstr "Admin - Ordnerstruktur"
+
+msgid "(Kein Elternordner)"
+msgstr "(Kein Elternordner)"
+
+msgid "Ordnerstruktur verwalten"
+msgstr "Ordnerstruktur verwalten"
+
+msgid "Ordnername (Hierarchie)"
+msgstr "Ordnername (Hierarchie)"
+
+msgid "Übergeordnet"
+msgstr "Übergeordnet"
+
+msgid "Neuer Ordner..."
+msgstr "Neuer Ordner..."
+
+msgid "Rezepte"
+msgstr "Rezepte"
+
+msgid "Suche:"
+msgstr "Suche:"
+
+msgid "Alle Rezepte"
+msgstr "Alle Rezepte"
+
+msgid "Einträge"
+msgstr "Einträge"
+
+msgid "Suchanfrage fehlerhaft"
+msgstr "Suchanfrage fehlerhaft"
+
+msgid "Tipp:"
+msgstr "Tipp:"
+
+msgid "Verwende z.B."
+msgstr "Verwende z.B."
+
+msgid "oder"
+msgstr "oder"
+
+msgid "von"
+msgstr "von"
+
+msgid "Rezept wirklich unwiderruflich löschen?"
+msgstr "Rezept wirklich unwiderruflich löschen?"
+
+msgid "PDF"
+msgstr "PDF"
+
+msgid "fett"
+msgstr "fett"
+
+msgid "kursiv"
+msgstr "kursiv"
+
+msgid "hochgestellt"
+msgstr "hochgestellt"
+
+msgid "tiefgestellt"
+msgstr "tiefgestellt"
+
+msgid "Seite"
+msgstr "Seite"
+
+msgid "Stand"
+msgstr "Stand"
+
+msgid "Letzte Änderung"
+msgstr "Letzte Änderung"
+
+msgid "Von"
+msgstr "Von"
+
+msgid "Quelle"
+msgstr "Quelle"
+
+msgid "Zutaten"
+msgstr "Zutaten"
+
+msgid "Zubereitung"
+msgstr "Zubereitung"
+
+msgid "Admin - Einheiten"
+msgstr "Admin - Einheiten"
+
+msgid "Einheiten verwalten"
+msgstr "Einheiten verwalten"
+
+msgid "ID"
+msgstr "ID"
+
+msgid "Symbol"
+msgstr "Symbol"
+
+msgid "LaTeX Code"
+msgstr "LaTeX Code"
+
+msgid "Typ"
+msgstr "Typ"
+
+msgid "Neu"
+msgstr "Neu"
+
+msgid "Hinweise"
+msgstr "Hinweise"
+
+msgid "Name: Vollständiger Name der Einheit (z.B. 'Gramm', 'Milliliter')"
+msgstr "Name: Vollständiger Name der Einheit (z.B. 'Gramm', 'Milliliter')"
+
+msgid "Symbol: Kurzes Symbol der Einheit (z.B. 'g', 'ml', 'TL')"
+msgstr "Symbol: Kurzes Symbol der Einheit (z.B. 'g', 'ml', 'TL')"
+
+msgid "LaTeX Code: Der LaTeX-Befehl für siunitx (z.B. '\\gram', '\\milli\\liter')"
+msgstr "LaTeX Code: Der LaTeX-Befehl für siunitx (z.B. '\\gram', '\\milli\\liter')"
+
+msgid "Typ: Kategorie der Einheit für Gruppierung und Filterung"
+msgstr "Typ: Kategorie der Einheit für Gruppierung und Filterung"

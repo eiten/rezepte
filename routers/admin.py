@@ -45,6 +45,65 @@ async def update_category(
     await db.commit()
     return RedirectResponse(url="/admin/categories", status_code=303)
 
+@router.get("/units", response_class=HTMLResponse)
+async def manage_units(request: Request, db: aiosqlite.Connection = Depends(get_db_connection)):
+    user_ctx = await get_user_context(request, db)
+    
+    if not user_ctx["is_admin"]:
+        return RedirectResponse(url="/", status_code=303)
+
+    async with db.execute("SELECT * FROM units ORDER BY type, symbol") as cursor:
+        units = await cursor.fetchall()
+    
+    return templates.TemplateResponse("admin_units.html", {
+        "request": request,
+        "units": units,
+        **user_ctx
+    })
+
+@router.post("/units/update")
+async def update_unit(
+    request: Request,
+    id: int = Form(...),
+    name: str = Form(...),
+    symbol: str = Form(...),
+    latex_code: str = Form(...),
+    type: str = Form(...),
+    db: aiosqlite.Connection = Depends(get_db_connection)
+):
+    user_ctx = await get_user_context(request, db)
+    
+    if not user_ctx["is_admin"]:
+        raise HTTPException(status_code=403)
+
+    await db.execute(
+        "UPDATE units SET name = ?, symbol = ?, latex_code = ?, type = ? WHERE id = ?",
+        (name, symbol, latex_code, type, id)
+    )
+    await db.commit()
+    return RedirectResponse(url="/admin/units", status_code=303)
+
+@router.post("/units/add")
+async def add_unit(
+    request: Request,
+    name: str = Form(...),
+    symbol: str = Form(...),
+    latex_code: str = Form(...),
+    type: str = Form("si"),
+    db: aiosqlite.Connection = Depends(get_db_connection)
+):
+    user_ctx = await get_user_context(request, db)
+    
+    if not user_ctx["is_admin"]:
+        raise HTTPException(status_code=403)
+
+    await db.execute(
+        "INSERT INTO units (name, symbol, latex_code, type) VALUES (?, ?, ?, ?)",
+        (name, symbol, latex_code, type)
+    )
+    await db.commit()
+    return RedirectResponse(url="/admin/units", status_code=303)
+
 @router.get("/users", response_class=HTMLResponse)
 async def manage_users(request: Request, db: aiosqlite.Connection = Depends(get_db_connection)):
     user_ctx = await get_user_context(request, db)

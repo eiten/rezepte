@@ -1,6 +1,7 @@
 common:
   app_name: "Rezept Manager"
   version: "0.1.0"
+  lang: "de"  # de|en|fr|es
 
 # Development configuration
 dev:

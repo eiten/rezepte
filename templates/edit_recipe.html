@@ -7,7 +7,7 @@
 #}
 {% extends "base.html" %}
 
-{% block title %}{% if mode == 'add' %}New Recipe{% else %}Edit Recipe{% endif %}{% endblock %}
+{% block title %}{% if mode == 'add' %}{{ _("Neues Rezept") }}{% else %}{{ _("Rezept bearbeiten") }}{% endif %}{% endblock %}
 
 {% macro render_folder_options(folders, level=0) %}
     {% for folder in folders %}
@@ -38,7 +38,7 @@
 <div id="help-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-4 transition-all duration-300 opacity-0">
     <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto transform transition-all duration-300 scale-95">
         <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-            <h2 class="text-2xl font-bold text-gray-900">Editor Syntax Hilfe</h2>
+            <h2 class="text-2xl font-bold text-gray-900">{{ _("Editor Syntax Hilfe") }}</h2>
             <button id="help-close" class="text-gray-500 hover:text-gray-700 focus:outline-none">
                 <span class="text-2xl">✕</span>
             </button>
@@ -47,7 +47,7 @@
         <div class="p-6 space-y-6">
             {# Quantities Section #}
             <div>
-                <h3 class="text-lg font-semibold text-gray-900 mb-3">Mengen & Einheiten</h3>
+                <h3 class="text-lg font-semibold text-gray-900 mb-3">{{ _("Mengen & Einheiten") }}</h3>
                 <div class="grid gap-2 text-sm">
                     <div class="bg-gray-50 p-3 rounded border border-gray-200">
                         <code class="font-mono text-accent font-medium">[8g]</code>
@@ -66,30 +66,30 @@
 
             {# Formatting Section #}
             <div>
-                <h3 class="text-lg font-semibold text-gray-900 mb-3">Textformatierung</h3>
+                <h3 class="text-lg font-semibold text-gray-900 mb-3">{{ _("Textformatierung") }}</h3>
                 <div class="grid gap-2 text-sm">
                     <div class="bg-gray-50 p-3 rounded border border-gray-200">
-                        <code class="font-mono text-accent font-medium">**bold**</code>
-                        <span class="text-gray-600 ml-2">→ <strong>bold</strong></span>
+                        <code class="font-mono text-accent font-medium">**{{ _("fett") }}**</code>
+                        <span class="text-gray-600 ml-2">→ <strong>{{ _("fett") }}</strong></span>
                     </div>
                     <div class="bg-gray-50 p-3 rounded border border-gray-200">
-                        <code class="font-mono text-accent font-medium">*italic*</code>
-                        <span class="text-gray-600 ml-2">→ <em>italic</em></span>
+                        <code class="font-mono text-accent font-medium">*{{ _("kursiv") }}*</code>
+                        <span class="text-gray-600 ml-2">→ <em>{{ _("kursiv") }}</em></span>
                     </div>
                     <div class="bg-gray-50 p-3 rounded border border-gray-200">
-                        <code class="font-mono text-accent font-medium">^super^</code>
-                        <span class="text-gray-600 ml-2">→ <sup>super</sup></span>
+                        <code class="font-mono text-accent font-medium">^{{ _("hochgestellt") }}^</code>
+                        <span class="text-gray-600 ml-2">→ <sup>{{ _("hochgestellt") }}</sup></span>
                     </div>
                     <div class="bg-gray-50 p-3 rounded border border-gray-200">
-                        <code class="font-mono text-accent font-medium">_sub_</code>
-                        <span class="text-gray-600 ml-2">→ <sub>sub</sub></span>
+                        <code class="font-mono text-accent font-medium">_{{ _("tiefgestellt") }}_</code>
+                        <span class="text-gray-600 ml-2">→ <sub>{{ _("tiefgestellt") }}</sub></span>
                     </div>
                 </div>
             </div>
 
             {# Emoticons Section #}
             <div>
-                <h3 class="text-lg font-semibold text-gray-900 mb-3">Emoticon Kurzbefehle</h3>
+                <h3 class="text-lg font-semibold text-gray-900 mb-3">{{ _("Emoticon Kurzbefehle") }}</h3>
                 <div id="emoticons-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
                     {# Populated by JavaScript #}
                 </div>
@@ -173,21 +173,21 @@
     <div class="flex items-center justify-between mb-8">
         <div>
             <h1 class="text-3xl font-bold text-slate-800 mb-1">
-                {% if mode == 'add' %}Neues Rezept erstellen{% else %}Rezept bearbeiten{% endif %}
+                {% if mode == 'add' %}{{ _("Neues Rezept erstellen") }}{% else %}{{ _("Rezept bearbeiten") }}{% endif %}
             </h1>
             {% if mode != 'add' %}
-            <p class="text-slate-500 text-sm">ID: {{ recipe.id }}</p>
+            <p class="text-slate-500 text-sm">{{ _("ID") }}: {{ recipe.id }}</p>
             {% endif %}
         </div>
         <div class="flex gap-2">
             {% if mode == 'add' %}
-                <a href="{{ url_for('index') }}" class="px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors no-underline"><span class="ph-btn-icon text-lg mr-1">&#xE4F6;</span>  Abbrechen</a>
+                <a href="{{ url_for('index') }}" class="px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors no-underline"><span class="ph-btn-icon text-lg mr-1">&#xE4F6;</span>  {{ _("Abbrechen") }}</a>
             {% else %}
-                <a href="{{ url_for('read_recipe', recipe_id=recipe.id) }}" class="px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors no-underline"><span class="ph-btn-icon text-lg mr-1">&#xE4F6;</span>  Abbrechen</a>
+                <a href="{{ url_for('read_recipe', recipe_id=recipe.id) }}" class="px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors no-underline"><span class="ph-btn-icon text-lg mr-1">&#xE4F6;</span>  {{ _("Abbrechen") }}</a>
             {% endif %}
             
             <button type="submit" form="recipe-edit-form" class="px-6 py-2 bg-accent hover:bg-accent-dark text-white rounded-lg shadow-sm font-medium transition-colors">
-                <span class="ph-btn-icon text-lg mr-1">&#xE248;</span> {% if mode == 'add' %}Erstellen{% else %}Speichern{% endif %}
+                <span class="ph-btn-icon text-lg mr-1">&#xE248;</span> {% if mode == 'add' %}{{ _("Erstellen") }}{% else %}{{ _("Speichern") }}{% endif %}
             </button> 
         </div>
     </div>
@@ -199,35 +199,35 @@
         
         {# Basic Recipe Metadata #}
         <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
-            <h2 class="text-lg font-semibold text-slate-800 mb-4 border-b pb-2">Basisdaten</h2>
+            <h2 class="text-lg font-semibold text-slate-800 mb-4 border-b pb-2">{{ _("Basisdaten") }}</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="md:col-span-2">
-                    <label class="block text-sm font-medium text-slate-700 mb-1">Speicherort (Ordner)</label>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">{{ _("Speicherort (Ordner)") }}</label>
                     <select name="folder_id" class="w-full rounded-lg border-slate-300 focus:border-accent focus:ring-accent font-medium">
                         {{ render_folder_options(folder_tree) }}
                     </select>
                 </div>
                 <div class="md:col-span-2">
-                    <label class="block text-sm font-medium text-slate-700 mb-1">Rezeptname</label>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">{{ _("Rezeptname") }}</label>
                     <input type="text" name="name" value="{{ recipe.name }}" required 
                            class="px-2 w-full rounded-lg border-slate-300 focus:border-accent focus:ring-accent"
-                           placeholder="Rezeptname...">
+                           placeholder="{{ _("Rezeptname...") }}">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1">Autor</label>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">{{ _("Autor") }}</label>
                     <input type="text" name="author" value="{{ recipe.author }}"
                            class="px-2 w-full rounded-lg border-slate-300 focus:border-accent focus:ring-accent"
-                           placeholder="Autor...">
+                           placeholder="{{ _("Autor...") }}">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1">Quelle</label>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">{{ _("Quelle") }}</label>
                     <input type="text" name="source" value="{{ recipe.source }}"
                            class="px-2 w-full rounded-lg border-slate-300 focus:border-accent focus:ring-accent"
-                           placeholder="Quelle, zum Beispiel Oma Gertrud...">
+                           placeholder="{{ _("Quelle, zum Beispiel Oma Gertrud...") }}">
                 </div>
                 <div class="md:col-span-2">
-                    <label class="block text-sm font-medium text-slate-700 mb-1">Einführung / Preamble</label>
-                    <textarea name="preamble" rows="3" class="px-2 w-full rounded-lg border-slate-300 focus:border-accent focus:ring-accent" placeholder="Einführung, wenn gewünscht...">{{ recipe.preamble or '' }}</textarea>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">{{ _("Einführung / Preamble") }}</label>
+                    <textarea name="preamble" rows="3" class="px-2 w-full rounded-lg border-slate-300 focus:border-accent focus:ring-accent" placeholder="{{ _("Einführung, wenn gewünscht...") }}">{{ recipe.preamble or '' }}</textarea>
                 </div>
             </div>
         </div>
@@ -251,12 +251,12 @@
                         <div class="flex rounded-lg border border-slate-300 overflow-hidden divide-x divide-slate-300 bg-white shadow-sm">
                             <label class="group/lbl cursor-pointer relative px-3 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-50 transition-colors has-[:checked]:bg-accent/10 has-[:checked]:text-accent has-[:checked]:font-bold">
                                 <input type="radio" name="steps[{{ step_idx }}][type]" value="ingredients" class="peer hidden" {% if step.is_ingredients %}checked{% endif %} data-toggle-type>
-                                Zubereitung
+                                {{ _("Zubereitung") }}
                                 <span class="absolute bottom-0 left-0 w-full h-0.5 bg-accent scale-x-0 peer-checked:scale-x-100 transition-transform"></span>
                             </label>
                             <label class="group/lbl cursor-pointer relative px-3 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-50 transition-colors has-[:checked]:bg-accent/10 has-[:checked]:text-accent has-[:checked]:font-bold">
                                 <input type="radio" name="steps[{{ step_idx }}][type]" value="category" class="peer hidden" {% if not step.is_ingredients %}checked{% endif %} data-toggle-type>
-                                Info / Kategorie
+                                {{ _("Info / Kategorie") }}
                                 <span class="absolute bottom-0 left-0 w-full h-0.5 bg-accent scale-x-0 peer-checked:scale-x-100 transition-transform"></span>
                             </label>
                         </div>
@@ -264,14 +264,14 @@
 
                     {# Move/Delete Buttons #}
                     <div class="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                        <button type="button" onclick="moveStepUp(this)" class="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200 rounded" title="Move Up">
+                        <button type="button" onclick="moveStepUp(this)" class="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200 rounded" title="{{ _("Nach oben") }}">
                             <span class="ph-btn-icon text-lg">&#xE08E;</span>
                         </button>
-                        <button type="button" onclick="moveStepDown(this)" class="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200 rounded" title="Move Down">
+                        <button type="button" onclick="moveStepDown(this)" class="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200 rounded" title="{{ _("Nach unten") }}">
                             <span class="ph-btn-icon text-lg">&#xE03E;</span>
                         </button>
                         <div class="w-px h-4 bg-slate-300 mx-1"></div>
-                        <button type="button" onclick="removeStep(this)" class="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded" title="Delete">
+                        <button type="button" onclick="removeStep(this)" class="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded" title="{{ _("Löschen") }}">
                             <span class="ph-btn-icon text-lg">&#xE4A6;</span>
                         </button>
                     </div>
@@ -285,9 +285,9 @@
                     {# Category Selection Block (shown for "Info/Category" type) #}
                     <div class="category-block" {% if step.is_ingredients %}style="display:none;"{% endif %}>
                         <div class="max-w-md">
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Kategorie wählen</label>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">{{ _("Kategorie wählen") }}</label>
                             <select name="steps[{{ step_idx }}][category_id]" class="w-full rounded-lg border-slate-300">
-                                <option value="">-- Bitte wählen --</option>
+                                <option value="">{{ _("-- Bitte wählen --") }}</option>
                                 {% for cat in categories %}
                                 <option value="{{ cat.id }}" {% if step.category_id == cat.id %}selected{% endif %}>{{ cat.label_de }}</option>
                                 {% endfor %}
@@ -298,7 +298,7 @@
                     {# Ingredients Block (shown for "Zubereitung" type) #}
                     <div class="ingredients-block" {% if not step.is_ingredients %}style="display:none;"{% endif %}>
                         <div class="mb-4">
-                            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Zutaten</label>
+                            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">{{ _("Zutaten") }}</label>
                             <div class="ingredients-list space-y-2">
                                 {% for ing in step.ingredients %}
                                 <div class="ingredient-row flex items-start gap-2 group/ing">
@@ -309,11 +309,11 @@
                                         <input type="text" 
                                                name="steps[{{ step_idx }}][ingredients][{{ loop.index0 }}][amount_combined]" 
                                                value="{{ '%g'|format(ing.amount_min) if ing.amount_min else '' }}{{ '-' ~ '%g'|format(ing.amount_max) if ing.amount_max else '' }}"
-                                               placeholder="Menge"
+                                               placeholder="{{ _("Menge") }}"
                                                class="w-full text-right rounded-md border-slate-300 py-1.5 px-2 text-sm focus:border-accent focus:ring-accent"
                                                inputmode="decimal"
                                                pattern="^(\s*-\s*)?[\d]+([.,][\d]+)?(\s*-\s*[\d]+([.,][\d]+)?)?$"
-                                               title="Zahl oder Bereich"
+                                               title="{{ _("Zahl oder Bereich") }}"
                                                oninput="this.value = this.value.replace(/[^0-9.,\-\s]/g, '')">
                                     </div>
 
@@ -333,7 +333,7 @@
                                         <input type="text" 
                                                name="steps[{{ step_idx }}][ingredients][{{ loop.index0 }}][item]" 
                                                value="{{ ing.item }}" 
-                                               placeholder="Zutat"
+                                               placeholder="{{ _("Zutat") }}"
                                                required
                                                class="w-full rounded-md border-slate-300 py-1.5 px-2 text-sm font-medium focus:border-accent focus:ring-accent">
                                     </div>
@@ -343,7 +343,7 @@
                                         <input type="text" 
                                                name="steps[{{ step_idx }}][ingredients][{{ loop.index0 }}][note]" 
                                                value="{{ ing.note }}" 
-                                               placeholder="Notiz (optional)"
+                                               placeholder="{{ _("Notiz (optional)") }}"
                                                class="w-full rounded-md border-slate-200 py-1.5 px-2 text-sm text-slate-500 focus:border-accent focus:ring-accent">
                                     </div>
 
@@ -355,16 +355,16 @@
                                 {% endfor %}
                             </div>
                             <button type="button" onclick="addIngredient(this)" class="mt-2 text-sm text-accent hover:text-accent-dark font-medium flex items-center gap-1">
-                                <span class="text-lg">+</span> Zutat hinzufügen
+                                <span class="text-lg">+</span> {{ _("Zutat hinzufügen") }}
                             </button>
                         </div>
                     </div>
                     {# Instructions Textarea #}
                     <div>
-                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Anleitung</label>
+                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">{{ _("Anleitung") }}</label>
                         <textarea name="steps[{{ step_idx }}][markdown_text]" rows="3" 
                                     class="px-2 py-1 w-full rounded-lg border-slate-300 bg-slate-50 focus:bg-white focus:border-accent focus:ring-accent transition-colors"
-                                    placeholder="Describe the step...">{{ step.markdown_text or '' }}</textarea>
+                                    placeholder="{{ _("Beschreibe den Schritt...") }}">{{ step.markdown_text or '' }}</textarea>
                     </div>
                 </div>
             </div>
@@ -374,7 +374,7 @@
         {# Add Step Button #}
         <div class="text-center py-4 border-2 border-dashed border-slate-300 rounded-xl hover:border-accent hover:bg-accent-soft/10 transition-colors cursor-pointer" onclick="addStep()">
             <span class="text-accent font-medium flex items-center justify-center gap-2">
-                <span class="text-xl font-bold">+</span> Einen weiteren Schritt hinzufügen
+                <span class="text-xl font-bold">+</span> {{ _("Einen weiteren Schritt hinzufügen") }}
             </span>
         </div>
 
@@ -385,16 +385,16 @@
         <div class="flex gap-4">
             {% if mode == 'add' %}
                 <a href="{{ url_for('index') }}" class="px-6 py-2 rounded-lg text-slate-600 border border-slate-300 hover:bg-slate-50 transition-colors no-underline font-medium">
-                   <span class="ph-btn-icon text-lg mr-1">&#xE4F6;</span>  Abbrechen
+                   <span class="ph-btn-icon text-lg mr-1">&#xE4F6;</span>  {{ _("Abbrechen") }}
                 </a>
             {% else %}
                 <a href="{{ url_for('read_recipe', recipe_id=recipe.id) }}" class="px-6 py-2 rounded-lg text-slate-600 border border-slate-300 hover:bg-slate-50 transition-colors no-underline font-medium">
-                    <span class="ph-btn-icon text-lg mr-1">&#xE4F6;</span> Abbrechen
+                    <span class="ph-btn-icon text-lg mr-1">&#xE4F6;</span> {{ _("Abbrechen") }}
                 </a>
             {% endif %}
             
             <button type="submit" form="recipe-edit-form" class="px-8 py-2 bg-accent hover:bg-accent-dark text-white rounded-lg shadow-md hover:shadow-lg font-bold transition-all transform hover:-translate-y-0.5">
-                <span class="ph-btn-icon text-lg mr-1">&#xE248;</span> {% if mode == 'add' %}Erstellen{% else %}Speichern{% endif %}
+                <span class="ph-btn-icon text-lg mr-1">&#xE248;</span> {% if mode == 'add' %}{{ _("Erstellen") }}{% else %}{{ _("Speichern") }}{% endif %}
             </button> 
         </div>
     </div>
@@ -410,7 +410,7 @@
         <input type="hidden" name="" value=""> 
         
         <div class="w-24 shrink-0">
-            <input type="text" name="" placeholder="Menge" 
+            <input type="text" name="" placeholder="{{ _("Menge") }}" 
                    class="w-full text-right rounded-md border-slate-300 py-1.5 px-2 text-sm focus:border-accent focus:ring-accent font-mono"
                    inputmode="decimal"
                    pattern="^(\s*-\s*)?[\d]+([.,][\d]+)?(\s*-\s*[\d]+([.,][\d]+)?)?$"
@@ -427,11 +427,11 @@
         </div>
 
         <div class="grow">
-            <input type="text" name="" placeholder="Zutat" required class="w-full rounded-md border-slate-300 py-1.5 px-2 text-sm font-medium focus:border-accent focus:ring-accent">
+            <input type="text" name="" placeholder="{{ _("Zutat") }}" required class="w-full rounded-md border-slate-300 py-1.5 px-2 text-sm font-medium focus:border-accent focus:ring-accent">
         </div>
 
         <div class="w-1/4 hidden sm:block">
-            <input type="text" name="" placeholder="Notiz" class="w-full rounded-md border-slate-200 py-1.5 px-2 text-sm text-slate-500 focus:border-accent focus:ring-accent">
+            <input type="text" name="" placeholder="{{ _("Notiz") }}" class="w-full rounded-md border-slate-200 py-1.5 px-2 text-sm text-slate-500 focus:border-accent focus:ring-accent">
         </div>
 
         <button type="button" onclick="removeIngredient(this)" class="shrink-0 p-1.5 text-slate-300 hover:text-red-500 transition-colors">
@@ -453,26 +453,26 @@
                 <div class="flex rounded-lg border border-slate-300 overflow-hidden divide-x divide-slate-300 bg-white shadow-sm">
                     <label class="group/lbl cursor-pointer relative px-3 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-50 transition-colors has-[:checked]:bg-accent/10 has-[:checked]:text-accent has-[:checked]:font-bold">
                         <input type="radio" name="steps[__IDX__][type]" value="ingredients" class="peer hidden" checked data-toggle-type>
-                        Zubereitung
+                        {{ _("Zubereitung") }}
                         <span class="absolute bottom-0 left-0 w-full h-0.5 bg-accent scale-x-0 peer-checked:scale-x-100 transition-transform"></span>
                     </label>
                     <label class="group/lbl cursor-pointer relative px-3 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-50 transition-colors has-[:checked]:bg-accent/10 has-[:checked]:text-accent has-[:checked]:font-bold">
                         <input type="radio" name="steps[__IDX__][type]" value="category" class="peer hidden" data-toggle-type>
-                        Info / Kategorie
+                        {{ _("Info / Kategorie") }}
                         <span class="absolute bottom-0 left-0 w-full h-0.5 bg-accent scale-x-0 peer-checked:scale-x-100 transition-transform"></span>
                     </label>
                 </div>
             </div>
 
             <div class="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                <button type="button" onclick="moveStepUp(this)" class="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200 rounded" title="Move Up">
+                <button type="button" onclick="moveStepUp(this)" class="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200 rounded" title="{{ _("Nach oben") }}">
                     <span class="ph-btn-icon text-lg">&#xE08E;</span>
                 </button>
-                <button type="button" onclick="moveStepDown(this)" class="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200 rounded" title="Move Down">
+                <button type="button" onclick="moveStepDown(this)" class="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200 rounded" title="{{ _("Nach unten") }}">
                     <span class="ph-btn-icon text-lg">&#xE03E;</span>
                 </button>
                 <div class="w-px h-4 bg-slate-300 mx-1"></div>
-                <button type="button" onclick="removeStep(this)" class="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded" title="Delete">
+                <button type="button" onclick="removeStep(this)" class="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded" title="{{ _("Löschen") }}">
                     <span class="ph-btn-icon text-lg">&#xE4A6;</span>
                 </button>
             </div>
@@ -484,9 +484,9 @@
 
             <div class="category-block" style="display:none;">
                 <div class="max-w-md">
-                    <label class="block text-sm font-medium text-slate-700 mb-1">Kategorie wählen</label>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">{{ _("Kategorie wählen") }}</label>
                     <select name="steps[__IDX__][category_id]" class="w-full rounded-lg border-slate-300 focus:border-accent focus:ring-accent">
-                        <option value="">-- Bitte wählen --</option>
+                        <option value="">{{ _("-- Bitte wählen --") }}</option>
                         {% for cat in categories %}
                         <option value="{{ cat.id }}">{{ cat.label_de }}</option>
                         {% endfor %}
@@ -496,19 +496,19 @@
 
             <div class="ingredients-block">
                 <div class="mb-4">
-                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Zutaten</label>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">{{ _("Zutaten") }}</label>
                     <div class="ingredients-list space-y-2">
                     </div>
                     <button type="button" onclick="addIngredient(this)" class="mt-2 text-sm text-accent hover:text-accent-dark font-medium flex items-center gap-1">
-                        <span class="text-lg">+</span> Zutat hinzufügen
+                        <span class="text-lg">+</span> {{ _("Zutat hinzufügen") }}
                     </button>
                 </div>
             </div>
             <div>
-                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Anleitung</label>
+                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">{{ _("Anleitung") }}</label>
                 <textarea name="steps[__IDX__][markdown_text]" rows="3" 
                             class="px-2 py-1 w-full rounded-lg border-slate-300 bg-slate-50 focus:bg-white focus:border-accent focus:ring-accent transition-colors"
-                            placeholder="Describe the step..."></textarea>
+                            placeholder="{{ _("Beschreibe den Schritt...") }}"></textarea>
             </div>
         </div>
     </div>
@@ -561,7 +561,7 @@ function removeIngredient(btn) {
     const stepCard = row.closest('.step-card');
     const hasContent = Array.from(row.querySelectorAll('input')).some(i => i.value.trim() !== '');
     
-    if (!hasContent || confirm('Remove ingredient?')) {
+    if (!hasContent || confirm('{{ _("Zutat entfernen?") }}')) {
         row.remove();
         // Close gaps
         updateIngredientIndices(stepCard);
@@ -649,7 +649,7 @@ function moveStepDown(btn) {
 
 /* Remove step */
 function removeStep(btn) {
-    if (confirm('Really delete this step?')) {
+    if (confirm('{{ _("Diesen Schritt wirklich löschen?") }}')) {
         btn.closest('.step-card').remove();
         updateStepPositions();
     }

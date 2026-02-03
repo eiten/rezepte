@@ -5,24 +5,24 @@
     - Per-row forms post to `/admin/categories/update`; add-row posts to `/admin/categories/add`.
 #}
 {% extends "base.html" %}
-{% block title %}Admin - Kategorien{% endblock %}
+{% block title %}{{ _("Admin - Kategorien") }}{% endblock %}
 
 {% block content %}
 <div class="max-w-6xl mx-auto pb-12">
     
     <div class="flex items-center justify-between mb-6">
-        <h1 class="text-2xl font-bold text-slate-800">Kategorien verwalten</h1>
+        <h1 class="text-2xl font-bold text-slate-800">{{ _("Kategorien verwalten") }}</h1>
     </div>
 
     <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         <table class="w-full border-collapse">
             <thead class="bg-slate-50 border-b border-slate-200">
                 <tr>
-                    <th class="px-4 py-3 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest w-16">Icon</th>
-                    <th class="px-4 py-3 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest">Name</th>
-                    <th class="px-4 py-3 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest w-32">Farbe</th>
-                    <th class="px-4 py-3 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest w-32">Hex-Code</th>
-                    <th class="px-4 py-3 text-right text-[10px] font-bold text-slate-400 uppercase tracking-widest w-24">Aktion</th>
+                    <th class="px-4 py-3 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest w-16">{{ _("Icon") }}</th>
+                    <th class="px-4 py-3 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest">{{ _("Name") }}</th>
+                    <th class="px-4 py-3 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest w-32">{{ _("Farbe") }}</th>
+                    <th class="px-4 py-3 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest w-32">{{ _("Hex-Code") }}</th>
+                    <th class="px-4 py-3 text-right text-[10px] font-bold text-slate-400 uppercase tracking-widest w-24">{{ _("Aktion") }}</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
@@ -48,7 +48,7 @@
                                    class="w-full rounded-md border-slate-200 py-1 px-2 text-sm font-mono focus:border-accent focus:ring-accent codepoint-input">
                         </td>
                         <td class="px-4 py-2 text-right">
-                            <button type="submit" class="p-2 text-slate-400 hover:text-accent transition-colors" title="Speichern">
+                            <button type="submit" class="p-2 text-slate-400 hover:text-accent transition-colors" title="{{ _("Speichern") }}">
                                 <span class="ph-btn-icon text-xl">&#xE248;</span>
                             </button>
                         </td>
@@ -64,7 +64,7 @@
                             </span>
                         </td>
                         <td class="px-4 py-3">
-                            <input type="text" name="label_de" placeholder="Name..." required
+                            <input type="text" name="label_de" placeholder="{{ _("Name...") }}" required
                                    class="w-full rounded-md border-accent/20 py-1 px-2 text-sm focus:border-accent focus:ring-accent bg-white">
                         </td>
                         <td class="px-4 py-3">
@@ -72,11 +72,11 @@
                                    class="h-8 w-full p-0.5 rounded border border-accent/20 cursor-pointer bg-white color-input">
                         </td>
                         <td class="px-4 py-3">
-                            <input type="text" name="codepoint" placeholder="E2AA" required
+                            <input type="text" name="codepoint" placeholder="{{ _("E2AA") }}" required
                                    class="w-full rounded-md border-accent/20 py-1 px-2 text-sm font-mono focus:border-accent focus:ring-accent bg-white codepoint-input">
                         </td>
                         <td class="px-4 py-3 text-right">
-                            <button type="submit" class="p-2 text-accent hover:text-accent-dark transition-colors" title="Hinzufügen">
+                            <button type="submit" class="p-2 text-accent hover:text-accent-dark transition-colors" title="{{ _("Hinzufügen") }}">
                                 <span class="ph-btn-icon text-xl">&#xE3D6;</span>
                             </button>
                         </td>

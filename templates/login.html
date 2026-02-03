@@ -5,7 +5,7 @@
 #}
 {% extends "base.html" %}
 
-{% block title %}Anmelden{% endblock %}
+{% block title %}{{ _("Anmelden") }}{% endblock %}
 
 {% block content %}
 <div class="flex justify-center items-center min-h-[60vh] px-4">
@@ -14,23 +14,23 @@
             <div class="inline-flex items-center justify-center w-16 h-16 bg-accent/10 rounded-full mb-4">
                 <span class="ph-icon text-3xl text-accent">&#xE4C2;</span>
             </div>
-            <h1 class="text-2xl font-bold text-white mb-1">Anmelden</h1>
-            <p class="text-gray-400 text-sm">Bitte gib deine Zugangsdaten ein</p>
+            <h1 class="text-2xl font-bold text-white mb-1">{{ _("Anmelden") }}</h1>
+            <p class="text-gray-400 text-sm">{{ _("Bitte gib deine Zugangsdaten ein") }}</p>
         </div>
         
         <form action="{{ url_for('login') }}" method="post" class="p-8 space-y-6">
             <div class="space-y-2">
                 <label for="username" class="block text-sm font-semibold text-gray-700 ml-1">
-                    Benutzername
+                    {{ _("Benutzername") }}
                 </label>
                 <input type="text" id="username" name="username" 
-                    placeholder="Dein Name" required
+                    placeholder="{{ _("Dein Name") }}" required
                     class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none transition-all placeholder:text-gray-300">
             </div>
             
             <div class="space-y-2">
                 <label for="password" class="block text-sm font-semibold text-gray-700 ml-1">
-                    Passwort
+                    {{ _("Passwort") }}
                 </label>
                 <input type="password" id="password" name="password" 
                     placeholder="••••••••" required
@@ -46,7 +46,7 @@
 
             <button type="submit" 
                 class="w-full bg-accent hover:bg-accent-hover text-white font-bold py-3.5 rounded-xl shadow-lg shadow-accent/20 transition-all active:scale-[0.98] flex justify-center items-center gap-2">
-                <span>Einloggen</span>
+                <span>{{ _("Einloggen") }}</span>
                 <span class="ph-btn-icon">&#xE428;</span>
             </button>
         </form>
@@ -55,7 +55,7 @@
         <div class="px-8 pb-8">
             <div class="relative flex items-center justify-center my-6">
                 <div class="border-t border-gray-200 flex-grow"></div>
-                <span class="px-4 text-xs text-gray-400 uppercase tracking-wide">Oder</span>
+                <span class="px-4 text-xs text-gray-400 uppercase tracking-wide">{{ _("Oder") }}</span>
                 <div class="border-t border-gray-200 flex-grow"></div>
             </div>
             
@@ -69,7 +69,7 @@
 
         <div class="bg-gray-50 px-8 py-4 text-center border-t border-gray-100">
             <p class="text-xs text-gray-400">
-                Nur für registrierte Mitglieder der Rezept-App. Möchtest Du auch Rezepre erstellen und bearbeiten, dann melde Dich bei Edi.
+                {{ _("Hast du noch keinen Account? Wende dich an einen Administrator.") }}
             </p>
         </div>
     </article>

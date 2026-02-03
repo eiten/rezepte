@@ -188,7 +188,7 @@ def format_ingredient_quantity(amount_min: float = None, amount_max: float = Non
     return ""
 
 def replace_quotes(text):
-    """Convert standard quotes to Swiss Guillemets (« »)"""
+    """Convert standard quotes to appropriate format (enquote for LaTeX, guillemets for HTML)"""
     if not text: return ""
     # Opening quote: Quote preceded by space or start of line
     text = re.sub(r'(?:\^|\\textasciicircum{})(.*?)(?:\^|\\textasciicircum{})', 
@@ -208,8 +208,8 @@ def md_to_latex(text, unit_map: dict = None):
     # Parse and format quantities (before other replacements)
     text = re.sub(r'\[([^\]]+)\]', lambda m: format_quantity(m.group(1), 'latex', unit_map), text)
     
-    # Swiss Quotes
-    text = replace_quotes(text)
+    # Convert quotes to \enquote{} for language-aware formatting
+    text = re.sub(r'"([^"]+)"', r'\\enquote{\1}', text)
 
     # Trim and basic cleanup
     text = text.strip().replace('\r\n', '\n')
