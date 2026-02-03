@@ -154,6 +154,8 @@ jobs:
           echo "  git fetch --tags origin"
           echo "  git fetch origin main"
           echo "  git checkout -f tags/$TAG"
+          echo "  source venv/bin/activate"
+          echo "  pip install -r requirements.txt"
           echo "  rm -rf cache"
           echo "  sudo systemctl start $SERVICE"
           echo ""
@@ -170,6 +172,9 @@ jobs:
             git fetch origin main
             echo 'Checking out tag...'
             git checkout -f \"tags/$TAG\"
+            echo 'Updating Python dependencies...'
+            source venv/bin/activate
+            pip install -r requirements.txt
             echo 'Clearing cache...'
             rm -rf cache
             echo 'Starting service...'

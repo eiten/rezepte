@@ -101,7 +101,7 @@
                     md:grid md:grid-cols-12 md:gap-x-10 items-start py-4 px-2">
             
             <!-- Left Column: Ingredients or Category Icon -->
-            <div class="{% if step.ingredients %}w-full{% else %}w-12 shrink-0{% endif %} md:w-auto md:col-span-4">
+            <div class="{% if step.ingredients %}w-full{% else %}w-12 shrink-0{% endif %} md:w-auto md:col-span-4 {%if not step.ingredients and not step.codepoint%}hidden md:flex{% endif %}">
                 {% if step.ingredients %}
                     <!-- Ingredient List -->
                     <ul class="space-y-1">
