@@ -23,6 +23,9 @@ msgstr "Verwaltung"
 msgid "Kategorien"
 msgstr "Kategorien"
 
+msgid "Einheiten"
+msgstr "Einheiten"
+
 msgid "Pfade"
 msgstr "Pfade"
 
@@ -418,3 +421,39 @@ msgstr "Zutaten"
 
 msgid "Zubereitung"
 msgstr "Zubereitung"
+
+msgid "Admin - Einheiten"
+msgstr "Admin - Einheiten"
+
+msgid "Einheiten verwalten"
+msgstr "Einheiten verwalten"
+
+msgid "ID"
+msgstr "ID"
+
+msgid "Symbol"
+msgstr "Symbol"
+
+msgid "LaTeX Code"
+msgstr "LaTeX Code"
+
+msgid "Typ"
+msgstr "Typ"
+
+msgid "Neu"
+msgstr "Neu"
+
+msgid "Hinweise"
+msgstr "Hinweise"
+
+msgid "Name: Vollständiger Name der Einheit (z.B. 'Gramm', 'Milliliter')"
+msgstr "Name: Vollständiger Name der Einheit (z.B. 'Gramm', 'Milliliter')"
+
+msgid "Symbol: Kurzes Symbol der Einheit (z.B. 'g', 'ml', 'TL')"
+msgstr "Symbol: Kurzes Symbol der Einheit (z.B. 'g', 'ml', 'TL')"
+
+msgid "LaTeX Code: Der LaTeX-Befehl für siunitx (z.B. '\\gram', '\\milli\\liter')"
+msgstr "LaTeX Code: Der LaTeX-Befehl für siunitx (z.B. '\\gram', '\\milli\\liter')"
+
+msgid "Typ: Kategorie der Einheit für Gruppierung und Filterung"
+msgstr "Typ: Kategorie der Einheit für Gruppierung und Filterung"

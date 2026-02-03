@@ -418,3 +418,36 @@ msgstr "Ingredients"
 
 msgid "Zubereitung"
 msgstr "Preparation"
+
+msgid "Einheiten"
+msgstr "Units"
+
+msgid "Admin - Einheiten"
+msgstr "Admin - Units"
+
+msgid "Einheiten verwalten"
+msgstr "Manage Units"
+
+msgid "LaTeX Code"
+msgstr "LaTeX Code"
+
+msgid "Typ"
+msgstr "Type"
+
+msgid "Neu"
+msgstr "New"
+
+msgid "Hinweise"
+msgstr "Notes"
+
+msgid "Name: Vollständiger Name der Einheit (z.B. 'Gramm', 'Milliliter')"
+msgstr "Name: Full name of the unit (e.g. 'Gram', 'Milliliter')"
+
+msgid "Symbol: Kurzes Symbol der Einheit (z.B. 'g', 'ml', 'TL')"
+msgstr "Symbol: Short symbol of the unit (e.g. 'g', 'ml', 'tsp')"
+
+msgid "LaTeX Code: Der LaTeX-Befehl für siunitx (z.B. '\\gram', '\\milli\\liter')"
+msgstr "LaTeX Code: The LaTeX command for siunitx (e.g. '\\gram', '\\milli\\liter')"
+
+msgid "Typ: Kategorie der Einheit für Gruppierung und Filterung"
+msgstr "Type: Category of the unit for grouping and filtering"
