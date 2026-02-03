@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Documentation
 - README updated with OAuth/OIDC configuration guide and usage documentation
 - CHANGELOG updated with detailed OAuth feature list
+- **Multilingual documentation**: README available in German (README.de.md) and English (README.md) with language switcher flags
 
 ## [1.1.10] - 2026-01-21
 
